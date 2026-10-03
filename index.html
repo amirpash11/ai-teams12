@@ -5,19 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Teams</title>
 <style>
-:root{--bg:#0b1020;--panel:#121a2f;--panel2:#0f1629;--line:#24304d;--text:#edf2ff;--muted:#93a1bf;--accent:#7c5cff;--accent2:#20c997;--danger:#ff5c77}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#080c18,#0f1730);color:var(--text);font-family:Tahoma,Arial,sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}
-.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}.sidebar{border-left:1px solid var(--line);background:rgba(10,15,29,.88);padding:20px;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#2bb5ff);display:grid;place-items:center;font-weight:900}.brand h1{font-size:18px;margin:0}.brand span{font-size:11px;color:var(--muted)}
-.section-title{font-size:12px;color:var(--muted);margin:18px 0 10px}.agent-list{display:grid;gap:8px}.agent{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px}.agent .meta{display:flex;gap:9px;align-items:center}.avatar{width:34px;height:34px;border-radius:10px;background:#1d2947;display:grid;place-items:center}.agent small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.icon-btn{background:transparent;border:0;color:var(--muted);font-size:17px}.btn{border:1px solid var(--line);background:#18223d;color:var(--text);padding:10px 13px;border-radius:10px}.btn.primary{background:linear-gradient(135deg,var(--accent),#5e78ff);border-color:transparent}.btn.danger{color:#ffd7de}.btn.full{width:100%}
-.main{padding:26px;max-width:1200px;width:100%;margin:0 auto}.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:22px}.topbar h2{margin:0;font-size:24px}.status{font-size:11px;color:#96f2cf;background:rgba(32,201,151,.09);border:1px solid rgba(32,201,151,.25);padding:7px 10px;border-radius:999px}
-.grid{display:grid;grid-template-columns:1.4fr .8fr;gap:16px}.card{background:rgba(18,26,47,.9);border:1px solid var(--line);border-radius:16px;padding:18px}.card h3{font-size:15px;margin:0 0 14px}.field{display:grid;gap:7px;margin-bottom:13px}.field label{font-size:12px;color:var(--muted)}input,textarea,select{width:100%;background:#0a1020;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;outline:none}input:focus,textarea:focus,select:focus{border-color:#697cff}textarea{min-height:115px;resize:vertical}
-.actions{display:flex;gap:8px;flex-wrap:wrap}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}.toolbar .actions{justify-content:flex-end}
-.chat{min-height:390px;max-height:55vh;overflow:auto;display:grid;gap:12px;padding-left:4px}.msg{display:grid;grid-template-columns:38px 1fr;gap:9px}.msg .bubble{background:#0d1528;border:1px solid var(--line);padding:12px 13px;border-radius:12px;line-height:1.85}.msg.user .bubble{background:#171e39}.msg .name{font-size:11px;color:#aab8d6;margin-bottom:5px}.empty{min-height:360px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}
-.agent-editor{display:grid;gap:10px}.agent-row{border:1px solid var(--line);border-radius:13px;padding:12px;background:#0d1528}.agent-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.agent-head strong{font-size:13px}.pill{font-size:10px;color:#c9d2eb;background:#1a2643;padding:5px 7px;border-radius:999px}
-.notice{font-size:11px;color:#b9c4dc;line-height:1.7;background:rgba(124,92,255,.07);border:1px solid rgba(124,92,255,.18);padding:10px;border-radius:10px}
-.footer{margin-top:18px;color:#6e7b9b;font-size:11px;text-align:center}
-@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-left:0;border-bottom:1px solid var(--line)}.grid{grid-template-columns:1fr}.main{padding:16px}}
+:root{--bg:#090d18;--panel:#121a2d;--panel2:#0e1526;--line:#263452;--text:#eef3ff;--muted:#96a4c3;--accent:#765cff;--good:#23c997;--danger:#ff647d;--warn:#f3bb54}
+*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:Tahoma,Arial,sans-serif;background:radial-gradient(circle at 10% 0%,#18264b 0,#090d18 42%);min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100vh}.sidebar{background:rgba(8,13,25,.92);border-left:1px solid var(--line);padding:18px;position:sticky;top:0;height:100vh;overflow:auto}.brand{display:flex;gap:10px;align-items:center;margin-bottom:20px}.logo{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,var(--accent),#299cff);font-weight:900}.brand h1{margin:0;font-size:18px}.brand span{font-size:10px;color:var(--muted)}.section-title{font-size:11px;color:var(--muted);margin:16px 0 9px}
+.agent-list{display:grid;gap:8px}.agent-card{border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:10px;display:flex;gap:9px;align-items:center}.agent-card .avatar{flex:0 0 36px}.agent-card .details{min-width:0}.agent-card b,.agent-card small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.agent-card small{font-size:10px;color:var(--muted);margin-top:3px}.agent-card .dot{margin-right:auto;width:8px;height:8px;border-radius:50%;background:var(--good)}.agent-card .dot.off{background:#5a6784}
+.avatar{width:36px;height:36px;border-radius:10px;background:#1c2846;display:grid;place-items:center}.btn{width:100%;border:1px solid var(--line);background:#18223a;color:var(--text);padding:10px 12px;border-radius:10px;margin-top:8px}.btn:hover{filter:brightness(1.08)}.btn.primary{background:linear-gradient(135deg,var(--accent),#607fff);border-color:transparent}.btn.danger{color:#ffcdd6}.btn.warn{color:#ffe1a4}
+.main{width:100%;max-width:1240px;margin:0 auto;padding:22px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}.title h2{margin:0;font-size:24px}.title p{margin:5px 0 0;color:var(--muted);font-size:11px}.top-actions{display:flex;gap:8px}.top-actions .btn{width:auto;margin:0}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.card{background:rgba(18,26,45,.92);border:1px solid var(--line);border-radius:15px;padding:16px}.card.wide{grid-column:1/-1}.card h3{font-size:14px;margin:0 0 13px}.field{display:grid;gap:6px;margin-bottom:11px}.field label{font-size:11px;color:var(--muted)}input,textarea,select{width:100%;background:#0a1121;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;outline:none}input:focus,textarea:focus,select:focus{border-color:#687bff}textarea{min-height:95px;resize:vertical}
+.mode-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.mode{border:1px solid var(--line);background:#0c1324;padding:8px 10px;border-radius:999px;font-size:11px}.mode.active{border-color:#6e5eff;background:rgba(118,92,255,.14)}.tiny{font-size:10px;color:var(--muted);line-height:1.7}.notice{border:1px solid rgba(118,92,255,.25);background:rgba(118,92,255,.08);color:#c9d1e5;padding:10px;border-radius:10px;font-size:10px;line-height:1.75}.notice.warn{border-color:rgba(243,187,84,.28);background:rgba(243,187,84,.07)}
+.editor{display:grid;gap:10px;max-height:590px;overflow:auto;padding-left:2px}.agent-row{border:1px solid var(--line);background:#0d1528;border-radius:12px;padding:11px}.agent-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.agent-head strong{font-size:12px}.head-actions{display:flex;gap:5px}.icon-btn{border:0;background:transparent;color:var(--muted);font-size:16px;padding:4px}.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.agent-row .field{margin-bottom:7px}.agent-row .field:last-child{margin-bottom:0}
+.chat{min-height:360px;max-height:58vh;overflow:auto;display:grid;gap:11px}.msg{display:grid;grid-template-columns:37px minmax(0,1fr);gap:8px}.bubble{border:1px solid var(--line);background:#0d1528;border-radius:12px;padding:11px;line-height:1.85;font-size:12px;white-space:normal}.msg.user .bubble{background:#171e38}.msg .name{font-size:10px;color:#afbbd5;margin-bottom:4px}.empty{min-height:350px;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:12px;padding:24px}.loading{color:#bfc7da}.error{border-color:rgba(255,100,125,.35);background:rgba(255,100,125,.06)}
+.footer{text-align:center;color:#687590;font-size:10px;margin-top:14px}.pill{font-size:9px;padding:5px 7px;border-radius:999px;background:#1b2743;color:#c8d1e6}.stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:920px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-left:0;border-bottom:1px solid var(--line)}.grid{grid-template-columns:1fr}.main{padding:14px}.topbar{align-items:flex-start;flex-direction:column}.top-actions{width:100%}.top-actions .btn{flex:1}.two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -26,119 +25,257 @@
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
   <div class="section-title">اعضای تیم</div>
   <div id="agentList" class="agent-list"></div>
-  <button class="btn full" id="addAgentBtn">＋ افزودن هوش مصنوعی</button>
-  <div class="section-title">داده‌ها</div>
-  <button class="btn full" id="resetBtn">بازنشانی پروژه</button>
+  <button class="btn primary" id="addAgentBtn">＋ افزودن هوش مصنوعی</button>
+  <button class="btn" id="demoBtn">استفاده از تنظیمات نمونه</button>
+  <div class="section-title">پروژه</div>
+  <button class="btn warn" id="resetBtn">بازنشانی کامل</button>
 </aside>
 
 <main class="main">
   <div class="topbar">
-    <div><h2 id="teamTitle">تیم هوش مصنوعی من</h2><div class="status">حالت نمایشی فعال است</div></div>
-    <div class="actions"><button class="btn" id="exportBtn">خروجی JSON</button><button class="btn primary" id="runBtn">▶ اجرای تیم</button></div>
+    <div class="title"><h2 id="teamTitle">تیم هوش مصنوعی من</h2><p>چند عامل می‌توانند هدف مشترک را مرحله‌به‌مرحله اجرا کنند.</p></div>
+    <div class="top-actions"><button class="btn" id="exportBtn">خروجی تنظیمات</button><button class="btn primary" id="runBtn">▶ اجرای تیم</button></div>
   </div>
 
   <div class="grid">
     <section class="card">
-      <h3>هدف تیم</h3>
-      <div class="field"><label>نام تیم</label><input id="teamName" placeholder="مثلاً تیم تحقیق و کدنویسی"></div>
-      <div class="field"><label>هدف</label><textarea id="goal" placeholder="هدف را بنویس؛ مثلاً یک ایده نرم‌افزاری را تحلیل، طراحی و پیاده‌سازی کن."></textarea></div>
-      <div class="actions"><button class="btn primary" id="saveBtn">ذخیره</button></div>
-      <div class="notice" style="margin-top:12px">در حالت نمایشی، اعضا بر اساس نقش خود پاسخ نمونه تولید می‌کنند. برای اتصال به مدل واقعی باید یک بک‌اند امن برای نگهداری کلید API اضافه شود؛ کلید را داخل این فایل قرار نده.</div>
+      <h3>ماموریت تیم</h3>
+      <div class="field"><label>نام تیم</label><input id="teamName" placeholder="مثلاً تیم تحقیق و توسعه"></div>
+      <div class="field"><label>هدف اصلی</label><textarea id="goal" placeholder="مثلاً یک محصول را تحلیل کن، معماری بده و برنامه پیاده‌سازی بنویس."></textarea></div>
+      <div class="mode-row">
+    <button class="mode active" id="demoModeBtn">حالت نمایشی</button>
+    <button class="mode" id="realModeBtn">اتصال واقعی</button>
+      </div>
+      <div id="modeNotice" class="notice" style="margin-top:10px">حالت نمایشی برای تست رابط و جریان همکاری است و بدون API کار می‌کند.</div>
+      <div id="realNotice" class="notice warn" style="display:none;margin-top:10px">در حالت واقعی، API Key داخل مرورگر ذخیره می‌شود. برای استفاده شخصی مناسب تست است؛ برای محصول عمومی باید backend امن بسازیم.</div>
+      <div class="stats"><span class="pill" id="countPill"></span><span class="pill" id="configuredPill"></span></div>
     </section>
 
     <section class="card">
-      <div class="toolbar"><h3>اعضا و نقش‌ها</h3><span class="pill" id="countPill"></span></div>
-      <div id="editor" class="agent-editor"></div>
+      <h3>راهنمای اتصال مدل</h3>
+      <div class="tiny">هر عضو می‌تواند مدل و endpoint مستقل داشته باشد. برای سرویس‌های سازگار با OpenAI از مسیر Chat Completions استفاده می‌شود.</div>
+      <div class="notice" style="margin-top:10px">نمونه endpoint: <b>https://api.openai.com/v1/chat/completions</b><br>یا یک endpoint سازگار دیگر. نام مدل و کلید را در تنظیمات همان عضو وارد کن.</div>
     </section>
 
-    <section class="card" style="grid-column:1/-1">
-      <div class="toolbar"><h3>گفت‌وگوی تیم</h3><div class="actions"><button class="btn" id="clearChatBtn">پاک کردن</button></div></div>
-      <div id="chat" class="chat"><div class="empty">هدف تیم را وارد کن و روی «اجرای تیم» بزن.<br>هر عضو یک مرحله از کار را انجام می‌دهد.</div></div>
+    <section class="card wide">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><h3 style="margin:0">اعضا، نقش‌ها و اتصال‌ها</h3><button class="btn" style="width:auto;margin:0" id="collapseBtn">جمع‌کردن همه</button></div>
+      <div id="editor" class="editor"></div>
+    </section>
+
+    <section class="card wide">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><h3 style="margin:0">گفت‌وگوی تیم</h3><button class="btn" style="width:auto;margin:0" id="clearChatBtn">پاک کردن</button></div>
+      <div id="chat" class="chat"><div class="empty">هدف را وارد کن و «اجرای تیم» را بزن.</div></div>
     </section>
   </div>
-  <div class="footer">AI Teams — تنظیمات این نسخه در مرورگر شما ذخیره می‌شود.</div>
+  <div class="footer">AI Teams — تنظیمات روی همین مرورگر ذخیره می‌شود.</div>
 </main>
 </div>
 
 <script>
-const KEY='ai-teams12-state-v1';
-const defaults={
- teamName:'تیم هوش مصنوعی من',
- goal:'یک ایده نرم‌افزاری را تحلیل کن، ریسک‌های آن را مشخص کن و یک نقشه اجرای مرحله‌ای بده.',
- agents:[
-  {id:crypto.randomUUID(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠'},
-  {id:crypto.randomUUID(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨'},
-  {id:crypto.randomUUID(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻'},
-  {id:crypto.randomUUID(),name:'منتقد',role:'بررسی و یافتن ایرادها',icon:'🔎'}
- ],chat:[]
-};
+const KEY='ai-teams12-state-v2';
+const OLD_KEY='ai-teams12-state-v1';
+
+function uid(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()+Math.random())}
+function defaults(){
+ return {
+  version:2,teamName:'تیم هوش مصنوعی من',
+  goal:'یک ایده نرم‌افزاری را تحلیل کن، راه‌حل طراحی کن و یک برنامه اجرای مرحله‌ای بده.',
+  mode:'demo',
+  agents:[
+   {id:uid(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو تحلیل‌گر تیم هستی. هدف را دقیق به نیازمندی‌ها، فرضیات، ریسک‌ها و خروجی‌های قابل اجرا تبدیل کن.',enabled:true},
+   {id:uid(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو طراح راه‌حل هستی. با توجه به هدف و تحلیل قبلی، معماری، جریان کار و اجزای لازم را پیشنهاد بده.',enabled:true},
+   {id:uid(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو برنامه‌نویس ارشد تیم هستی. طرح را به مراحل فنی، ساختار فایل‌ها و کد قابل پیاده‌سازی تبدیل کن.',enabled:true},
+   {id:uid(),name:'منتقد',role:'بازبینی و کشف ایراد',icon:'🔎',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو منتقد فنی هستی. خروجی تیم را بررسی کن، خطاها، ریسک‌ها و اصلاحات دقیق را فهرست کن.',enabled:true}
+  ],
+  chat:[]
+ };
+}
+function load(){
+ try{
+  const v=JSON.parse(localStorage.getItem(KEY));
+  if(v&&v.version===2)return v;
+  const old=JSON.parse(localStorage.getItem(OLD_KEY));
+  if(old){
+   const d=defaults();
+   d.teamName=old.teamName||d.teamName;d.goal=old.goal||d.goal;d.chat=old.chat||[];
+   d.agents=(old.agents||d.agents).map((a,i)=>Object.assign({},d.agents[i%d.agents.length],a,{id:a.id||uid()}));
+   localStorage.setItem(KEY,JSON.stringify(d));return d;
+  }
+ }catch(e){}
+ return defaults();
+}
 let state=load();
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||structuredClone(defaults)}catch{return structuredClone(defaults)}}
+let collapsed=new Set();
+let busy=false;
+
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+function selectedAgent(id){return state.agents.find(function(a){return a.id===id})}
+function configuredCount(){return state.agents.filter(function(a){return a.enabled&&a.endpoint&&a.model&&a.apiKey}).length}
+
 function render(){
  document.getElementById('teamTitle').textContent=state.teamName||'تیم هوش مصنوعی من';
  document.getElementById('teamName').value=state.teamName||'';
  document.getElementById('goal').value=state.goal||'';
  document.getElementById('countPill').textContent=state.agents.length+' عضو';
- document.getElementById('agentList').innerHTML=state.agents.map(a=>`<div class="agent"><div class="meta"><div class="avatar">${esc(a.icon)}</div><div><b>${esc(a.name)}</b><small>${esc(a.role)}</small></div></div><button class="icon-btn" title="ویرایش" onclick="focusAgent('${a.id}')">✎</button></div>`).join('');
- document.getElementById('editor').innerHTML=state.agents.map((a,i)=>`<div class="agent-row" id="agent-${a.id}">
-  <div class="agent-head"><strong>${esc(a.icon)} ${esc(a.name)}</strong><button class="icon-btn" onclick="removeAgent('${a.id}')">🗑</button></div>
-  <input data-id="${a.id}" data-key="name" value="${esc(a.name)}" placeholder="نام">
-  <input data-id="${a.id}" data-key="role" value="${esc(a.role)}" placeholder="نقش" style="margin-top:8px">
- </div>`).join('');
- document.querySelectorAll('#editor input').forEach(x=>x.addEventListener('input',e=>{const a=state.agents.find(v=>v.id===e.target.dataset.id);a[e.target.dataset.key]=e.target.value;save();renderSidebarOnly()}));
+ document.getElementById('configuredPill').textContent=configuredCount()+' اتصال آماده';
+ document.getElementById('demoModeBtn').classList.toggle('active',state.mode==='demo');
+ document.getElementById('realModeBtn').classList.toggle('active',state.mode==='real');
+ document.getElementById('realNotice').style.display=state.mode==='real'?'block':'none';
+ document.getElementById('modeNotice').style.display=state.mode==='demo'?'block':'none';
+
+ document.getElementById('agentList').innerHTML=state.agents.map(function(a){
+  return '<div class="agent-card"><div class="avatar">'+esc(a.icon)+'</div><div class="details"><b>'+esc(a.name)+'</b><small>'+esc(a.role)+'</small></div><span class="dot '+(a.enabled?'':'off')+'"></span></div>';
+ }).join('');
+
+ document.getElementById('editor').innerHTML=state.agents.map(function(a,index){
+  const closed=collapsed.has(a.id);
+  return '<div class="agent-row" id="agent-'+a.id+'">'+
+   '<div class="agent-head"><strong>'+esc(a.icon)+' '+esc(a.name)+'</strong><div class="head-actions">'+
+   '<button class="icon-btn" title="باز و بسته کردن" onclick="toggleAgent(\''+a.id+'\')">'+(closed?'＋':'−')+'</button>'+
+   '<button class="icon-btn" title="حذف" onclick="removeAgent(\''+a.id+'\')">🗑</button></div></div>'+
+   (closed?'':'<div class="field"><label>نام</label><input data-id="'+a.id+'" data-k="name" value="'+esc(a.name)+'"></div>'+
+   '<div class="field"><label>نقش</label><input data-id="'+a.id+'" data-k="role" value="'+esc(a.role)+'"></div>'+
+   '<div class="field"><label>پرامپت سیستم</label><textarea data-id="'+a.id+'" data-k="system">'+esc(a.system)+'</textarea></div>'+
+   '<div class="two"><div class="field"><label>Provider</label><select data-id="'+a.id+'" data-k="provider"><option value="openai" '+(a.provider==='openai'?'selected':'')+'>OpenAI-compatible</option><option value="openrouter" '+(a.provider==='openrouter'?'selected':'')+'>OpenRouter</option><option value="custom" '+(a.provider==='custom'?'selected':'')+'>Custom</option></select></div><div class="field"><label>Model</label><input data-id="'+a.id+'" data-k="model" value="'+esc(a.model)+'" placeholder="نام مدل"></div></div>'+
+   '<div class="field"><label>Endpoint</label><input data-id="'+a.id+'" data-k="endpoint" value="'+esc(a.endpoint)+'" placeholder="https://.../v1/chat/completions"></div>'+
+   '<div class="two"><div class="field"><label>API Key</label><input type="password" data-id="'+a.id+'" data-k="apiKey" value="'+esc(a.apiKey)+'" placeholder="کلید دسترسی"></div><div class="field"><label>وضعیت عضو</label><select data-id="'+a.id+'" data-k="enabled"><option value="true" '+(a.enabled?'selected':'')+'>فعال</option><option value="false" '+(!a.enabled?'selected':'')+'>غیرفعال</option></select></div></div>'+
+   '<button class="btn" style="margin-top:2px" onclick="testAgent(\''+a.id+'\')">اتصال آزمایشی</button>')
+   +'</div>';
+ }).join('');
+
+ document.querySelectorAll('#editor [data-k]').forEach(function(el){
+  el.addEventListener('input',updateAgent);
+  el.addEventListener('change',updateAgent);
+ });
  renderChat();
-}
-function renderSidebarOnly(){
- document.getElementById('agentList').innerHTML=state.agents.map(a=>`<div class="agent"><div class="meta"><div class="avatar">${esc(a.icon)}</div><div><b>${esc(a.name)}</b><small>${esc(a.role)}</small></div></div></div>`).join('');
- document.getElementById('countPill').textContent=state.agents.length+' عضو';
-}
-function focusAgent(id){document.getElementById('agent-'+id)?.scrollIntoView({behavior:'smooth',block:'center'})}
-function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(a=>a.id!==id);save();render()}
-function addAgent(){
- const n=state.agents.length+1;
- state.agents.push({id:crypto.randomUUID(),name:'عضو '+n,role:'نقش جدید',icon:'🤖'});
- save();render();setTimeout(()=>focusAgent(state.agents.at(-1).id),0)
 }
 function renderChat(){
  const box=document.getElementById('chat');
- if(!state.chat?.length){box.innerHTML='<div class="empty">هدف تیم را وارد کن و روی «اجرای تیم» بزن.<br>هر عضو یک مرحله از کار را انجام می‌دهد.</div>';return}
- box.innerHTML=state.chat.map(m=>`<div class="msg ${m.type==='user'?'user':''}"><div class="avatar">${esc(m.icon||'👤')}</div><div class="bubble"><div class="name">${esc(m.name)}</div>${esc(m.text).replace(/\n/g,'<br>')}</div></div>`).join('');
+ if(!state.chat.length){box.innerHTML='<div class="empty">هدف را وارد کن و «اجرای تیم» را بزن.</div>';return}
+ box.innerHTML=state.chat.map(function(m){
+  return '<div class="msg '+(m.type==='user'?'user':'')+'"><div class="avatar">'+esc(m.icon||'🤖')+'</div><div class="bubble '+(m.error?'error':'')+'"><div class="name">'+esc(m.name||'عضو تیم')+'</div>'+esc(m.text||'').replace(/\\n/g,'<br>')+'</div></div>';
+ }).join('');
  box.scrollTop=box.scrollHeight;
 }
-function mockResponse(agent,goal,prev){
- const base={
-  'تحلیل‌گر':`نیازمندی اصلی را از هدف استخراج کردم: «${goal}». خروجی پیشنهادی: تعریف مسئله، کاربران، ورودی‌ها، خروجی‌ها و معیار موفقیت. ابهام‌های مهم باید قبل از پیاده‌سازی مشخص شوند.`,
-  'طراح':`بر اساس تحلیل قبلی، راه‌حل را به ماژول‌های کوچک تقسیم می‌کنم: رابط کاربری، مدیریت اعضای تیم، موتور اجرای مراحل و لایه اتصال به سرویس مدل. هر ماژول باید مستقل و قابل جایگزینی باشد.`,
-  'برنامه‌نویس':`برای پیاده‌سازی، ابتدا هسته داده و جریان اجرای تیم ساخته می‌شود؛ سپس رابط کاربری و ذخیره‌سازی اضافه می‌شوند. اتصال مدل واقعی باید از طریق سرور انجام شود تا کلیدهای دسترسی در مرورگر منتشر نشوند.`,
-  'منتقد':`بازبینی: سه ریسک اصلی وجود دارد؛ وابستگی به سرویس خارجی، مدیریت خطا و امنیت کلیدها. برای نسخه واقعی باید timeout، ثبت خطا، احراز هویت و محدودیت مصرف تعریف شود.`
+function renderSidebarOnly(){
+ document.getElementById('agentList').innerHTML=state.agents.map(function(a){
+  return '<div class="agent-card"><div class="avatar">'+esc(a.icon)+'</div><div class="details"><b>'+esc(a.name)+'</b><small>'+esc(a.role)+'</small></div><span class="dot '+(a.enabled?'':'off')+'"></span></div>';
+ }).join('');
+ document.getElementById('countPill').textContent=state.agents.length+' عضو';
+ document.getElementById('configuredPill').textContent=configuredCount()+' اتصال آماده';
+}
+function updateAgent(e){
+ const a=selectedAgent(e.target.dataset.id);if(!a)return;
+ let v=e.target.value;if(e.target.dataset.k==='enabled')v=v==='true';
+ a[e.target.dataset.k]=v;save();renderSidebarOnly();
+}
+function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
+function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
+function addAgent(){
+ state.agents.push({id:uid(),name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true});
+ save();render();
+ const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
+}
+function fillDemo(){
+ state=defaults();save();render();alert('تنظیمات نمونه برگشت داده شد.');
+}
+function setMode(m){state.mode=m;save();render()}
+function msg(name,icon,text,type,error){state.chat.push({name:name,icon:icon,text:text,type:type||'agent',error:!!error});renderChat();save()}
+
+function mockResponse(a,goal,history){
+ const lower=(a.name||'').toLowerCase();
+ if(lower.indexOf('تحلیل')>=0)return 'هدف: «'+goal+'»\\n\\n۱) مسئله و نیازمندی‌های اصلی را استخراج می‌کنم.\\n۲) فرضیات و ابهام‌های مهم را مشخص می‌کنم.\\n۳) معیار موفقیت و خروجی قابل تحویل را تعریف می‌کنم.';
+ if(lower.indexOf('طراح')>=0)return 'بر اساس هدف و تحلیل مرحله قبل، راه‌حل را به ماژول‌ها تقسیم می‌کنم: رابط کاربر، هسته اجرای تیم، مدیریت اعضا، لایه مدل و مدیریت خطا. هر بخش باید مستقل و قابل توسعه باشد.';
+ if(lower.indexOf('برنامه')>=0)return 'طرح فنی پیشنهادی:\\n۱) مدل داده برای اعضا و اجراها.\\n۲) اجرای ترتیبی یا موازی بر اساس نوع وظیفه.\\n۳) عبور دادن خروجی هر عامل به عامل بعدی.\\n۴) مدیریت timeout، خطا و ثبت رویدادها.';
+ if(lower.indexOf('منتقد')>=0)return 'بازبینی انجام شد. مواردی که باید کنترل شوند: وابستگی به سرویس مدل، هزینه و محدودیت مصرف، مدیریت خطا، امنیت اعتبارنامه‌ها و امکان تکرار یک مرحله بدون اجرای کل تیم.';
+ return 'در نقش «'+a.role+'»، هدف را بررسی کردم و یک خروجی مرحله‌ای برای ادامه کار پیشنهاد می‌دهم.';
+}
+
+async function callAgent(a,goal,transcript){
+ const payload={
+  model:a.model,
+  messages:[
+   {role:'system',content:a.system||('تو عضو تیم با نقش '+a.role+' هستی.')},
+   {role:'user',content:'هدف تیم:\\n'+goal+'\\n\\nخروجی اعضای قبلی:\\n'+(transcript||'هنوز خروجی قبلی وجود ندارد.')+'\\n\\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.'}
+  ],
+  temperature:0.2
  };
- return base[agent.name]||`در نقش «${agent.role}»، هدف را بررسی می‌کنم و خروجی مرحله‌ای ارائه می‌دهم. برای اجرای واقعی این نقش می‌تواند به یک مدل زبانی متصل شود.`;
+ const headers={'Content-Type':'application/json','Authorization':'Bearer '+a.apiKey};
+ if(a.provider==='openrouter')headers['HTTP-Referer']=location.origin;
+ const controller=new AbortController();const timer=setTimeout(function(){controller.abort()},90000);
+ try{
+  const res=await fetch(a.endpoint,{method:'POST',headers:headers,body:JSON.stringify(payload),signal:controller.signal});
+  const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
+  if(!res.ok)throw new Error((data.error&&data.error.message)||raw.slice(0,500)||('HTTP '+res.status));
+  const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+  if(!out)throw new Error('پاسخ مدل قابل استخراج نبود.');
+  return out;
+ }catch(err){
+  if(err.name==='AbortError')throw new Error('زمان پاسخ تمام شد.');
+  throw err;
+ }finally{clearTimeout(timer)}
 }
+
+async function testAgent(id){
+ const a=selectedAgent(id);if(!a)return;
+ if(!a.endpoint||!a.model||!a.apiKey)return alert('Endpoint، Model و API Key را کامل کن.');
+ try{
+  alert('در حال آزمایش اتصال...');
+  const out=await callAgent(a,'فقط یک جمله بنویس که اتصال برقرار شده است.','');
+  alert('اتصال موفق است:\\n\\n'+out.slice(0,300));
+ }catch(e){alert('اتصال ناموفق بود:\\n\\n'+e.message)}
+}
+
 async function runTeam(){
+ if(busy)return;
  const goal=document.getElementById('goal').value.trim();
- if(!goal)return alert('اول هدف تیم را وارد کن.');
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
- state.goal=goal;state.chat=[];
- state.chat.push({type:'user',name:'مدیر پروژه',icon:'👤',text:'هدف: '+goal});
- renderChat();
- for(const a of state.agents){
-  await new Promise(r=>setTimeout(r,350));
-  state.chat.push({name:a.name,icon:a.icon,text:mockResponse(a,goal,state.chat)});
-  save();renderChat();
+ state.goal=goal;
+ if(!goal)return alert('اول هدف تیم را وارد کن.');
+ const active=state.agents.filter(function(a){return a.enabled});
+ if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
+ busy=true;document.getElementById('runBtn').disabled=true;
+ state.chat=[];msg('مدیر پروژه','👤','هدف: '+goal,'user',false);
+ let transcript='';
+ for(const a of active){
+  msg(a.name,a.icon,state.mode==='demo'?'در حال تحلیل هدف در حالت نمایشی...':'در حال ارسال درخواست به مدل...','agent',false);
+  try{
+   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,goal,transcript);
+   state.chat[state.chat.length-1].text=result;state.chat[state.chat.length-1].error=false;
+   transcript+=(transcript?'\\n\\n':'')+'['+a.name+']\\n'+result;
+   renderChat();save();
+  }catch(e){
+   state.chat[state.chat.length-1].text='خطا: '+e.message;state.chat[state.chat.length-1].error=true;
+   renderChat();save();
+   if(state.mode==='real'){
+    transcript+=(transcript?'\\n\\n':'')+'['+a.name+' - خطا]\\n'+e.message;
+   }
+  }
  }
+ busy=false;document.getElementById('runBtn').disabled=false;save();
 }
-function exportJson(){
- const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-teams12.json';a.click();URL.revokeObjectURL(a.href)
+function clearChat(){state.chat=[];save();renderChat()}
+function exportConfig(){
+ const safe=JSON.parse(JSON.stringify(state));safe.agents=safe.agents.map(function(a){const x=Object.assign({},a);delete x.apiKey;return x});
+ const blob=new Blob([JSON.stringify(safe,null,2)],{type:'application/json;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-teams12-config.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
 }
+
 document.getElementById('addAgentBtn').onclick=addAgent;
+document.getElementById('demoBtn').onclick=fillDemo;
+document.getElementById('resetBtn').onclick=function(){if(confirm('همه تنظیمات و گفتگوها پاک شود؟')){localStorage.removeItem(KEY);localStorage.removeItem(OLD_KEY);location.reload()}};
+document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
+document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;
-document.getElementById('saveBtn').onclick=()=>{state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';state.goal=document.getElementById('goal').value;save();render();alert('ذخیره شد.')};
-document.getElementById('clearChatBtn').onclick=()=>{state.chat=[];save();renderChat()};
-document.getElementById('exportBtn').onclick=exportJson;
-document.getElementById('resetBtn').onclick=()=>{if(confirm('همه تنظیمات پاک شود؟')){localStorage.removeItem(KEY);location.reload()}};
+document.getElementById('clearChatBtn').onclick=clearChat;
+document.getElementById('exportBtn').onclick=exportConfig;
+document.getElementById('collapseBtn').onclick=function(){
+ if(collapsed.size===state.agents.length)collapsed.clear();else state.agents.forEach(function(a){collapsed.add(a.id)});
+ render();
+};
+document.getElementById('teamName').addEventListener('input',function(e){state.teamName=e.target.value;save();document.getElementById('teamTitle').textContent=state.teamName||'تیم هوش مصنوعی من'});
+document.getElementById('goal').addEventListener('input',function(e){state.goal=e.target.value;save()});
 render();
 </script>
 </body>

@@ -57,3 +57,13 @@ create policy "github own connection insert" on public.github_connections for in
 drop policy if exists "github own connection update" on public.github_connections;
 create policy "github own connection update" on public.github_connections for update to authenticated using (auth.uid()=user_id) with check (auth.uid()=user_id);
 grant select,insert,update on public.github_connections to authenticated;
+
+create table if not exists public.github_oauth_states (
+  state text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  return_to text not null,
+  expires_at timestamptz not null
+);
+alter table public.github_oauth_states enable row level security;
+-- OAuth state is created/consumed only by the Edge Function using its server key.
+revoke all on public.github_oauth_states from anon, authenticated;

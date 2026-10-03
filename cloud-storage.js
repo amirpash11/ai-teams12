@@ -1,0 +1,205 @@
+/* AI Teams Cloud Storage - Supabase */
+(function(){
+'use strict';
+
+const CONFIG = {
+  url: 'YOUR_SUPABASE_PROJECT_URL',
+  publishableKey: 'YOUR_SUPABASE_PUBLISHABLE_KEY'
+};
+const SCRIPT_SRC = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+const TABLE = 'ai_teams_projects';
+const LOCAL_KEY = 'ai-teams12-cloud-project-id-v1';
+
+let supabase = null;
+let cloudReady = false;
+let cloudUser = null;
+let saving = false;
+let applyingRemote = false;
+let originalSave = null;
+
+function configured(){
+  return CONFIG.url.indexOf('YOUR_') !== 0 &&
+         CONFIG.publishableKey.indexOf('YOUR_') !== 0;
+}
+
+function loadScript(){
+  return new Promise(function(resolve,reject){
+    if(window.supabase){resolve();return;}
+    const s=document.createElement('script');
+    s.src=SCRIPT_SRC;
+    s.onload=resolve;
+    s.onerror=function(){reject(new Error('کتابخانه ذخیره‌سازی ابری بارگذاری نشد.'))};
+    document.head.appendChild(s);
+  });
+}
+
+function projectId(){
+  let id=localStorage.getItem(LOCAL_KEY);
+  if(!id){
+    id=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();
+    localStorage.setItem(LOCAL_KEY,id);
+  }
+  return id;
+}
+
+function panel(){
+  if(document.getElementById('cloudStoragePanel'))return;
+  const el=document.createElement('div');
+  el.id='cloudStoragePanel';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:3000;padding:16px;overflow:auto;display:none';
+  el.innerHTML='<div class="card" style="max-width:620px;margin:30px auto;background:#121a2d">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">☁ ذخیره‌سازی ابری</h3><button class="icon-btn" id="cloudClose">✕</button></div>'+
+    '<div id="cloudStatus" class="notice" style="margin-top:12px">در حال بررسی اتصال...</div>'+
+    '<div id="cloudAuth" style="margin-top:12px">'+
+      '<div class="field"><label>ایمیل</label><input id="cloudEmail" type="email" placeholder="ایمیل حساب"></div>'+
+      '<div class="field"><label>رمز عبور</label><input id="cloudPassword" type="password" placeholder="حداقل رمز امن"></div>'+
+      '<div class="actions"><button class="btn primary" style="width:auto" id="cloudSignIn">ورود</button><button class="btn" style="width:auto" id="cloudSignUp">ساخت حساب</button></div>'+
+    '</div>'+
+    '<div id="cloudUserBox" style="display:none;margin-top:12px">'+
+      '<div class="tiny" id="cloudUserText"></div>'+
+      '<div class="actions"><button class="btn primary" style="width:auto" id="cloudSync">☁ همگام‌سازی الآن</button><button class="btn" style="width:auto" id="cloudSignOut">خروج</button></div>'+
+    '</div>'+
+    '<div class="notice" style="margin-top:12px">اطلاعات پروژه در پایگاه‌داده ابری ذخیره می‌شود. این برنامه برای پروژه‌ها سیاست حذف خودکار ندارد؛ حذف داده باید از پنل مدیریت پایگاه‌داده انجام شود.</div>'+
+    '<div class="actions" style="margin-top:12px"><button class="btn" style="width:auto" id="cloudClose2">بستن</button></div>'+
+  '</div>';
+  document.body.appendChild(el);
+  document.getElementById('cloudClose').onclick=closePanel;
+  document.getElementById('cloudClose2').onclick=closePanel;
+  document.getElementById('cloudSignIn').onclick=signIn;
+  document.getElementById('cloudSignUp').onclick=signUp;
+  document.getElementById('cloudSignOut').onclick=signOut;
+  document.getElementById('cloudSync').onclick=function(){syncNow(true)};
+}
+function status(t,good){
+  const x=document.getElementById('cloudStatus');
+  if(x){x.textContent=t;x.className='notice'+(good?'':' warn');}
+}
+function openPanel(){panel();document.getElementById('cloudStoragePanel').style.display='block';refreshAuthUI();}
+function closePanel(){const x=document.getElementById('cloudStoragePanel');if(x)x.style.display='none';}
+
+async function init(){
+  panel();
+  const btn=document.createElement('button');
+  btn.id='cloudStorageBtn';btn.className='btn';btn.textContent='☁ ذخیره‌سازی ابری';
+  const sidebar=document.querySelector('.sidebar');
+  if(sidebar){
+    const reset=document.getElementById('resetBtn');
+    if(reset)sidebar.insertBefore(btn,reset);
+    else sidebar.appendChild(btn);
+    btn.onclick=openPanel;
+  }
+  if(!configured()){
+    status('ذخیره‌سازی ابری هنوز فعال نشده است. ابتدا URL و Publishable Key پروژه Supabase را در cloud-storage.js قرار بده.',false);
+    return;
+  }
+  try{
+    await loadScript();
+    supabase=window.supabase.createClient(CONFIG.url,CONFIG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    cloudReady=true;
+    const result=await supabase.auth.getUser();
+    cloudUser=result.data&&result.data.user||null;
+    refreshAuthUI();
+    if(cloudUser)await syncFromCloud();
+  }catch(e){status('اتصال ابری آماده نشد: '+e.message,false);}
+}
+
+function refreshAuthUI(){
+  if(!cloudReady){
+    status('اتصال ابری نیاز به تنظیم Supabase دارد.',false);return;
+  }
+  const auth=document.getElementById('cloudAuth'),box=document.getElementById('cloudUserBox');
+  if(!auth||!box)return;
+  if(cloudUser){
+    auth.style.display='none';box.style.display='block';
+    document.getElementById('cloudUserText').textContent='وارد شده: '+cloudUser.email;
+    status('ذخیره‌سازی ابری فعال است. پروژه به‌صورت خودکار همگام می‌شود.',true);
+  }else{
+    auth.style.display='block';box.style.display='none';
+    status('برای ذخیره دائمی ابری، وارد حساب خودت شو.',false);
+  }
+}
+async function signUp(){
+  if(!cloudReady)return;
+  const email=document.getElementById('cloudEmail').value.trim(),password=document.getElementById('cloudPassword').value;
+  if(!email||password.length<8)return alert('ایمیل و رمز عبور حداقل ۸ کاراکتری وارد کن.');
+  const r=await supabase.auth.signUp({email:email,password:password});
+  if(r.error)return alert('ساخت حساب ناموفق بود: '+r.error.message);
+  cloudUser=r.data.user||null;refreshAuthUI();
+  alert('حساب ساخته شد. اگر تأیید ایمیل فعال باشد، ایمیل تأیید را باز کن و سپس وارد شو.');
+}
+async function signIn(){
+  if(!cloudReady)return;
+  const email=document.getElementById('cloudEmail').value.trim(),password=document.getElementById('cloudPassword').value;
+  const r=await supabase.auth.signInWithPassword({email:email,password:password});
+  if(r.error)return alert('ورود ناموفق بود: '+r.error.message);
+  cloudUser=r.data.user||null;refreshAuthUI();await syncFromCloud();
+}
+async function signOut(){
+  if(!cloudReady)return;
+  await supabase.auth.signOut();cloudUser=null;refreshAuthUI();
+}
+function payload(){
+  const core=window.aiTeamsCore;
+  if(!core)return null;
+  return {project_id:projectId(),name:(core.getState().teamName||'AI Teams'),state:core.getState(),updated_at:new Date().toISOString()};
+}
+async function syncNow(manual){
+  if(!cloudReady||!cloudUser||applyingRemote)return;
+  const row=payload();if(!row)return;
+  if(saving)return;saving=true;
+  try{
+    const r=await supabase.from(TABLE).upsert(row,{onConflict:'user_id,project_id'});
+    if(r.error)throw r.error;
+    status('آخرین ذخیره ابری: '+new Date().toLocaleTimeString('fa-IR'),true);
+    if(manual)alert('پروژه با موفقیت در فضای ابری ذخیره شد.');
+  }catch(e){
+    status('ذخیره ابری ناموفق بود: '+e.message,false);
+    if(manual)alert('ذخیره ابری ناموفق بود: '+e.message);
+  }finally{saving=false;}
+}
+async function syncFromCloud(){
+  if(!cloudReady||!cloudUser)return;
+  try{
+    const r=await supabase.from(TABLE).select('state,updated_at').eq('project_id',projectId()).maybeSingle();
+    if(r.error)throw r.error;
+    if(r.data&&r.data.state){
+      const core=window.aiTeamsCore;
+      if(core){
+        applyingRemote=true;
+        const current=core.getState();
+        const remote=r.data.state;
+        Object.keys(current).forEach(function(k){delete current[k]});
+        Object.keys(remote).forEach(function(k){current[k]=remote[k]});
+        localStorage.setItem('ai-teams12-state-v2',JSON.stringify(current));
+        core.render();
+        applyingRemote=false;
+        status('نسخه ابری پروژه بازیابی شد.',true);
+      }
+    }else{
+      await syncNow(false);
+    }
+  }catch(e){applyingRemote=false;status('دریافت پروژه ابری ناموفق بود: '+e.message,false);}
+}
+
+function wrapSave(){
+  const core=window.aiTeamsCore;
+  if(!core||core.__cloudSaveWrapped)return;
+  originalSave=core.save;
+  core.save=function(){
+    originalSave();
+    if(cloudReady&&cloudUser&&!applyingRemote)clearTimeout(core.__cloudTimer),core.__cloudTimer=setTimeout(function(){syncNow(false)},700);
+  };
+  core.__cloudSaveWrapped=true;
+}
+
+async function boot(){
+  await init();
+  wrapSave();
+  if(cloudReady) supabase.auth.onAuthStateChange(function(event,session){
+    cloudUser=session&&session.user||null;refreshAuthUI();
+    if(cloudUser)syncFromCloud();
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true)},isReady:function(){return cloudReady&&!!cloudUser}};
+})();

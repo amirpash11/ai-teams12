@@ -85,7 +85,8 @@
     </section>
 
     <section class="card wide">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><h3 style="margin:0">گفت‌وگوی تیم</h3><button class="btn" style="width:auto;margin:0" id="clearChatBtn">پاک کردن</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap"><h3 style="margin:0">گفت‌وگوی تیم</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="dialogueRounds" class="mode" style="width:auto;padding:8px 10px"><option value="1">۱ دور گفتگو</option><option value="2" selected>۲ دور گفتگو</option><option value="3">۳ دور گفتگو</option></select><button class="btn" style="width:auto;margin:0" id="dialogueBtn">💬 گفتگوی اعضا</button><button class="btn" style="width:auto;margin:0" id="clearChatBtn">پاک کردن</button></div></div>
+      <div class="notice" style="margin-bottom:10px">«گفتگوی اعضا» باعث می‌شود هر هوش مصنوعی خروجی اعضای قبلی را ببیند و در دور بعدی آن را نقد، تکمیل یا اصلاح کند.</div>
       <div id="chat" class="chat"><div class="empty">هدف را وارد کن و «اجرای تیم» را بزن.</div></div>
     </section>
   </div>
@@ -266,6 +267,55 @@ async function testAgent(id){
  }catch(e){alert('اتصال ناموفق بود:\\n\\n'+e.message)}
 }
 
+async function runDialogue(){
+ if(busy)return;
+ const goal=document.getElementById('goal').value.trim();
+ state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
+ state.goal=goal;
+ if(!goal)return alert('اول هدف تیم را وارد کن.');
+ const active=state.agents.filter(function(a){return a.enabled});
+ if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
+ const rounds=Math.max(1,Math.min(3,Number(document.getElementById('dialogueRounds').value)||2));
+ busy=true;
+ document.getElementById('runBtn').disabled=true;
+ document.getElementById('dialogueBtn').disabled=true;
+ state.chat=[];
+ msg('مدیر پروژه','👤','شروع گفتگوی چندمرحله‌ای برای هدف: '+goal,'user',false);
+ let transcript='';
+ for(let round=1;round<=rounds;round++){
+  msg('مدیر پروژه','🧩','دور '+round+' از '+rounds+' — اعضا اکنون خروجی‌های قبلی را بررسی می‌کنند.','agent',false);
+  for(const a of active){
+   msg(a.name,a.icon,'دور '+round+' — در حال '+(round===1?'ارائه نظر اولیه':'بررسی و پاسخ به اعضای قبلی')+'...','agent',false);
+   try{
+    let result;
+    if(state.mode==='demo'){
+      result='دور '+round+' — '+mockResponse(a,goal,transcript);
+      if(round>1)result+='\n\nدر این دور، خروجی اعضای قبلی را نیز بررسی کردم و موارد لازم را برای ادامه کار اصلاح یا تکمیل کردم.';
+    }else{
+      const dialogueGoal=round===1
+        ?goal
+        :'هدف تیم:\n'+goal+'\n\nاین دور '+round+' گفتگوی تیم است. خروجی اعضای قبلی را بررسی کن. اگر لازم است با استدلال مشخص با آنها مخالفت کن، ایرادها را اصلاح کن و پیشنهاد خودت را به‌روزرسانی کن. فقط نتیجه نقش خودت را ارائه بده.';
+      result=await callAgent(a,dialogueGoal,transcript);
+    }
+    state.chat[state.chat.length-1].text=result;
+    state.chat[state.chat.length-1].error=false;
+    transcript+=(transcript?'\n\n':'')+'[دور '+round+' | '+a.name+']\n'+result;
+    renderChat();save();
+   }catch(e){
+    state.chat[state.chat.length-1].text='خطا: '+e.message;
+    state.chat[state.chat.length-1].error=true;
+    renderChat();save();
+    transcript+=(transcript?'\n\n':'')+'[دور '+round+' | '+a.name+' - خطا]\n'+e.message;
+   }
+  }
+ }
+ msg('مدیر پروژه','👤','گفتگوی تیم پس از '+rounds+' دور به پایان رسید. خروجی‌های بالا قابل بررسی و ادامه هستند.','agent',false);
+ busy=false;
+ document.getElementById('runBtn').disabled=false;
+ document.getElementById('dialogueBtn').disabled=false;
+ save();
+}
+
 async function runTeam(){
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();
@@ -307,6 +357,7 @@ document.getElementById('resetBtn').onclick=function(){if(confirm('همه تنظ
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;
+document.getElementById('dialogueBtn').onclick=runDialogue;
 document.getElementById('clearChatBtn').onclick=clearChat;
 document.getElementById('exportBtn').onclick=exportConfig;
 document.getElementById('collapseBtn').onclick=function(){

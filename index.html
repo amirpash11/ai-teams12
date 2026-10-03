@@ -324,7 +324,7 @@ function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
 function selectedAgent(id){return state.agents.find(function(a){return a.id===id})}
 function agentAiLabel(a){const m=String(a.model||'').toLowerCase();const p=String(a.provider||'').toLowerCase();if(m.includes('deepseek'))return 'DeepSeek';if(m.includes('claude'))return 'Claude';if(m.includes('gemini'))return 'Gemini';if(m.includes('gpt')||p==='openai')return 'GPT / OpenAI';if(m.includes('grok'))return 'Grok';if(m.includes('mistral'))return 'Mistral';if(m.includes('qwen'))return 'Qwen';if(m.includes('llama'))return 'Llama';if(p==='horde')return 'AI Horde';if(p==='openrouter')return 'OpenRouter';if(p==='custom')return 'Custom';return a.model||a.provider||'نامشخص'}
-function configuredCount(){return state.agents.filter(function(a){return a.kind!=='human'&&a.enabled&&a.endpoint&&a.model&&(a.provider==='horde'||a.apiKey)}).length}
+function configuredCount(){return state.agents.filter(function(a){return a.kind!=='human'&&a.enabled&&a.endpoint&&a.model&&(a.provider==='horde'||(window.aiTeamsCloud&&window.aiTeamsCloud.isReady()))}).length}
 
 function render(){
  document.getElementById('teamTitle').textContent=state.teamName||'تیم هوش مصنوعی من';
@@ -335,7 +335,7 @@ function render(){
  document.getElementById('demoModeBtn').classList.toggle('active',state.mode==='demo');
  document.getElementById('realModeBtn').classList.toggle('active',state.mode==='real');
  document.getElementById('realNotice').textContent=state.mode==='real'?'حالت واقعی فعال است. اگر Provider روی AI Horde باشد، بدون API Key کار می‌کند؛ در سرویس‌های دیگر ممکن است API Key لازم باشد.':'';
- document.getElementById('realNotice').textContent='حالت واقعی فعال است. AI Horde بدون API Key کار می‌کند؛ چون از صف عمومی استفاده می‌شود، پاسخ ممکن است با تأخیر برسد.';
+ document.getElementById('realNotice').textContent='حالت واقعی فعال است. AI Horde مستقیم و بدون کلید کار می‌کند؛ Providerهای دیگر از Gateway امن استفاده می‌کنند و کلیدشان نباید داخل مرورگر باشد.';
  document.getElementById('realNotice').style.display=state.mode==='real'?'block':'none';
  document.getElementById('modeNotice').style.display=state.mode==='demo'?'block':'none';
 
@@ -444,7 +444,8 @@ async function callAgent(a,goal,transcript){
 
 async function testAgent(id){
  const a=selectedAgent(id);if(!a)return;
- if(!a.endpoint||!a.model||(a.provider!=='horde'&&!a.apiKey))return alert(a.provider==='horde'?'Endpoint و Model را کامل کن.':'Endpoint، Model و API Key را کامل کن.');
+ if(!a.endpoint||!a.model)return alert('Endpoint و Model را کامل کن.');
+ if(a.provider!=='horde'&&(!window.aiTeamsCloud||!window.aiTeamsCloud.isReady()))return alert('برای تست امن این Provider ابتدا وارد حساب ابری شو و کلید Provider را در Supabase تنظیم کن.');
  try{
   alert('در حال آزمایش اتصال...');
   const out=await callAgent(a,'فقط یک جمله بنویس که اتصال برقرار شده است.','');

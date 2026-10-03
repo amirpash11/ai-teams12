@@ -147,7 +147,7 @@ function render(){
  document.getElementById('editor').innerHTML=state.agents.map(function(a,index){
   const closed=collapsed.has(a.id);
   return '<div class="agent-row" id="agent-'+a.id+'">'+
-   '<div class="agent-head"><strong>'+esc(a.icon)+' '+esc(a.name)+'</strong><div class="head-actions">'+
+   '<div class="agent-head"><strong>\esc(a.icon)+' \esc(a.name)+' <span class="pill" style="margin-right:6px;color:#9fe2ff;background:#16283e;border:1px solid #28506d">🤖 \esc(agentAiLabel(a))+'</span></strong><div class="head-actions">'+
    '<button class="icon-btn" title="باز و بسته کردن" onclick="toggleAgent(\''+a.id+'\')">'+(closed?'＋':'−')+'</button>'+
    '<button class="icon-btn" title="حذف" onclick="removeAgent(\''+a.id+'\')">🗑</button></div></div>'+
    (closed?'':'<div class="field"><label>نام</label><input data-id="'+a.id+'" data-k="name" value="'+esc(a.name)+'"></div>'+
@@ -186,7 +186,7 @@ function updateAgent(e){
  const k=e.target.dataset.k;let v=e.target.value;if(k==='enabled')v=v==='true';
  a[k]=v;
  if(k==='provider'&&v==='horde'){a.endpoint='https://oai.stablehorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';a.apiKey='';}
- save();renderSidebarOnly();
+ save();renderSidebarOnly();if((k==='provider'||k==='model')&&e.type==='change')render();
 }
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}

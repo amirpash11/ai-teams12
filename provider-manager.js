@@ -151,10 +151,12 @@ async function universalCallAgent(a,goal,transcript){
 
 ensureProviders();wrapRender();makeModal();attachProviderButton();attachProviderChange();decorateProviderSelects();renderProviderMini();
 window.callAgent=universalCallAgent;
+window.aiTeamsCore={getState:function(){return state;},save:save,render:render,esc:esc,providerById:providerById};
 })();
 /* Live AI catalog: searchable online models + AI Horde free models. */
 (function(){
 'use strict';
+const core=window.aiTeamsCore;
 const aliases=[
  ['کلاد','claude'],['کلود','claude'],['چت جی پی تی','gpt'],['چت‌جی‌پی‌تی','gpt'],['جمینای','gemini'],['جمنای','gemini'],
  ['گروک','grok'],['دیپ سیک','deepseek'],['دیپ‌سیک','deepseek'],['میسترال','mistral'],['لاما','llama'],['کویین','qwen'],['کیوئن','qwen'],
@@ -216,21 +218,21 @@ function filterCatalog(){
  if(!list.length){box.innerHTML='<div class="empty">موردی پیدا نشد.</div>';return;}
  box.innerHTML=list.map(function(x){
   const safe=encodeURIComponent(JSON.stringify({id:x.id,name:x.name,model:x.model,provider:x.provider,free:x.free}));
-  return '<div class="agent-row"><div class="agent-head"><strong>'+esc(x.name)+'</strong><span class="pill">'+(x.free?'رایگان':'آنلاین')+' · '+esc(x.source)+'</span></div>'+
-   '<div class="tiny">'+esc(x.id)+(x.context?' · context '+Number(x.context).toLocaleString():'')+'<br>'+esc((x.desc||'').slice(0,260))+'</div>'+
+  return '<div class="agent-row"><div class="agent-head"><strong>'+core.esc(x.name)+'</strong><span class="pill">'+(x.free?'رایگان':'آنلاین')+' · '+core.esc(x.source)+'</span></div>'+
+   '<div class="tiny">'+core.esc(x.id)+(x.context?' · context '+Number(x.context).toLocaleString():'')+'<br>'+core.esc((x.desc||'').slice(0,260))+'</div>'+
    '<button class="btn primary" style="margin-top:8px" data-ai-add="'+safe+'">＋ افزودن به تیم</button></div>';
  }).join('');
  box.querySelectorAll('[data-ai-add]').forEach(function(b){b.onclick=function(){addCatalogAgent(JSON.parse(decodeURIComponent(b.dataset.aiAdd)));};});
 }
 function addCatalogAgent(x){
- const p=providerById(x.provider);
+ const p=core.providerById(x.provider);
  if(!p){alert('Provider این سرویس در پروژه موجود نیست.');return;}
  const agent={
   id:uid(),name:x.name,role:'عامل هوش مصنوعی',icon:x.provider==='horde'?'🆓':'🤖',
   provider:x.provider,endpoint:p.endpoint,model:x.model,apiKey:p.apiKey||'',
   system:'تو یک عامل متخصص در تیم AI Teams هستی. نقش خودت را دقیق انجام بده و خروجی قابل استفاده به عامل بعدی تحویل بده.',enabled:true
  };
- state.agents.push(agent);save();render();renderProviderMini();
+ core.getState().agents.push(agent);core.save();core.render();renderProviderMini();
  alert(x.name+' به تیم اضافه شد.');
 }
 ensureCatalogButton();ensureCatalogModal();

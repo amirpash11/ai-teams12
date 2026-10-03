@@ -294,7 +294,7 @@ function defaults(){
    {id:uid(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'تو برنامه‌نویس ارشد تیم هستی. طرح را به مراحل فنی، ساختار فایل‌ها و کد قابل پیاده‌سازی تبدیل کن.',enabled:true},
    {id:uid(),name:'منتقد',role:'بازبینی و کشف ایراد',icon:'🔎',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'تو منتقد فنی هستی. خروجی تیم را بررسی کن، خطاها، ریسک‌ها و اصلاحات دقیق را فهرست کن.',enabled:true}
   ],
-  chat:[]
+  chat:[],\n  runs:[]
  };
 }
 function load(){
@@ -565,10 +565,13 @@ async function runTeam(){
  state.goal=goal;
  if(!goal)return alert('اول هدف تیم را وارد کن.');
  const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ const previousMemory=(state.chat||[]).slice(-12).map(function(m){return '['+(m.name||'عضو')+'] '+String(m.text||'').slice(0,1200)}).join('\\n');
  if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
  busy=true;document.getElementById('runBtn').disabled=true;document.getElementById('dialogueBtn').disabled=true;document.getElementById('adminChatBtn').disabled=true;
+ const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
+ state.runs=state.runs||[];
  state.chat=[];msg('شما','👤','هدف: '+goal,'user',false);
- let transcript=buildTeamRoster(active)+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
+ let transcript=buildTeamRoster(active)+'\\n\\nحافظه اخیر تیم:\\n'+(previousMemory||'موردی وجود ندارد.')+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
  for(let i=0;i<active.length;i++){
   const a=active[i];
   msg(a.name,a.icon,(i===0?'مرحله ۱ — در حال تحلیل اولیه...':'مرحله '+(i+1)+' — در حال بررسی خروجی اعضای قبلی...'),'agent',false);
@@ -606,6 +609,8 @@ async function runTeam(){
   renderChat();save();
  }
  msg('سیستم','✅','اجرای زنجیره‌ای تیم تمام شد؛ خروجی هر عضو به مرحله بعد منتقل شد و جمع‌بندی نهایی تولید شد.','agent',false);
+ state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,members:active.map(function(a){return a.name}),summary:(state.chat[state.chat.length-2]&&state.chat[state.chat.length-2].text)||'',messages:state.chat.slice()});
+ state.runs=state.runs.slice(0,20);
  busy=false;document.getElementById('runBtn').disabled=false;document.getElementById('dialogueBtn').disabled=false;document.getElementById('adminChatBtn').disabled=false;save();
 }
 function clearChat(){state.chat=[];save();renderChat()}

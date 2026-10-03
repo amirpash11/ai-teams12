@@ -93,7 +93,11 @@ function defaults(){
 function load(){
  try{
   const v=JSON.parse(localStorage.getItem(KEY));
-  if(v&&v.version===2)return v;
+  if(v&&v.version===2){
+   const looksLikeOldApiSetup=v.agents&&v.agents.length&&v.agents.every(function(a){return a.provider==='openai'&&(!a.apiKey)});
+   if(looksLikeOldApiSetup){v.agents.forEach(function(a){a.provider='horde';a.endpoint='https://oai.stablehorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';});v.mode='real';localStorage.setItem(KEY,JSON.stringify(v));}
+   return v;
+  }
   const old=JSON.parse(localStorage.getItem(OLD_KEY));
   if(old){
    const d=defaults();
@@ -111,7 +115,7 @@ let busy=false;
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
 function selectedAgent(id){return state.agents.find(function(a){return a.id===id})}
-function configuredCount(){return state.agents.filter(function(a){return a.enabled&&a.endpoint&&a.model&&a.apiKey}).length}
+function configuredCount(){return state.agents.filter(function(a){return a.enabled&&a.endpoint&&a.model&&(a.provider==='horde'||a.apiKey)}).length}
 
 function render(){
  document.getElementById('teamTitle').textContent=state.teamName||'تیم هوش مصنوعی من';
@@ -122,6 +126,7 @@ function render(){
  document.getElementById('demoModeBtn').classList.toggle('active',state.mode==='demo');
  document.getElementById('realModeBtn').classList.toggle('active',state.mode==='real');
  document.getElementById('realNotice').textContent=state.mode==='real'?'حالت واقعی فعال است. اگر Provider روی AI Horde باشد، بدون API Key کار می‌کند؛ در سرویس‌های دیگر ممکن است API Key لازم باشد.':'';
+ document.getElementById('realNotice').textContent='حالت واقعی فعال است. AI Horde بدون API Key کار می‌کند؛ چون از صف عمومی استفاده می‌شود، پاسخ ممکن است با تأخیر برسد.';
  document.getElementById('realNotice').style.display=state.mode==='real'?'block':'none';
  document.getElementById('modeNotice').style.display=state.mode==='demo'?'block':'none';
 
@@ -168,8 +173,10 @@ function renderSidebarOnly(){
 }
 function updateAgent(e){
  const a=selectedAgent(e.target.dataset.id);if(!a)return;
- let v=e.target.value;if(e.target.dataset.k==='enabled')v=v==='true';
- a[e.target.dataset.k]=v;save();renderSidebarOnly();
+ const k=e.target.dataset.k;let v=e.target.value;if(k==='enabled')v=v==='true';
+ a[k]=v;
+ if(k==='provider'&&v==='horde'){a.endpoint='https://oai.stablehorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';a.apiKey='';}
+ save();renderSidebarOnly();
 }
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
@@ -203,12 +210,14 @@ async function callAgent(a,goal,transcript){
  const headers={'Content-Type':'application/json'};
  if(a.provider==='horde'){headers['Authorization']='Bearer 0000000000';}else{headers['Authorization']='Bearer '+a.apiKey;}
  if(a.provider==='openrouter')headers['HTTP-Referer']=location.origin;
+ if(a.provider==='horde'){headers['X-Client']='AI-Teams';}
  const controller=new AbortController();const timer=setTimeout(function(){controller.abort()},90000);
  try{
   const res=await fetch(a.endpoint,{method:'POST',headers:headers,body:JSON.stringify(payload),signal:controller.signal});
   const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
   if(!res.ok)throw new Error((data.error&&data.error.message)||raw.slice(0,500)||('HTTP '+res.status));
   const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+  if(a.provider==='horde'&&typeof out!=='string'&&data.choices&&data.choices[0]&&data.choices[0].text) return data.choices[0].text;
   if(!out)throw new Error('پاسخ مدل قابل استخراج نبود.');
   return out;
  }catch(err){

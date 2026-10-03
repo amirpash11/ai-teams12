@@ -520,7 +520,10 @@ function open(){
   document.getElementById('sacInput').oninput=filter;
   document.getElementById('sacInput').onkeydown=function(ev){if(ev.key==='Enter')filter()};
  }
- modal.style.display='block';filter();document.getElementById('sacInput').focus();
+ modal.style.display='block';
+ allModels=presets.slice();
+ filter();
+ document.getElementById('sacInput').focus();
  fetchLive();
 }
 function loadCachedCatalog(){

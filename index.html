@@ -57,9 +57,6 @@
   </div>
   <button class="btn" id="providersBtn">⚙ مدیریت و افزودن سرویس</button>
   <button class="btn" id="aiCatalogBtn">🔎 جستجوی هوش مصنوعی</button>
-  <div id="providerMiniList" class="tiny" style="margin-top:8px"></div>
-  <div class="section-title">پروژه</div>
-  <button class="btn warn" id="resetBtn">بازنشانی کامل</button>
 </aside>
 
 <main class="main">
@@ -445,7 +442,6 @@ function toggleRightMembers(){
 document.getElementById('rightTeamMembersToggle').addEventListener('click',toggleRightMembers);
 applyRightMembers();
 document.getElementById('addAgentBtn').onclick=addAgent;
-document.getElementById('resetBtn').onclick=function(){if(confirm('همه تنظیمات و گفتگوها پاک شود؟')){localStorage.removeItem(KEY);localStorage.removeItem(OLD_KEY);location.reload()}};
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;

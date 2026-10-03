@@ -86,8 +86,10 @@
 
     <section class="card wide">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap"><h3 style="margin:0">گفت‌وگوی تیم</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="dialogueRounds" class="mode" style="width:auto;padding:8px 10px"><option value="1">۱ دور گفتگو</option><option value="2" selected>۲ دور گفتگو</option><option value="3">۳ دور گفتگو</option></select><button class="btn" style="width:auto;margin:0" id="dialogueBtn">💬 گفتگوی اعضا</button><button class="btn" style="width:auto;margin:0" id="clearChatBtn">پاک کردن</button></div></div>
-      <div class="notice" style="margin-bottom:10px">«گفتگوی اعضا» برای بحث درباره <b>انجام یک کار مشخص</b> است: هر هوش مصنوعی نظر می‌دهد، خروجی اعضای قبلی را بررسی می‌کند، در صورت نیاز مخالفت و دلیل می‌آورد، راه‌حل را اصلاح می‌کند و در دورهای بعدی روی همان کار ادامه می‌دهد.</div>
+      <div class="notice" style="margin-bottom:10px">👑 <b>ادمین تیم:</b> اینجا می‌توانی مستقیماً با اعضای AI صحبت کنی یا به یک عضو/کل تیم دستور بدهی. پیام تو با اولویت ادمین وارد بحث می‌شود و اعضا آن را می‌بینند و بر اساس آن پاسخ می‌دهند.</div>
       <div id="chat" class="chat"><div class="empty">هدف را وارد کن و «اجرای تیم» را بزن.</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px"><textarea id="adminChatInput" rows="2" placeholder="👑 پیام یا دستور ادمین را بنویس... مثلاً: برنامه‌نویس، این بخش را اصلاح کن. یا: همه اعضا این راه‌حل را دوباره بررسی کنید." style="min-height:58px;flex:1;resize:none"></textarea><button class="btn primary" id="adminChatBtn" style="width:auto;margin:0;min-height:58px">ارسال به تیم</button></div>
+      <div class="tiny" style="margin-top:6px">Enter برای ارسال · Shift+Enter برای خط جدید</div>
     </section>
   </div>
   <div class="footer">AI Teams — تنظیمات روی همین مرورگر ذخیره می‌شود.</div>
@@ -267,6 +269,53 @@ async function testAgent(id){
  }catch(e){alert('اتصال ناموفق بود:\\n\\n'+e.message)}
 }
 
+async function runAdminTurn(){
+ if(busy)return;
+ const input=document.getElementById('adminChatInput');
+ const userText=input.value.trim();
+ if(!userText)return;
+ const active=state.agents.filter(function(a){return a.enabled});
+ if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
+ state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
+ state.goal=document.getElementById('goal').value.trim();
+ input.value='';
+ busy=true;
+ document.getElementById('adminChatBtn').disabled=true;
+ document.getElementById('dialogueBtn').disabled=true;
+ document.getElementById('runBtn').disabled=true;
+ msg('ادمین','👑',userText,'user',false);
+ let transcript=state.chat.map(function(m){return '['+(m.type==='user'?'ادمین':'عضو '+(m.name||'تیم'))+']\\n'+m.text}).join('\\n\\n');
+ for(const a of active){
+  msg(a.name,a.icon,'در حال پاسخ به دستور ادمین...','agent',false);
+  try{
+   let result;
+   if(state.mode==='demo'){
+    result='دستور ادمین دریافت شد. در نقش «'+a.role+'» آن را بررسی کردم و برای ادامه کار اقدام/پیشنهاد لازم را ارائه می‌دهم.\\n\\nپیام ادمین: '+userText;
+   }else{
+    const adminGoal='هدف فعلی تیم:\n'+(state.goal||'هدف هنوز مشخص نشده است')+
+      '\n\nپیام/دستور مستقیم ادمین:\n'+userText+
+      '\n\nقواعد: پیام ادمین را در اولویت قرار بده. اگر دستور مستقیماً یک عضو خاص را خطاب قرار داده، از نقش خودت فقط در همان محدوده استفاده کن. اگر دستور خطاب به کل تیم است، با نقش خودت پاسخ بده. پاسخ اعضای قبلی همین نوبت و سابقه گفتگو را بررسی کن، تکرار را کم کن و اگر نیاز به اصلاح داری دقیق و عملی توضیح بده.';
+    result=await callAgent(a,adminGoal,transcript);
+   }
+   state.chat[state.chat.length-1].text=result;
+   state.chat[state.chat.length-1].error=false;
+   transcript+='\\n\\n['+a.name+' در پاسخ به ادمین]\\n'+result;
+   renderChat();save();
+  }catch(e){
+   state.chat[state.chat.length-1].text='خطا: '+e.message;
+   state.chat[state.chat.length-1].error=true;
+   renderChat();save();
+   transcript+='\\n\\n['+a.name+' - خطا در پاسخ به ادمین]\\n'+e.message;
+  }
+ }
+ msg('سیستم','👑','دستور ادمین توسط اعضای فعال بررسی شد. می‌توانی دستور یا پیام بعدی را ارسال کنی.','agent',false);
+ busy=false;
+ document.getElementById('adminChatBtn').disabled=false;
+ document.getElementById('dialogueBtn').disabled=false;
+ document.getElementById('runBtn').disabled=false;
+ save();
+}
+
 async function runDialogue(){
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();
@@ -359,6 +408,8 @@ document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;
 document.getElementById('dialogueBtn').onclick=runDialogue;
+document.getElementById('adminChatBtn').onclick=runAdminTurn;
+document.getElementById('adminChatInput').addEventListener('keydown',function(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();runAdminTurn();}});
 document.getElementById('clearChatBtn').onclick=clearChat;
 document.getElementById('exportBtn').onclick=exportConfig;
 document.getElementById('collapseBtn').onclick=function(){

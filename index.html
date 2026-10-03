@@ -193,6 +193,17 @@ body.chat-first-home #chat{
   body.chat-first-home .grid > section:last-child{min-height:calc(100vh - 24px);padding:12px}
   body.chat-first-home #chat{min-height:calc(100vh - 170px);max-height:none}
 }
+</style><style>
+.right-home-options{margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)}
+.right-home-options .topbar{display:block;margin:0 0 10px;padding:0}
+.right-home-options .title h2{font-size:15px}.right-home-options .title p{font-size:9px}
+.right-home-options .top-actions{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+.right-home-options .top-actions .btn{width:100%;min-width:0}
+.right-home-options .card{padding:12px;margin-top:9px;border-radius:12px}
+.right-home-options .card.wide{grid-column:auto}.right-home-options .card h3{font-size:12px}
+.right-home-options .field{margin-bottom:8px}.right-home-options textarea{min-height:75px}
+.right-home-options .editor{max-height:320px}
+@media(max-width:920px){.right-home-options{margin-top:12px}.right-home-options .card{padding:10px}}
 </style><script>
 (function(){
   try{
@@ -686,7 +697,21 @@ else moveProjectControlsToRightDrawer();
   .sidebar .right-project-controls .topbar{padding-bottom:9px}
 }
 </style>
-<script src="provider-manager.js?v=6"></script>
+<script>
+(function(){
+function moveHomeOptionsToRightDrawer(){
+ var sidebar=document.querySelector('.sidebar'),main=document.querySelector('.main'),grid=document.querySelector('.main .grid');
+ if(!sidebar||!main||!grid||sidebar.dataset.optionsMoved==='1')return;
+ var title=main.querySelector('.topbar'),cards=Array.prototype.slice.call(grid.children),chatCard=cards[cards.length-1];
+ var panel=document.createElement('div');panel.id='rightHomeOptions';panel.className='right-home-options';
+ panel.innerHTML='<div class="section-title">تنظیمات و اجرای تیم</div>';
+ if(title)panel.appendChild(title);
+ cards.forEach(function(card){if(card!==chatCard)panel.appendChild(card);});
+ sidebar.appendChild(panel);sidebar.dataset.optionsMoved='1';
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveHomeOptionsToRightDrawer);else moveHomeOptionsToRightDrawer();
+})();
+</script><script src="provider-manager.js?v=6"></script>
 <script src="multiplayer.js?v=1"></script>
 <script>
 (function(){

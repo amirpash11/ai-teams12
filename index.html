@@ -635,6 +635,57 @@ function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)==='
     }
   });
 })();</script>
+<script>
+(function(){
+'use strict';
+function moveProjectControlsToRightDrawer(){
+  const sidebar=document.querySelector('.sidebar');
+  const main=document.querySelector('.main');
+  const grid=main&&main.querySelector('.grid');
+  if(!sidebar||!main||!grid||sidebar.dataset.controlsMoved==='1')return;
+  const title=document.querySelector('.topbar');
+  if(title){
+    const wrap=document.createElement('div');
+    wrap.className='right-project-controls';
+    wrap.appendChild(title);
+    sidebar.appendChild(wrap);
+  }
+  Array.from(grid.children).forEach(function(section){
+    if(section.querySelector('#chat'))return;
+    const wrap=document.createElement('div');
+    wrap.className='right-project-controls';
+    wrap.appendChild(section);
+    sidebar.appendChild(wrap);
+  });
+  sidebar.dataset.controlsMoved='1';
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveProjectControlsToRightDrawer);
+else moveProjectControlsToRightDrawer();
+})();
+</script>
+<style>
+/* Project controls live in the right drawer */
+.sidebar .right-project-controls{margin-top:12px}
+.sidebar .right-project-controls .topbar{display:block!important;margin:0;padding:0 0 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sidebar .right-project-controls .title h2{font-size:16px}
+.sidebar .right-project-controls .title p{font-size:9px;line-height:1.6}
+.sidebar .right-project-controls .top-actions{display:grid;grid-template-columns:1fr;gap:6px;margin-top:9px}
+.sidebar .right-project-controls .top-actions .btn{width:100%;min-width:0}
+.sidebar .right-project-controls .card{display:block!important;padding:11px;border-radius:12px;background:#0d1627;box-shadow:none}
+.sidebar .right-project-controls .card h3{font-size:11px;margin-bottom:9px}
+.sidebar .right-project-controls .field{margin-bottom:8px}
+.sidebar .right-project-controls input,
+.sidebar .right-project-controls textarea,
+.sidebar .right-project-controls select{font-size:11px;padding:8px}
+.sidebar .right-project-controls textarea{min-height:70px}
+.sidebar .right-project-controls .notice{font-size:9px;padding:8px}
+.sidebar .right-project-controls .mode{font-size:9px;padding:7px}
+.sidebar .right-project-controls .stats{margin-top:7px}
+@media(max-width:920px){
+  .sidebar .right-project-controls .card{padding:10px}
+  .sidebar .right-project-controls .topbar{padding-bottom:9px}
+}
+</style>
 <script src="provider-manager.js?v=6"></script>
 <script src="multiplayer.js?v=1"></script>
 <script>

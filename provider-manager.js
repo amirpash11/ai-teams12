@@ -51,7 +51,7 @@ function makeModal(){
  wrap.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999;padding:18px;overflow:auto';
  wrap.innerHTML='<div class="card" style="max-width:760px;margin:35px auto;background:#121a2d">'+
  '<div style="display:flex;justify-content:space-between;align-items:center"><h3>مدیریت و افزودن سرویس</h3><button class="icon-btn" id="pmClose">✕</button></div>'+
- '<div class="notice">یک سرویس را فقط یک‌بار ثبت کن. بعد از آن، از داخل Provider هر Agent همان سرویس را انتخاب می‌کند. سرویس‌های وب‌سایتی که API قابل‌استفاده یا اجازه درخواست از مرورگر ندارند، ممکن است به backend نیاز داشته باشند.</div>'+
+ '<div id="providerSecureStatus" class="notice warn" style="margin-bottom:10px">در حال بررسی اتصال امن...</div><div class="notice">یک سرویس را فقط یک‌بار ثبت کن. بعد از آن، از داخل Provider هر Agent همان سرویس را انتخاب می‌کند. سرویس‌های وب‌سایتی که API قابل‌استفاده یا اجازه درخواست از مرورگر ندارند، ممکن است به backend نیاز داشته باشند.</div>'+
  '<div id="providerList" class="editor" style="max-height:220px;margin-top:10px"></div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">'+
  '<h3>سرویس جدید</h3>'+
  '<div class="two"><div class="field"><label>نام</label><input id="pmName" placeholder="مثلاً DeepSeek"></div><div class="field"><label>شناسه</label><input id="pmId" placeholder="مثلاً deepseek"></div></div>'+
@@ -117,39 +117,45 @@ async function universalCallAgent(a,goal,transcript){
  const p=providerById(a.provider)||providerById('horde');
  if(!p)throw new Error('سرویس این Agent پیدا نشد.');
  const prompt='هدف تیم:\\n'+goal+'\\n\\nخروجی اعضای قبلی:\\n'+(transcript||'هنوز خروجی قبلی وجود ندارد.')+'\\n\\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.';
- let endpoint=(a.endpoint||p.endpoint||'').replace(/\\{\\{model\\}\\}/g,encodeURIComponent(a.model||p.model||''));
- let body={},headers={'Content-Type':'application/json'};
- if(p.protocol==='anthropic'){
-  body={model:a.model||p.model,max_tokens:1200,system:a.system||('تو عضو تیم با نقش '+a.role+' هستی.'),messages:[{role:'user',content:prompt}]};
-  headers['anthropic-version']=p.anthropicVersion||'2023-06-01';
- }else if(p.protocol==='gemini'){
-  body={contents:[{parts:[{text:(a.system||('تو عضو تیم با نقش '+a.role+' هستی.'))+'\\n\\n'+prompt}]}]};
- }else if(p.protocol==='generic'){
-  let raw=p.template||'{"model":"{{model}}","messages":[{"role":"system","content":"{{system}}"},{"role":"user","content":"{{prompt}}"}]}';
-  raw=raw.replace(/\\{\\{model\\}\\}/g,a.model||p.model||'').replace(/\\{\\{system\\}\\}/g,(a.system||'').replace(/\\\\/g,'\\\\\\\\').replace(/"/g,'\\\\&quot;')).replace(/\\{\\{prompt\\}\\}/g,prompt.replace(/\\\\/g,'\\\\\\\\').replace(/"/g,'\\\\&quot;'));
-  try{body=JSON.parse(raw.replace(/\\\\&quot;/g,'\\"'));}catch(e){throw new Error('JSON Template سرویس نامعتبر است.');}
- }else{
-  body={model:a.model||p.model,messages:[{role:'system',content:a.system||('تو عضو تیم با نقش '+a.role+' هستی.')},{role:'user',content:prompt}],temperature:0.2};
+ const messages=[
+  {role:'system',content:a.system||('تو عضو تیم با نقش '+a.role+' هستی.')},
+  {role:'user',content:prompt}
+ ];
+ if(p.id!=='horde'){
+  if(!window.aiTeamsCloud||!window.aiTeamsCloud.isReady())throw new Error('اتصال امن فعال نیست. برای Providerهای غیررایگان ابتدا وارد حساب ذخیره‌سازی ابری شوید و کلید Provider را در Supabase Edge Function تنظیم کنید.');
+  const data=await window.aiTeamsCloud.invokeAI({
+   provider:p.id,model:a.model||p.model,messages:messages,system:a.system||('تو عضو تیم با نقش '+a.role+' هستی.'),
+   endpoint:p.id==='custom'?(a.endpoint||p.endpoint||''):undefined,temperature:0.2,referer:location.origin
+  });
+  return data.output;
  }
- const key=a.apiKey||p.apiKey||'';
- if(p.auth==='bearer'||p.auth==='bearer-public')headers['Authorization']='Bearer '+(p.auth==='bearer-public'?'0000000000':key);
- else if(p.auth==='x-api-key')headers['x-api-key']=key;
- else if(p.auth==='custom-header'&&p.header)headers[p.header]=key;
- else if(p.auth==='query'&&p.query)endpoint+=(endpoint.indexOf('?')>=0?'&':'?')+encodeURIComponent(p.query)+'='+encodeURIComponent(key);
- if(p.id==='openrouter')headers['HTTP-Referer']=location.origin;
+ let endpoint=(a.endpoint||p.endpoint||'').replace(/\\{\\{model\\}\\}/g,encodeURIComponent(a.model||p.model||''));
+ const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
+ const body={model:a.model||p.model,messages:messages,temperature:0.2};
  const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
  try{
   const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
   const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
   if(!res.ok)throw new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));
-  const path=p.responsePath||'choices.0.message.content';let out=data;path.split('.').forEach(function(k){if(out!=null)out=out[k]});
-  if(Array.isArray(out))out=out.map(function(x){return typeof x==='string'?x:(x&&x.text)||''}).join('\\n');
-  if(!out||typeof out!=='string')throw new Error('پاسخ مدل پیدا نشد؛ مسیر پاسخ را بررسی کن: '+path);
-  return out;
+  const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+  if(typeof out==='string'&&out)return out;
+  if(data.choices&&data.choices[0]&&typeof data.choices[0].text==='string')return data.choices[0].text;
+  throw new Error('پاسخ مدل پیدا نشد.');
  }catch(e){if(e.name==='AbortError')throw new Error('زمان پاسخ تمام شد.');throw e}finally{clearTimeout(timer)}
 }
+function secureProviderStatus(){
+ const el=document.getElementById('providerSecureStatus');
+ if(!el)return;
+ if(window.aiTeamsCloud&&window.aiTeamsCloud.isReady()){
+  el.textContent='🔐 اتصال امن فعال است؛ کلید Providerهای پولی از مرورگر ارسال نمی‌شود.';
+  el.className='notice';
+ }else{
+  el.textContent='🔐 برای Providerهای پولی، ورود به حساب ابری و تنظیم کلید در Supabase لازم است. AI Horde همچنان بدون کلید کار می‌کند.';
+  el.className='notice warn';
+ }
+}
 
-ensureProviders();wrapRender();makeModal();attachProviderButton();attachProviderChange();decorateProviderSelects();renderProviderMini();
+ensureProviders();wrapRender();makeModal();attachProviderButton();attachProviderChange();decorateProviderSelects();renderProviderMini();setTimeout(secureProviderStatus,700);
 window.callAgent=universalCallAgent;
 window.aiTeamsCore={getState:function(){return state;},save:save,render:render,esc:esc,providerById:providerById};
 })();

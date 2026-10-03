@@ -533,44 +533,5 @@ document.addEventListener('click',function(ev){
 },true);
 })();
 </script>
-<script>
-(function(){
-  function initDrawers(){
-    var app=document.querySelector('.app');
-    var right=document.getElementById('drawerToggle');
-    var left=document.getElementById('leftDrawerToggle');
-    if(!app||!right||!left)return false;
-    var RK='ai-teams-drawer-hidden-v1', LK='ai-teams-left-drawer-hidden-v1';
-    function rightHidden(){return localStorage.getItem(RK)==='1'}
-    function leftHidden(){return localStorage.getItem(LK)==='1'}
-    function paint(){
-      var rh=rightHidden(), lh=leftHidden();
-      app.classList.toggle('drawer-hidden',rh);
-      app.classList.toggle('left-drawer-hidden',lh);
-      right.textContent=rh?'▶':'◀';
-      right.title=rh?'نمایش کشوی سمت راست':'مخفی کردن کشوی سمت راست';
-      left.textContent=lh?'◀':'▶';
-      left.title=lh?'نمایش کشوی سمت چپ':'مخفی کردن کشوی سمت چپ';
-    }
-    right.onclick=function(e){
-      e.preventDefault();e.stopPropagation();
-      var next=!rightHidden();
-      localStorage.setItem(RK,next?'1':'0');
-      if(!next)localStorage.setItem(LK,'1');
-      paint();
-    };
-    left.onclick=function(e){
-      e.preventDefault();e.stopPropagation();
-      var next=!leftHidden();
-      localStorage.setItem(LK,next?'1':'0');
-      if(!next)localStorage.setItem(RK,'1');
-      paint();
-    };
-    paint();
-    return true;
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initDrawers);
-  else initDrawers();
-})();
-</script></body>
+</body>
 </html>

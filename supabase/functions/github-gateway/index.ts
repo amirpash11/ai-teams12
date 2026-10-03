@@ -6,7 +6,7 @@ const GITHUB_CLIENT_ID=Deno.env.get("GITHUB_CLIENT_ID")||"";
 const GITHUB_CLIENT_SECRET=Deno.env.get("GITHUB_CLIENT_SECRET")||"";
 const APP_URL=Deno.env.get("AI_TEAMS_APP_URL")||"https://amirpash11.github.io/ai-teams12/";
 const ENC_KEY=Deno.env.get("GITHUB_TOKEN_ENCRYPTION_KEY")||"";
-const TABLE="github_connections";\nconst STATE_TABLE="github_oauth_states";
+const TABLE="github_connections";\nconst STATE_TABLE="github_oauth_states";\nfunction adminKey(){try{const x=JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")||"{}");return x.default||"";}catch(_){return "";}}\nfunction adminClient(){return createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||adminKey());}
 
 function json(x,status=200){return new Response(JSON.stringify(x),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});}
 function hexToBytes(h){return new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));}
@@ -35,7 +35,7 @@ Deno.serve(async req=>{
       if(!GITHUB_CLIENT_ID||!GITHUB_CLIENT_SECRET)throw new Error("GitHub OAuth secrets are not configured");
       const code=u.searchParams.get("code"),state=u.searchParams.get("state")||"";
       if(!code||!state)throw new Error("GitHub authorization data missing");
-      const admin=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const admin=adminClient();
       const {data:st}=await admin.from(STATE_TABLE).select("*").eq("state",state).maybeSingle();
       if(!st||new Date(st.expires_at).getTime()<Date.now())throw new Error("OAuth state expired");
       const cb=u.origin+u.pathname+"?action=oauth-callback";

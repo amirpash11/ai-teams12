@@ -2,9 +2,13 @@
 'use strict';
 
 const builtIns = [
+ {id:'horde',name:'AI Horde — رایگان بدون کلید',protocol:'openai',endpoint:'https://oai.stablehorde.net/v1/chat/completions',auth:'bearer-public',header:'Authorization',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',template:'',responsePath:'choices.0.message.content',builtIn:true},
+ {id:'openai',name:'OpenAI',protocol:'openai',endpoint:'https://api.openai.com/v1/chat/completions',auth:'bearer',header:'Authorization',model:'gpt-4o-mini',template:'',responsePath:'choices.0.message.content',builtIn:true},
+ {id:'openrouter',name:'OpenRouter',protocol:'openai',endpoint:'https://openrouter.ai/api/v1/chat/completions',auth:'bearer',header:'Authorization',model:'openai/gpt-4o-mini',template:'',responsePath:'choices.0.message.content',builtIn:true},
+ {id:'custom',name:'Custom',protocol:'generic',endpoint:'',auth:'bearer',header:'Authorization',model:'',template:'{"model":"{{model}}","messages":[{"role":"system","content":"{{system}}"},{"role":"user","content":"{{prompt}}"}]}',responsePath:'choices.0.message.content',builtIn:true},
  {id:'claude',name:'Claude (Anthropic)',protocol:'anthropic',endpoint:'https://api.anthropic.com/v1/messages',auth:'x-api-key',header:'x-api-key',model:'claude-sonnet-4-5',template:'',responsePath:'content.0.text',anthropicVersion:'2023-06-01',builtIn:true},
  {id:'gemini',name:'Gemini',protocol:'gemini',endpoint:'https://generativelanguage.googleapis.com/v1beta/models/{{model}}:generateContent',auth:'custom-header',header:'x-goog-api-key',model:'gemini-2.5-flash',template:'',responsePath:'candidates.0.content.parts.0.text',builtIn:true}
-];
+]
 
 function ensureProviders(){
  if(!state.providers) state.providers=[];

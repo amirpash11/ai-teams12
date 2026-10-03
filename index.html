@@ -147,7 +147,7 @@ function render(){
  document.getElementById('editor').innerHTML=state.agents.map(function(a,index){
   const closed=collapsed.has(a.id);
   return '<div class="agent-row" id="agent-'+a.id+'">'+
-   '<div class="agent-head"><strong>\esc(a.icon)+' \esc(a.name)+' <span class="pill" style="margin-right:6px;color:#9fe2ff;background:#16283e;border:1px solid #28506d">🤖 \esc(agentAiLabel(a))+'</span></strong><div class="head-actions">'+
+   '<div class="agent-head"><strong>'+esc(a.icon)+' '+esc(a.name)+' <span class="pill" style="margin-right:6px;color:#9fe2ff;background:#16283e;border:1px solid #28506d">🤖 '+esc(agentAiLabel(a))+'</span></strong><div class="head-actions">'+
    '<button class="icon-btn" title="باز و بسته کردن" onclick="toggleAgent(\''+a.id+'\')">'+(closed?'＋':'−')+'</button>'+
    '<button class="icon-btn" title="حذف" onclick="removeAgent(\''+a.id+'\')">🗑</button></div></div>'+
    (closed?'':'<div class="field"><label>نام</label><input data-id="'+a.id+'" data-k="name" value="'+esc(a.name)+'"></div>'+

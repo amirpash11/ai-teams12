@@ -141,7 +141,7 @@ async function signOut(){
 function payload(){
   const core=window.aiTeamsCore;
   if(!core)return null;
-  return {project_id:projectId(),name:(core.getState().teamName||'AI Teams'),state:core.getState(),updated_at:new Date().toISOString()};
+  return {user_id:cloudUser.id,project_id:projectId(),name:(core.getState().teamName||'AI Teams'),state:core.getState(),updated_at:new Date().toISOString()};
 }
 async function syncNow(manual){
   if(!cloudReady||!cloudUser||applyingRemote)return;

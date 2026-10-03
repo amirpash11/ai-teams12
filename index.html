@@ -86,10 +86,10 @@
 
     <section class="card wide">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap"><h3 style="margin:0">گفت‌وگوی تیم</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="dialogueRounds" class="mode" style="width:auto;padding:8px 10px"><option value="1">۱ دور گفتگو</option><option value="2" selected>۲ دور گفتگو</option><option value="3">۳ دور گفتگو</option></select><button class="btn" style="width:auto;margin:0" id="dialogueBtn">💬 گفتگوی اعضا</button><button class="btn" style="width:auto;margin:0" id="clearChatBtn">پاک کردن</button></div></div>
-      <div class="notice" style="margin-bottom:10px">👑 <b>ادمین تیم:</b> اینجا می‌توانی مستقیماً با اعضای AI صحبت کنی یا به یک عضو/کل تیم دستور بدهی. پیام تو با اولویت ادمین وارد بحث می‌شود و اعضا آن را می‌بینند و بر اساس آن پاسخ می‌دهند.</div>
+      <div class="notice" style="margin-bottom:10px">💬 <b>گفت‌وگوی گروهی:</b> اینجا مثل یک چت واقعی با کل تیم صحبت کن. پیام تو برای اعضای فعال فرستاده می‌شود و هر عضو با توجه به نقش خودش پاسخ می‌دهد؛ لازم نیست حالت دستوری داشته باشی.</div>
       <div id="chat" class="chat"><div class="empty">هدف را وارد کن و «اجرای تیم» را بزن.</div></div>
-      <div class="admin-composer"><textarea id="adminChatInput" class="admin-chat-input" rows="2" placeholder="👑 پیام یا دستور ادمین را بنویس... مثلاً: برنامه‌نویس، این بخش را اصلاح کن. یا: همه اعضا این راه‌حل را دوباره بررسی کنید."></textarea><button class="btn primary admin-chat-btn" id="adminChatBtn">ارسال به تیم</button></div>
-      <div class="tiny" style="margin-top:6px">Enter برای ارسال · Shift+Enter برای خط جدید</div>
+      <div class="admin-composer"><textarea id="adminChatInput" class="admin-chat-input" rows="2" placeholder="پیامت را مثل یک گفت‌وگوی معمولی با تیم بنویس... مثلاً: به نظرتون این ایده شدنیه؟ یا: من این قسمت رو این‌طور تغییر دادم، نظرتون چیه؟"></textarea><button class="btn primary admin-chat-btn" id="adminChatBtn">ارسال به تیم</button></div>
+      <div class="tiny" style="margin-top:6px">Enter برای ارسال · Shift+Enter برای خط جدید · همه اعضای فعال پیام را می‌بینند</div>
     </section>
   </div>
   <div class="footer">AI Teams — تنظیمات روی همین مرورگر ذخیره می‌شود.</div>
@@ -283,10 +283,10 @@ async function runAdminTurn(){
  document.getElementById('adminChatBtn').disabled=true;
  document.getElementById('dialogueBtn').disabled=true;
  document.getElementById('runBtn').disabled=true;
- msg('ادمین','👑',userText,'user',false);
+ msg('شما','👤',userText,'user',false);
  let transcript=state.chat.map(function(m){return '['+(m.type==='user'?'ادمین':'عضو '+(m.name||'تیم'))+']\\n'+m.text}).join('\\n\\n');
  for(const a of active){
-  msg(a.name,a.icon,'در حال پاسخ به دستور ادمین...','agent',false);
+  msg(a.name,a.icon,'در حال پاسخ...','agent',false);
   try{
    let result;
    if(state.mode==='demo'){
@@ -308,7 +308,7 @@ async function runAdminTurn(){
    transcript+='\\n\\n['+a.name+' - خطا در پاسخ به ادمین]\\n'+e.message;
   }
  }
- msg('سیستم','👑','دستور ادمین توسط اعضای فعال بررسی شد. می‌توانی دستور یا پیام بعدی را ارسال کنی.','agent',false);
+ msg('سیستم','💬','اعضای فعال به پیام شما پاسخ دادند. می‌توانی مثل یک گفت‌وگوی عادی پیام بعدی را بفرستی.','agent',false);
  busy=false;
  document.getElementById('adminChatBtn').disabled=false;
  document.getElementById('dialogueBtn').disabled=false;

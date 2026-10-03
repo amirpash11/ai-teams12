@@ -86,7 +86,7 @@
 
     <section class="card wide">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap"><h3 style="margin:0">گفت‌وگوی تیم</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="dialogueRounds" class="mode" style="width:auto;padding:8px 10px"><option value="1">۱ دور گفتگو</option><option value="2" selected>۲ دور گفتگو</option><option value="3">۳ دور گفتگو</option></select><button class="btn" style="width:auto;margin:0" id="dialogueBtn">💬 گفتگوی اعضا</button><button class="btn" style="width:auto;margin:0" id="clearChatBtn">پاک کردن</button></div></div>
-      <div class="notice" style="margin-bottom:10px">«گفتگوی اعضا» باعث می‌شود هر هوش مصنوعی خروجی اعضای قبلی را ببیند و در دور بعدی آن را نقد، تکمیل یا اصلاح کند.</div>
+      <div class="notice" style="margin-bottom:10px">«گفتگوی اعضا» برای بحث درباره <b>انجام یک کار مشخص</b> است: هر هوش مصنوعی نظر می‌دهد، خروجی اعضای قبلی را بررسی می‌کند، در صورت نیاز مخالفت و دلیل می‌آورد، راه‌حل را اصلاح می‌کند و در دورهای بعدی روی همان کار ادامه می‌دهد.</div>
       <div id="chat" class="chat"><div class="empty">هدف را وارد کن و «اجرای تیم» را بزن.</div></div>
     </section>
   </div>
@@ -272,7 +272,7 @@ async function runDialogue(){
  const goal=document.getElementById('goal').value.trim();
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=goal;
- if(!goal)return alert('اول هدف تیم را وارد کن.');
+ if(!goal)return alert('اول کار یا موضوع مشخصی را که اعضا باید درباره انجام آن بحث کنند وارد کن.');
  const active=state.agents.filter(function(a){return a.enabled});
  if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
  const rounds=Math.max(1,Math.min(3,Number(document.getElementById('dialogueRounds').value)||2));
@@ -280,21 +280,22 @@ async function runDialogue(){
  document.getElementById('runBtn').disabled=true;
  document.getElementById('dialogueBtn').disabled=true;
  state.chat=[];
- msg('مدیر پروژه','👤','شروع گفتگوی چندمرحله‌ای برای هدف: '+goal,'user',false);
+ msg('مدیر پروژه','👤','موضوع بحث و کار موردنظر:\n'+goal+'\n\nاعضا باید درباره بهترین روش انجام این کار بحث کنند.','user',false);
  let transcript='';
  for(let round=1;round<=rounds;round++){
-  msg('مدیر پروژه','🧩','دور '+round+' از '+rounds+' — اعضا اکنون خروجی‌های قبلی را بررسی می‌کنند.','agent',false);
+  msg('مدیر پروژه','🧩','دور '+round+' از '+rounds+' — هر عضو نظر قبلی را بررسی می‌کند و درباره همان کار پاسخ می‌دهد.','agent',false);
   for(const a of active){
-   msg(a.name,a.icon,'دور '+round+' — در حال '+(round===1?'ارائه نظر اولیه':'بررسی و پاسخ به اعضای قبلی')+'...','agent',false);
+   msg(a.name,a.icon,'دور '+round+' — در حال بررسی دیدگاه اعضا و ارائه نظر خود...','agent',false);
    try{
     let result;
     if(state.mode==='demo'){
       result='دور '+round+' — '+mockResponse(a,goal,transcript);
-      if(round>1)result+='\n\nدر این دور، خروجی اعضای قبلی را نیز بررسی کردم و موارد لازم را برای ادامه کار اصلاح یا تکمیل کردم.';
+      if(round>1)result+='\n\nدر این دور، دیدگاه اعضای قبلی را بررسی کردم؛ موارد قابل اصلاح را نقد و پیشنهاد خودم را برای انجام این کار به‌روزرسانی کردم.';
     }else{
-      const dialogueGoal=round===1
-        ?goal
-        :'هدف تیم:\n'+goal+'\n\nاین دور '+round+' گفتگوی تیم است. خروجی اعضای قبلی را بررسی کن. اگر لازم است با استدلال مشخص با آنها مخالفت کن، ایرادها را اصلاح کن و پیشنهاد خودت را به‌روزرسانی کن. فقط نتیجه نقش خودت را ارائه بده.';
+      const dialogueGoal='کار/موضوعی که تیم باید درباره آن بحث کند:\n'+goal+
+        '\n\nاین دور '+round+' از '+rounds+' است. تو یکی از اعضای یک تیم چندعاملی هستی. دیدگاه و خروجی اعضای قبلی را دقیق بررسی کن. '+
+        (round===1?'نظر اولیه و راه‌حل خودت را برای انجام این کار ارائه بده.':'اگر با نظر اعضای قبلی موافق نیستی، دقیقاً بگو کدام بخش را قبول نداری و دلیل فنی/منطقی بیاور؛ سپس راه‌حل خودت را اصلاح یا تکمیل کن.')+
+        '\n\nقواعد بحث: فقط درباره همین کار صحبت کن؛ به خروجی قبلی‌ها ارجاع بده؛ نکات تکراری را کوتاه کن؛ اختلاف‌نظرها را شفاف کن؛ در پایان پیشنهاد عملی خودت را ارائه بده.';
       result=await callAgent(a,dialogueGoal,transcript);
     }
     state.chat[state.chat.length-1].text=result;
@@ -309,7 +310,7 @@ async function runDialogue(){
    }
   }
  }
- msg('مدیر پروژه','👤','گفتگوی تیم پس از '+rounds+' دور به پایان رسید. خروجی‌های بالا قابل بررسی و ادامه هستند.','agent',false);
+ msg('مدیر پروژه','👤','بحث اعضا درباره این کار پس از '+rounds+' دور به پایان رسید. اکنون می‌توانی دیدگاه‌ها، اختلاف‌نظرها و پیشنهادهای اجرایی را بررسی کنی.','agent',false);
  busy=false;
  document.getElementById('runBtn').disabled=false;
  document.getElementById('dialogueBtn').disabled=false;

@@ -50,9 +50,11 @@
 <div class="app">
 <button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست">◀</button><aside class="sidebar">
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
-  <div class="section-title">اعضای تیم</div>
-  <div id="agentList" class="agent-list"></div>
-  <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button>
+  <div class="section-title team-members-toggle" id="rightTeamMembersToggle" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">اعضای تیم <button type="button" class="icon-btn" id="rightTeamMembersBtn" style="width:32px;height:32px;padding:0">＋</button></div>
+  <div id="rightTeamMembersBody" style="display:none">
+    <div id="agentList" class="agent-list"></div>
+    <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button>
+  </div>
   <button class="btn" id="providersBtn">⚙ مدیریت و افزودن سرویس</button>
   <button class="btn" id="aiCatalogBtn">🔎 جستجوی هوش مصنوعی</button>
   <div id="providerMiniList" class="tiny" style="margin-top:8px"></div>
@@ -427,6 +429,22 @@ function exportConfig(){
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-teams12-config.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
 }
 
+const __rightMembersState={key:'ai-teams-right-members-collapsed-v1'};
+function applyRightMembers(){
+ const b=document.getElementById('rightTeamMembersBody'),t=document.getElementById('rightTeamMembersBtn');
+ if(!b||!t)return;
+ const collapsed=localStorage.getItem(__rightMembersState.key)!=='0';
+ b.style.display=collapsed?'none':'block';
+ t.textContent=collapsed?'＋':'−';
+ t.title=collapsed?'باز کردن اعضای تیم':'جمع کردن اعضای تیم';
+}
+function toggleRightMembers(){
+ const collapsed=localStorage.getItem(__rightMembersState.key)!=='0';
+ localStorage.setItem(__rightMembersState.key,collapsed?'0':'1');
+ applyRightMembers();
+}
+document.getElementById('rightTeamMembersToggle').onclick=toggleRightMembers;
+applyRightMembers();
 document.getElementById('addAgentBtn').onclick=addAgent;
 document.getElementById('demoBtn').onclick=fillDemo;
 document.getElementById('resetBtn').onclick=function(){if(confirm('همه تنظیمات و گفتگوها پاک شود؟')){localStorage.removeItem(KEY);localStorage.removeItem(OLD_KEY);location.reload()}};

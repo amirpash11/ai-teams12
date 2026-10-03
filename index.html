@@ -293,66 +293,70 @@ render();
 <script src="provider-manager.js?v=4"></script>
 <script>
 (function(){
-  const btn=document.getElementById('aiCatalogBtn');
-  if(!btn) return;
-  btn.onclick=async function(){
-    let modal=document.getElementById('directAiSearchModal');
-    if(!modal){
-      modal=document.createElement('div');
-      modal.id='directAiSearchModal';
-      modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:2000;padding:16px;overflow:auto';
-      modal.innerHTML='<div class="card" style="max-width:900px;margin:25px auto;background:#121a2d"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🔎 جستجوی هوش مصنوعی</h3><button id="directClose" class="icon-btn">✕</button></div><div class="notice" style="margin-top:10px">نام سرویس یا مدل را بنویس؛ نتایج زنده نمایش داده می‌شوند.</div><div style="display:flex;gap:8px;margin-top:12px"><input id="directSearch" placeholder="Claude، Gemini، GPT، Grok، DeepSeek..." style="flex:1"><button id="directSearchBtn" class="btn primary" style="width:auto;margin:0">جستجو</button></div><div id="directStatus" class="tiny" style="margin-top:8px"></div><div id="directResults" class="editor" style="margin-top:10px;max-height:58vh"></div></div>';
-      document.body.appendChild(modal);
-      document.getElementById('directClose').onclick=function(){modal.style.display='none'};
-      document.getElementById('directSearchBtn').onclick=load;
-      document.getElementById('directSearch').onkeydown=function(e){if(e.key==='Enter')load()};
-    }
-    modal.style.display='block';
-    if(!modal.dataset.loaded) await load();
-    document.getElementById('directSearch').focus();
-  };
-  async function load(){
-    const resBox=document.getElementById('directResults'),status=document.getElementById('directStatus'),q=(document.getElementById('directSearch').value||'').trim().toLowerCase();
-    status.textContent='در حال دریافت فهرست زنده...';resBox.innerHTML='<div class="empty">در حال جستجو...</div>';
-    let data=[];
-    try{
-      const r=await fetch('https://openrouter.ai/api/v1/models',{headers:{Accept:'application/json'}});
-      if(r.ok){const j=await r.json();data=(j.data||[]).map(function(m){return {id:m.id,name:m.name||m.id,desc:m.description||'',model:m.id,source:'OpenRouter',free:String(m.pricing&&m.pricing.prompt)==='0'&&String(m.pricing&&m.pricing.completion)==='0'};});}
-    }catch(e){}
-    const preset=[
-      {id:'horde',name:'AI Horde',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',source:'AI Horde',free:true},
-      {id:'claude',name:'Claude (Anthropic)',model:'claude-sonnet-4-5',source:'Built-in'},
-      {id:'gemini',name:'Gemini',model:'gemini-2.5-flash',source:'Built-in'},
-      {id:'gpt',name:'GPT / OpenAI',model:'gpt-4o-mini',source:'Built-in'},
-      {id:'grok',name:'Grok',model:'grok-3-mini',source:'Built-in'},
-      {id:'deepseek',name:'DeepSeek',model:'deepseek-chat',source:'Built-in'},
-      {id:'mistral',name:'Mistral',model:'mistral-large-latest',source:'Built-in'},
-      {id:'qwen',name:'Qwen',model:'qwen-max',source:'Built-in'},
-      {id:'llama',name:'Llama',model:'meta-llama/llama-3.3-70b-instruct',source:'Built-in'}
-    ];
-    data=preset.concat(data);
-    const seen={};data=data.filter(function(x){const k=x.id||x.model;if(seen[k])return false;seen[k]=1;return true});
-    if(q)data=data.filter(function(x){return ((x.name||'')+' '+(x.id||'')+' '+(x.model||'')+' '+(x.desc||'')).toLowerCase().indexOf(q)>=0});
-    data=data.slice(0,120);
-    status.textContent=data.length+' نتیجه';
-    if(!data.length){resBox.innerHTML='<div class="empty">موردی پیدا نشد.</div>';modal.dataset.loaded='1';return;}
-    resBox.innerHTML=data.map(function(x){
-      return '<div class="agent-row"><div class="agent-head"><strong>'+safe(x.name)+'</strong><span class="pill">'+safe(x.source)+(x.free?' · رایگان':'')+'</span></div><div class="tiny">'+safe(x.model||x.id)+'</div><button class="btn primary addDirect" style="margin-top:8px;width:auto" data-name="'+safeAttr(x.name)+'" data-model="'+safeAttr(x.model||x.id)+'">＋ افزودن به تیم</button></div>';
-    }).join('');
-    resBox.querySelectorAll('.addDirect').forEach(function(b){b.onclick=function(){add(b.dataset.name,b.dataset.model)}});
-    modal.dataset.loaded='1';
-  }
-  function add(name,model){
-    const st=window.aiTeamsCore&&window.aiTeamsCore.getState ? window.aiTeamsCore.getState():null;
-    if(!st){alert('هسته برنامه هنوز آماده نشده است. صفحه را یک‌بار Refresh کن.');return;}
-    const p=st.providers&&st.providers.find(function(x){return x.id==='openrouter'})||st.providers&&st.providers.find(function(x){return x.id==='horde'});
-    if(!p){alert('Provider پیش‌فرض پیدا نشد.');return;}
-    st.agents.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name:name,role:'عامل هوش مصنوعی',icon:'🤖',provider:p.id,endpoint:p.endpoint,model:model,apiKey:p.apiKey||'',system:'تو یک عامل متخصص در تیم AI Teams هستی. نقش خودت را دقیق انجام بده و خروجی قابل استفاده تحویل بده.',enabled:true});
-    window.aiTeamsCore.save();window.aiTeamsCore.render();alert(name+' به تیم اضافه شد.');
-  }
-  function safe(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
-  function safeAttr(s){return safe(s).replace(/"/g,'&quot;')}
+'use strict';
+const presets=[
+ {name:'Claude (Anthropic)',model:'claude-sonnet-4-5',provider:'claude',free:false},
+ {name:'Gemini',model:'gemini-2.5-flash',provider:'gemini',free:false},
+ {name:'GPT / OpenAI',model:'gpt-4o-mini',provider:'openai',free:false},
+ {name:'Grok',model:'grok-3-mini',provider:'openrouter',free:false},
+ {name:'DeepSeek',model:'deepseek-chat',provider:'openrouter',free:false},
+ {name:'Mistral',model:'mistral-large-latest',provider:'openrouter',free:false},
+ {name:'Qwen',model:'qwen-max',provider:'openrouter',free:false},
+ {name:'Llama',model:'meta-llama/llama-3.3-70b-instruct',provider:'openrouter',free:false},
+ {name:'AI Horde',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',provider:'horde',free:true}
+];
+let allModels=presets.slice();
+function esc2(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]});}
+function open(){
+ let modal=document.getElementById('searchAiModal');
+ if(!modal){
+  modal=document.createElement('div');modal.id='searchAiModal';modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:3000;padding:15px;overflow:auto';
+  modal.innerHTML='<div class="card" style="max-width:900px;margin:25px auto;background:#121a2d">'+
+  '<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🔎 جستجوی هوش مصنوعی</h3><button id="sacClose" class="icon-btn">✕</button></div>'+
+  '<div class="notice" style="margin-top:10px">اسم سرویس یا مدل را جستجو کن. نتایج اولیه بدون اینترنت نمایش داده می‌شوند و سپس فهرست آنلاین به‌روزرسانی می‌شود.</div>'+
+  '<div style="display:flex;gap:8px;margin-top:12px"><input id="sacInput" placeholder="Claude، Gemini، GPT، Grok، DeepSeek..." style="flex:1"><button id="sacBtn" class="btn primary" style="width:auto;margin:0">جستجو</button></div>'+
+  '<div id="sacStatus" class="tiny" style="margin-top:8px"></div><div id="sacResults" class="editor" style="margin-top:10px;max-height:60vh"></div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('sacClose').onclick=function(){modal.style.display='none'};
+  document.getElementById('sacBtn').onclick=filter;
+  document.getElementById('sacInput').oninput=filter;
+  document.getElementById('sacInput').onkeydown=function(ev){if(ev.key==='Enter')filter()};
+ }
+ modal.style.display='block';filter();document.getElementById('sacInput').focus();
+ fetchLive();
+}
+function filter(){
+ const q=(document.getElementById('sacInput')?.value||'').trim().toLowerCase();
+ const list=allModels.filter(function(x){return !q||[x.name,x.model,x.provider].join(' ').toLowerCase().includes(q)}).slice(0,150);
+ const box=document.getElementById('sacResults');const st=document.getElementById('sacStatus');if(!box)return;
+ st.textContent=list.length+' نتیجه';
+ box.innerHTML=list.map(function(x,i){return '<div class="agent-row"><div class="agent-head"><strong>'+esc2(x.name)+'</strong><span class="pill">'+esc2(x.provider)+(x.free?' · رایگان':'')+'</span></div><div class="tiny">'+esc2(x.model)+'</div><button class="btn primary sacAdd" style="margin-top:8px;width:auto" data-i="'+i+'">＋ افزودن به تیم</button></div>';}).join('')||( '<div class="empty">موردی پیدا نشد.</div>' );
+ box.querySelectorAll('.sacAdd').forEach(function(b){b.onclick=function(){add(allModels[findDisplayedIndex(list,Number(b.dataset.i))]);}});
+}
+function findDisplayedIndex(list,i){const x=list[i];return allModels.indexOf(x);}
+function add(x){
+ const core=window.aiTeamsCore;
+ if(!core){alert('هسته برنامه آماده نشده است. یک‌بار Ctrl+F5 بزن.');return;}
+ const st=core.getState();
+ const p=(st.providers||[]).find(function(v){return v.id===x.provider})||(st.providers||[]).find(function(v){return v.id==='horde'});
+ if(!p){alert('Provider مناسب پیدا نشد.');return;}
+ st.agents.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())),name:x.name,role:'عامل هوش مصنوعی',icon:'🤖',provider:p.id,endpoint:p.endpoint,model:x.model,apiKey:p.apiKey||'',system:'تو یک عامل متخصص در تیم AI Teams هستی. نقش خودت را دقیق انجام بده و خروجی قابل استفاده به عامل بعدی تحویل بده.',enabled:true});
+ core.save();core.render();alert(x.name+' به تیم اضافه شد.');
+}
+async function fetchLive(){
+ const status=document.getElementById('sacStatus');if(status)status.textContent='در حال به‌روزرسانی فهرست آنلاین...';
+ try{
+  const r=await fetch('https://openrouter.ai/api/v1/models',{method:'GET',headers:{Accept:'application/json'},cache:'no-store'});
+  if(r.ok){const j=await r.json();const live=(j.data||[]).map(function(m){return {name:m.name||m.id,model:m.id,provider:'openrouter',free:String(m.pricing&&m.pricing.prompt)==='0'&&String(m.pricing&&m.pricing.completion)==='0'};});const map=new Map(presets.map(function(x){return [x.model,x]}));live.forEach(function(x){if(!map.has(x.model))map.set(x.model,x)});allModels=Array.from(map.values());filter();return;}
+ }catch(e){}
+ if(status)status.textContent='فهرست آماده نمایش است؛ دریافت فهرست آنلاین در این مرورگر ممکن نشد.';
+}
+document.addEventListener('click',function(ev){
+ const target=ev.target.closest&&ev.target.closest('#aiCatalogBtn');
+ if(target){ev.preventDefault();ev.stopImmediatePropagation();open();}
+},true);
 })();
 </script>
+</body></script>
 </body>
 </html>

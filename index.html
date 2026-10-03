@@ -50,8 +50,8 @@
 <div class="app">
 <button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست">◀</button><aside class="sidebar">
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
-  <div class="section-title team-members-toggle" id="rightTeamMembersToggle" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">اعضای تیم <button type="button" class="icon-btn" id="rightTeamMembersBtn" style="width:32px;height:32px;padding:0">＋</button></div>
-  <div id="rightTeamMembersBody" style="display:none">
+  <button type="button" id="rightTeamMembersToggle" class="section-title team-members-toggle" style="width:100%;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;border:1px solid var(--line);background:#18223a;color:var(--text);padding:10px 12px;border-radius:10px;margin:8px 0"> <span>اعضای تیم</span><span id="rightTeamMembersBtn" aria-hidden="true" style="font-size:20px;line-height:1">＋</span></button>
+  <div id="rightTeamMembersBody" style="display:none!important">
     <div id="agentList" class="agent-list"></div>
     <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button>
   </div>
@@ -434,7 +434,7 @@ function applyRightMembers(){
  const b=document.getElementById('rightTeamMembersBody'),t=document.getElementById('rightTeamMembersBtn');
  if(!b||!t)return;
  const collapsed=localStorage.getItem(__rightMembersState.key)!=='0';
- b.style.display=collapsed?'none':'block';
+ b.style.setProperty('display',collapsed?'none':'block','important');
  t.textContent=collapsed?'＋':'−';
  t.title=collapsed?'باز کردن اعضای تیم':'جمع کردن اعضای تیم';
 }
@@ -443,7 +443,7 @@ function toggleRightMembers(){
  localStorage.setItem(__rightMembersState.key,collapsed?'0':'1');
  applyRightMembers();
 }
-document.getElementById('rightTeamMembersToggle').onclick=toggleRightMembers;
+document.getElementById('rightTeamMembersToggle').addEventListener('click',toggleRightMembers);
 applyRightMembers();
 document.getElementById('addAgentBtn').onclick=addAgent;
 document.getElementById('demoBtn').onclick=fillDemo;

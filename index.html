@@ -290,7 +290,7 @@ document.getElementById('teamName').addEventListener('input',function(e){state.t
 document.getElementById('goal').addEventListener('input',function(e){state.goal=e.target.value;save()});
 render();
 </script>
-<script src="provider-manager.js?v=4"></script>
+<script src="provider-manager.js?v=5"></script>
 <script>
 (function(){
 'use strict';
@@ -306,6 +306,7 @@ const presets=[
  {name:'AI Horde',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',provider:'horde',free:true}
 ];
 let allModels=presets.slice();
+const CACHE_KEY='ai-teams-live-catalog-v1', CACHE_TTL=15*60*1000;
 function esc2(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]});}
 function open(){
  let modal=document.getElementById('searchAiModal');
@@ -325,6 +326,14 @@ function open(){
  modal.style.display='block';filter();document.getElementById('sacInput').focus();
  fetchLive();
 }
+function loadCachedCatalog(){
+ try{
+  const raw=sessionStorage.getItem(CACHE_KEY);if(!raw)return;
+  const x=JSON.parse(raw);if(!x||!Array.isArray(x.data)||Date.now()-x.ts>CACHE_TTL)return;
+  allModels=x.data;filter();
+ }catch(e){}
+}
+function cacheCatalog(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data:data}));}catch(e){}}
 function filter(){
  const q=(document.getElementById('sacInput')?.value||'').trim().toLowerCase();
  const list=allModels.filter(function(x){return !q||[x.name,x.model,x.provider].join(' ').toLowerCase().includes(q)}).slice(0,150);
@@ -347,7 +356,7 @@ async function fetchLive(){
  const status=document.getElementById('sacStatus');if(status)status.textContent='در حال به‌روزرسانی فهرست آنلاین...';
  try{
   const r=await fetch('https://openrouter.ai/api/v1/models',{method:'GET',headers:{Accept:'application/json'},cache:'no-store'});
-  if(r.ok){const j=await r.json();const live=(j.data||[]).map(function(m){return {name:m.name||m.id,model:m.id,provider:'openrouter',free:String(m.pricing&&m.pricing.prompt)==='0'&&String(m.pricing&&m.pricing.completion)==='0'};});const map=new Map(presets.map(function(x){return [x.model,x]}));live.forEach(function(x){if(!map.has(x.model))map.set(x.model,x)});allModels=Array.from(map.values());filter();return;}
+  if(r.ok){const j=await r.json();const live=(j.data||[]).map(function(m){return {name:m.name||m.id,model:m.id,provider:'openrouter',free:String(m.pricing&&m.pricing.prompt)==='0'&&String(m.pricing&&m.pricing.completion)==='0'};});const map=new Map(presets.map(function(x){return [x.model,x]}));live.forEach(function(x){if(!map.has(x.model))map.set(x.model,x)});allModels=Array.from(map.values());cacheCatalog(allModels);filter();return;}
  }catch(e){}
  if(status)status.textContent='فهرست آماده نمایش است؛ دریافت فهرست آنلاین در این مرورگر ممکن نشد.';
 }

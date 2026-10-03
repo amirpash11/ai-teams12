@@ -57,6 +57,106 @@
  #searchAiModal #sacResults{grid-template-columns:1fr;max-height:68vh!important}
  #searchAiModal #sacBtn{min-width:78px}
 }
+</style><style>
+/* AI Teams — unified professional visual system */
+:root{
+ --bg:#080c16;--panel:#101728;--panel2:#0c1423;--line:#26344f;
+ --text:#f4f7ff;--muted:#9eacc5;--accent:#7567f8;--good:#35d9a8;
+ --danger:#ff718b;--warn:#f4c96b;
+}
+body{
+ background:
+ radial-gradient(900px 500px at 80% -10%,rgba(117,103,248,.13),transparent 60%),
+ radial-gradient(700px 450px at 0% 35%,rgba(45,150,255,.08),transparent 65%),
+ var(--bg);
+ color:var(--text);
+}
+.app{gap:0}
+.sidebar,.left-sidebar{
+ background:rgba(8,13,24,.96);
+ backdrop-filter:blur(16px);
+ border-color:#202d45;
+}
+.brand{padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:16px}
+.logo{box-shadow:0 8px 24px rgba(117,103,248,.22)}
+.brand h1{letter-spacing:.1px}
+.main{padding:24px;max-width:1320px}
+.topbar{padding:2px 2px 8px;margin-bottom:14px}
+.title h2{font-size:22px;letter-spacing:-.2px}
+.title p{color:#8796b0}
+.top-actions .btn{min-width:120px}
+.card{
+ background:linear-gradient(180deg,rgba(17,26,45,.96),rgba(13,20,35,.96));
+ border:1px solid rgba(88,108,145,.28);
+ border-radius:16px;
+ padding:17px;
+ box-shadow:0 12px 35px rgba(0,0,0,.16);
+}
+.card h3{font-size:13px;letter-spacing:.1px}
+.field label{color:#aebbd1}
+input,textarea,select{
+ background:#09111f;
+ border-color:#293853;
+ transition:border-color .15s,box-shadow .15s,background .15s;
+}
+input:focus,textarea:focus,select:focus{
+ border-color:#6f68e9;
+ box-shadow:0 0 0 3px rgba(117,103,248,.10);
+ background:#0a1323;
+}
+.btn{
+ background:#151f34;
+ border-color:#293853;
+ min-height:40px;
+ transition:transform .12s,filter .12s,box-shadow .12s;
+}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{box-shadow:0 7px 18px rgba(117,103,248,.18)}
+.mode{background:#0b1322;border-color:#293853}
+.mode.active{box-shadow:0 4px 14px rgba(117,103,248,.10)}
+.notice{background:rgba(117,103,248,.055);border-color:rgba(117,103,248,.20)}
+.agent-card,.agent-row,.human-member{
+ background:linear-gradient(180deg,#0e1729,#0b1424);
+ border-color:#263650;
+ transition:border-color .15s,transform .15s,background .15s;
+}
+.agent-card:hover,.agent-row:hover,.human-member:hover{
+ border-color:#3b4f72;
+ background:#101a2d;
+}
+.agent-card{padding:11px}
+.avatar{background:#18243b;border:1px solid rgba(110,130,170,.16)}
+.editor{scrollbar-width:thin;scrollbar-color:#354564 transparent}
+.chat{scrollbar-width:thin;scrollbar-color:#354564 transparent}
+.chat .bubble{border-color:#283853}
+.msg.user .bubble{background:#1c2a49;border-color:#344e7d}
+.admin-composer{
+ background:#0b1322;
+ border-color:#2a3954;
+ box-shadow:0 8px 25px rgba(0,0,0,.14);
+}
+.footer{opacity:.8}
+.drawer-toggle,.left-drawer-toggle{
+ box-shadow:0 8px 24px rgba(0,0,0,.28);
+ backdrop-filter:blur(8px);
+}
+.section-title{color:#aebbd1}
+.pill{background:#17233a;border:1px solid rgba(86,107,145,.22)}
+.role-pill{background:rgba(117,103,248,.11);border-color:rgba(117,103,248,.35)}
+.ai-pill{background:rgba(45,170,220,.08);border-color:rgba(45,170,220,.28)}
+@media(max-width:920px){
+ .main{padding:16px 13px}
+ .topbar{padding-top:2px}
+ .card{border-radius:14px;padding:14px}
+}
+@media(max-width:520px){
+ .main{padding:12px 9px}
+ .title h2{font-size:19px}
+ .card{padding:12px;border-radius:13px}
+ .grid{gap:10px}
+ .topbar{gap:10px}
+}
 </style><script>
 (function(){
   try{

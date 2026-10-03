@@ -164,11 +164,13 @@ const aliases=[
 ];
 function norm(q){let x=(q||'').trim().toLowerCase();aliases.forEach(function(a){x=x.split(a[0]).join(a[1]);});return x;}
 function ensureCatalogButton(){
- if(document.getElementById('aiCatalogBtn'))return;
- const p=document.getElementById('providersBtn');
- if(!p)return;
- const b=document.createElement('button');b.id='aiCatalogBtn';b.className='btn';b.textContent='🔎 جستجوی هوش مصنوعی';
- p.parentNode.insertBefore(b,p.nextSibling);
+ let b=document.getElementById('aiCatalogBtn');
+ if(!b){
+  const p=document.getElementById('providersBtn');
+  if(!p)return;
+  b=document.createElement('button');b.id='aiCatalogBtn';b.className='btn';b.textContent='🔎 جستجوی هوش مصنوعی';
+  p.parentNode.insertBefore(b,p.nextSibling);
+ }
  b.onclick=openCatalog;
 }
 function ensureCatalogModal(){

@@ -82,10 +82,10 @@ function defaults(){
   goal:'یک ایده نرم‌افزاری را تحلیل کن، راه‌حل طراحی کن و یک برنامه اجرای مرحله‌ای بده.',
   mode:'demo',
   agents:[
-   {id:uid(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو تحلیل‌گر تیم هستی. هدف را دقیق به نیازمندی‌ها، فرضیات، ریسک‌ها و خروجی‌های قابل اجرا تبدیل کن.',enabled:true},
-   {id:uid(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو طراح راه‌حل هستی. با توجه به هدف و تحلیل قبلی، معماری، جریان کار و اجزای لازم را پیشنهاد بده.',enabled:true},
-   {id:uid(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو برنامه‌نویس ارشد تیم هستی. طرح را به مراحل فنی، ساختار فایل‌ها و کد قابل پیاده‌سازی تبدیل کن.',enabled:true},
-   {id:uid(),name:'منتقد',role:'بازبینی و کشف ایراد',icon:'🔎',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'تو منتقد فنی هستی. خروجی تیم را بررسی کن، خطاها، ریسک‌ها و اصلاحات دقیق را فهرست کن.',enabled:true}
+   {id:uid(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'تو تحلیل‌گر تیم هستی. هدف را دقیق به نیازمندی‌ها، فرضیات، ریسک‌ها و خروجی‌های قابل اجرا تبدیل کن.',enabled:true},
+   {id:uid(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'تو طراح راه‌حل هستی. با توجه به هدف و تحلیل قبلی، معماری، جریان کار و اجزای لازم را پیشنهاد بده.',enabled:true},
+   {id:uid(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'تو برنامه‌نویس ارشد تیم هستی. طرح را به مراحل فنی، ساختار فایل‌ها و کد قابل پیاده‌سازی تبدیل کن.',enabled:true},
+   {id:uid(),name:'منتقد',role:'بازبینی و کشف ایراد',icon:'🔎',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'تو منتقد فنی هستی. خروجی تیم را بررسی کن، خطاها، ریسک‌ها و اصلاحات دقیق را فهرست کن.',enabled:true}
   ],
   chat:[]
  };
@@ -121,6 +121,7 @@ function render(){
  document.getElementById('configuredPill').textContent=configuredCount()+' اتصال آماده';
  document.getElementById('demoModeBtn').classList.toggle('active',state.mode==='demo');
  document.getElementById('realModeBtn').classList.toggle('active',state.mode==='real');
+ document.getElementById('realNotice').textContent=state.mode==='real'?'حالت واقعی فعال است. اگر Provider روی AI Horde باشد، بدون API Key کار می‌کند؛ در سرویس‌های دیگر ممکن است API Key لازم باشد.':'';
  document.getElementById('realNotice').style.display=state.mode==='real'?'block':'none';
  document.getElementById('modeNotice').style.display=state.mode==='demo'?'block':'none';
 
@@ -137,7 +138,7 @@ function render(){
    (closed?'':'<div class="field"><label>نام</label><input data-id="'+a.id+'" data-k="name" value="'+esc(a.name)+'"></div>'+
    '<div class="field"><label>نقش</label><input data-id="'+a.id+'" data-k="role" value="'+esc(a.role)+'"></div>'+
    '<div class="field"><label>پرامپت سیستم</label><textarea data-id="'+a.id+'" data-k="system">'+esc(a.system)+'</textarea></div>'+
-   '<div class="two"><div class="field"><label>Provider</label><select data-id="'+a.id+'" data-k="provider"><option value="openai" '+(a.provider==='openai'?'selected':'')+'>OpenAI-compatible</option><option value="openrouter" '+(a.provider==='openrouter'?'selected':'')+'>OpenRouter</option><option value="custom" '+(a.provider==='custom'?'selected':'')+'>Custom</option></select></div><div class="field"><label>Model</label><input data-id="'+a.id+'" data-k="model" value="'+esc(a.model)+'" placeholder="نام مدل"></div></div>'+
+   '<div class="two"><div class="field"><label>Provider</label><select data-id="'+a.id+'" data-k="provider"><option value="horde" '+(a.provider==='horde'?'selected':'')+'>AI Horde — رایگان بدون کلید</option><option value="openai" '+(a.provider==='openai'?'selected':'')+'>OpenAI-compatible</option><option value="openrouter" '+(a.provider==='openrouter'?'selected':'')+'>OpenRouter</option><option value="custom" '+(a.provider==='custom'?'selected':'')+'>Custom</option></select></div><div class="field"><label>Model</label><input data-id="'+a.id+'" data-k="model" value="'+esc(a.model)+'" placeholder="نام مدل"></div></div>'+
    '<div class="field"><label>Endpoint</label><input data-id="'+a.id+'" data-k="endpoint" value="'+esc(a.endpoint)+'" placeholder="https://.../v1/chat/completions"></div>'+
    '<div class="two"><div class="field"><label>API Key</label><input type="password" data-id="'+a.id+'" data-k="apiKey" value="'+esc(a.apiKey)+'" placeholder="کلید دسترسی"></div><div class="field"><label>وضعیت عضو</label><select data-id="'+a.id+'" data-k="enabled"><option value="true" '+(a.enabled?'selected':'')+'>فعال</option><option value="false" '+(!a.enabled?'selected':'')+'>غیرفعال</option></select></div></div>'+
    '<button class="btn" style="margin-top:2px" onclick="testAgent(\''+a.id+'\')">اتصال آزمایشی</button>')
@@ -173,13 +174,11 @@ function updateAgent(e){
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
 function addAgent(){
- state.agents.push({id:uid(),name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'openai',endpoint:'https://api.openai.com/v1/chat/completions',model:'gpt-4o-mini',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true});
+ state.agents.push({id:uid(),name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true});
  save();render();
  const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
 }
-function fillDemo(){
- state=defaults();save();render();alert('تنظیمات نمونه برگشت داده شد.');
-}
+function fillDemo(){ state=defaults();save();render();alert('تنظیمات نمونه برگشت داده شد.'); }
 function setMode(m){state.mode=m;save();render()}
 function msg(name,icon,text,type,error){state.chat.push({name:name,icon:icon,text:text,type:type||'agent',error:!!error});renderChat();save()}
 
@@ -201,7 +200,8 @@ async function callAgent(a,goal,transcript){
   ],
   temperature:0.2
  };
- const headers={'Content-Type':'application/json','Authorization':'Bearer '+a.apiKey};
+ const headers={'Content-Type':'application/json'};
+ if(a.provider==='horde'){headers['Authorization']='Bearer 0000000000';}else{headers['Authorization']='Bearer '+a.apiKey;}
  if(a.provider==='openrouter')headers['HTTP-Referer']=location.origin;
  const controller=new AbortController();const timer=setTimeout(function(){controller.abort()},90000);
  try{
@@ -219,7 +219,7 @@ async function callAgent(a,goal,transcript){
 
 async function testAgent(id){
  const a=selectedAgent(id);if(!a)return;
- if(!a.endpoint||!a.model||!a.apiKey)return alert('Endpoint، Model و API Key را کامل کن.');
+ if(!a.endpoint||!a.model||(a.provider!=='horde'&&!a.apiKey))return alert(a.provider==='horde'?'Endpoint و Model را کامل کن.':'Endpoint، Model و API Key را کامل کن.');
  try{
   alert('در حال آزمایش اتصال...');
   const out=await callAgent(a,'فقط یک جمله بنویس که اتصال برقرار شده است.','');

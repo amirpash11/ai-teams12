@@ -674,34 +674,7 @@ function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)==='
     }
   });
 })();</script>
-<script>
-(function(){
-'use strict';
-function moveProjectControlsToRightDrawer(){
-  const sidebar=document.querySelector('.sidebar');
-  const main=document.querySelector('.main');
-  const grid=main&&main.querySelector('.grid');
-  if(!sidebar||!main||!grid||sidebar.dataset.controlsMoved==='1')return;
-  const title=document.querySelector('.topbar');
-  if(title){
-    const wrap=document.createElement('div');
-    wrap.className='right-project-controls';
-    wrap.appendChild(title);
-    sidebar.appendChild(wrap);
-  }
-  Array.from(grid.children).forEach(function(section){
-    if(section.querySelector('#chat'))return;
-    const wrap=document.createElement('div');
-    wrap.className='right-project-controls';
-    wrap.appendChild(section);
-    sidebar.appendChild(wrap);
-  });
-  sidebar.dataset.controlsMoved='1';
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveProjectControlsToRightDrawer);
-else moveProjectControlsToRightDrawer();
-})();
-</script>
+
 <style>
 /* Project controls live in the right drawer */
 .sidebar .right-project-controls{margin-top:12px}

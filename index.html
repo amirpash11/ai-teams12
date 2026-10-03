@@ -343,11 +343,12 @@ function loadCachedCatalog(){
 function cacheCatalog(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data:data}));}catch(e){}}
 function filter(){
  const q=(document.getElementById('sacInput')?.value||'').trim().toLowerCase();
- const list=allModels.filter(function(x){return !q||[x.name,x.model,x.provider].join(' ').toLowerCase().includes(q)}).slice(0,150);
+ let list=allModels.filter(function(x){return !q||[x.name,x.model,x.provider].join(' ').toLowerCase().includes(q)});if(document.getElementById('sacFavOnly')?.classList.contains('active'))list=list.filter(isFavorite);list=sortFavorites(list).slice(0,150);
  const box=document.getElementById('sacResults');const st=document.getElementById('sacStatus');if(!box)return;
  st.textContent=list.length+' نتیجه'+(favorites.length?' · '+favorites.length+' مورد ستاره‌دار در صدر':'' );
  box.innerHTML=list.map(function(x,i){return '<div class="agent-row"><div class="agent-head"><strong>'+esc2(x.name)+'</strong><span style="display:flex;gap:6px;align-items:center"><button class="icon-btn sacFav" title="'+(isFavorite(x)?'حذف از علاقه‌مندی‌ها':'افزودن به علاقه‌مندی‌ها')+'" data-i="'+i+'" style="font-size:20px;color:'+(isFavorite(x)?'#ffd45c':'#77839d')+'">'+(isFavorite(x)?'★':'☆')+'</button><span class="pill">'+esc2(x.provider)+(x.free?' · رایگان':'')+'</span></span></div><div class="tiny">'+esc2(x.model)+'</div><button class="btn primary sacAdd" style="margin-top:8px;width:auto" data-i="'+i+'">＋ افزودن به تیم</button></div>';}).join('')||( '<div class="empty">موردی پیدا نشد.</div>' );
- box.querySelectorAll('.sacAdd').forEach(function(b){b.onclick=function(){add(allModels[findDisplayedIndex(list,Number(b.dataset.i))]);}});
+ box.querySelectorAll('.sacAdd').forEach(function(b){b.onclick=function(){add(list[Number(b.dataset.i)]);}});
+ box.querySelectorAll('.sacFav').forEach(function(b){b.onclick=function(ev){ev.preventDefault();ev.stopPropagation();toggleFavorite(list[Number(b.dataset.i)]);}});
 }
 function findDisplayedIndex(list,i){const x=list[i];return allModels.indexOf(x);}
 function add(x){
@@ -373,6 +374,5 @@ document.addEventListener('click',function(ev){
 },true);
 })();
 </script>
-</body></script>
 </body>
 </html>

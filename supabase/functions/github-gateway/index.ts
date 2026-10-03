@@ -6,7 +6,7 @@ const GITHUB_CLIENT_ID=Deno.env.get("GITHUB_CLIENT_ID")||"";
 const GITHUB_CLIENT_SECRET=Deno.env.get("GITHUB_CLIENT_SECRET")||"";
 const APP_URL=Deno.env.get("AI_TEAMS_APP_URL")||"https://amirpash11.github.io/ai-teams12/";
 const ENC_KEY=Deno.env.get("GITHUB_TOKEN_ENCRYPTION_KEY")||"";
-const TABLE="github_connections";
+const TABLE="github_connections";\nconst STATE_TABLE="github_oauth_states";
 
 function json(x,status=200){return new Response(JSON.stringify(x),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});}
 function hexToBytes(h){return new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));}
@@ -21,28 +21,31 @@ Deno.serve(async req=>{
   try{
     if(action==="oauth-start"){
       if(!GITHUB_CLIENT_ID)throw new Error("GITHUB_CLIENT_ID is not configured");
+      const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
+      if(error)return json({error:error.message},error.status);
       const ret=u.searchParams.get("return_to")||APP_URL;
-      const state=btoa(JSON.stringify({return_to:ret,nonce:crypto.randomUUID()}));
+      const state=crypto.randomUUID();
+      const admin=ctx.supabaseAdmin;
+      await admin.from(STATE_TABLE).insert({state,user_id:ctx.userClaims.id,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
       const cb=u.origin+u.pathname+"?action=oauth-callback";
-      const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email")+"&state="+encodeURIComponent(state);
-      return Response.redirect(auth,302);
+      const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email offline_access")+"&state="+encodeURIComponent(state);
+      return json({url:auth});
     }
     if(action==="oauth-callback"){
       if(!GITHUB_CLIENT_ID||!GITHUB_CLIENT_SECRET)throw new Error("GitHub OAuth secrets are not configured");
       const code=u.searchParams.get("code"),state=u.searchParams.get("state")||"";
-      if(!code)throw new Error("GitHub authorization code missing");
-      const tokenResp=await fetch("https://github.com/login/oauth/access_token",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json"},body:JSON.stringify({client_id:GITHUB_CLIENT_ID,client_secret:GITHUB_CLIENT_SECRET,code,redirect_uri:u.origin+u.pathname+"?action=oauth-callback"})});
+      if(!code||!state)throw new Error("GitHub authorization data missing");
+      const admin=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const {data:st}=await admin.from(STATE_TABLE).select("*").eq("state",state).maybeSingle();
+      if(!st||new Date(st.expires_at).getTime()<Date.now())throw new Error("OAuth state expired");
+      const cb=u.origin+u.pathname+"?action=oauth-callback";
+      const tokenResp=await fetch("https://github.com/login/oauth/access_token",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json"},body:JSON.stringify({client_id:GITHUB_CLIENT_ID,client_secret:GITHUB_CLIENT_SECRET,code,redirect_uri:cb})});
       const tok=await tokenResp.json();if(!tok.access_token)throw new Error(tok.error_description||"GitHub token exchange failed");
       const me=await gh(tok.access_token,"https://api.github.com/user");
-      const authHeader=req.headers.get("Authorization");
-      if(!authHeader) {
-        const st=JSON.parse(atob(state)); const redirect=(st.return_to||APP_URL)+"?github=connected";
-        const admin=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-        const {data:users}=await admin.auth.admin.listUsers({page:1,perPage:1});
-        void users;
-        return Response.redirect(redirect,302);
-      }
-      return json({error:"callback must be completed by an authenticated flow"},400);
+      await admin.from(TABLE).upsert({user_id:st.user_id,github_user_id:me.id,github_login:me.login,access_token_enc:await enc(tok.access_token),refresh_token_enc:tok.refresh_token?await enc(tok.refresh_token):null,expires_at:tok.expires_in?new Date(Date.now()+Number(tok.expires_in)*1000).toISOString():null,scopes:tok.scope||"",updated_at:new Date().toISOString()});
+      await admin.from(STATE_TABLE).delete().eq("state",state);
+      const ret=st.return_to||APP_URL;
+      return Response.redirect(ret+(ret.includes("?")?"&":"?")+"github=connected",302);
     }
     const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
     if(error)return json({error:error.message},error.status);

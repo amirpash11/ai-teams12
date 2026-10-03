@@ -208,5 +208,28 @@ async function invokeAIGateway(payload){
   if(r.data&&r.data.error)throw new Error(r.data.error);
   return r.data;
 }
+async function listProjects(){
+  if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
+  const r=await supabase.from(TABLE).select('project_id,name,updated_at').order('updated_at',{ascending:false}).limit(50);
+  if(r.error)throw r.error; return r.data||[];
+}
+async function switchProject(id){
+  if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
+  localStorage.setItem(LOCAL_KEY,String(id));
+  await syncFromCloud();
+  return id;
+}
+async function newProject(name){
+  if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
+  const id=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();
+  localStorage.setItem(LOCAL_KEY,id);
+  const core=window.aiTeamsCore;
+  if(core){
+    const s=core.getState();
+    s.teamName=name||'تیم جدید';s.goal='';s.chat=[];s.runs=[];
+    core.save();core.render();
+  }
+  await syncNow(false); return id;
+}
 window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true)},isReady:function(){return cloudReady&&!!cloudUser},invokeAI:invokeAIGateway,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser}}};
 })();

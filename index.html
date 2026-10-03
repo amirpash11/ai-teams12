@@ -727,17 +727,40 @@ else moveProjectControlsToRightDrawer();
 </style>
 <script>
 (function(){
+'use strict';
 function moveHomeOptionsToRightDrawer(){
  var sidebar=document.querySelector('.sidebar'),main=document.querySelector('.main'),grid=document.querySelector('.main .grid');
  if(!sidebar||!main||!grid||sidebar.dataset.optionsMoved==='1')return;
- var title=main.querySelector('.topbar'),cards=Array.prototype.slice.call(grid.children),chatCard=cards[cards.length-1];
- var panel=document.createElement('div');panel.id='rightHomeOptions';panel.className='right-home-options';
- panel.innerHTML='<div class="section-title">تنظیمات و اجرای تیم</div>';
- if(title)panel.appendChild(title);
- cards.forEach(function(card){if(card!==chatCard)panel.appendChild(card);});
- sidebar.appendChild(panel);sidebar.dataset.optionsMoved='1';
+ var title=main.querySelector('.topbar');
+ var cards=Array.prototype.slice.call(grid.children);
+ var chatCard=cards.find(function(card){return card.querySelector('#chat')});
+ var panel=document.getElementById('rightHomeOptions')||document.createElement('div');
+ panel.id='rightHomeOptions';panel.className='right-home-options';
+ if(!panel.querySelector('.section-title')){
+   var heading=document.createElement('div');heading.className='section-title';heading.textContent='تنظیمات و اجرای تیم';panel.appendChild(heading);
+ }
+ if(title&&!panel.contains(title))panel.appendChild(title);
+ cards.forEach(function(card){if(card!==chatCard&&!panel.contains(card))panel.appendChild(card);});
+ if(!sidebar.contains(panel))sidebar.appendChild(panel);
+ sidebar.dataset.optionsMoved='1';
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveHomeOptionsToRightDrawer);else moveHomeOptionsToRightDrawer();
+function bindDrawerControls(){
+ var r=document.getElementById('drawerToggle'),l=document.getElementById('leftDrawerToggle');
+ if(r&&!r.dataset.bound){r.addEventListener('click',function(){
+   var hidden=localStorage.getItem('ai-teams-drawer-hidden-v1')==='1';
+   localStorage.setItem('ai-teams-drawer-hidden-v1',hidden?'0':'1');
+   document.querySelector('.app').classList.toggle('drawer-hidden',!hidden);
+   r.textContent=hidden?'◀':'▶';
+ });r.dataset.bound='1';}
+ if(l&&!l.dataset.bound){l.addEventListener('click',function(){
+   var hidden=localStorage.getItem('ai-teams-left-drawer-hidden-v1')==='1';
+   localStorage.setItem('ai-teams-left-drawer-hidden-v1',hidden?'0':'1');
+   document.querySelector('.app').classList.toggle('left-drawer-hidden',!hidden);
+   l.textContent=hidden?'▶':'◀';
+ });l.dataset.bound='1';}
+}
+function init(){moveHomeOptionsToRightDrawer();bindDrawerControls();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script src="provider-manager.js?v=6"></script>
 <script src="multiplayer.js?v=1"></script>

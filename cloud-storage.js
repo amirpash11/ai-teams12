@@ -201,5 +201,12 @@ async function boot(){
   });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true)},isReady:function(){return cloudReady&&!!cloudUser}};
+async function invokeAIGateway(payload){
+  if(!cloudReady||!cloudUser)throw new Error('برای اتصال امن مدل، ابتدا وارد ذخیره‌سازی ابری شوید.');
+  const r=await supabase.functions.invoke('ai-gateway',{body:payload});
+  if(r.error)throw new Error(r.error.message||'AI Gateway در دسترس نیست.');
+  if(r.data&&r.data.error)throw new Error(r.data.error);
+  return r.data;
+}
+window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true)},isReady:function(){return cloudReady&&!!cloudUser},invokeAI:invokeAIGateway,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser}}};
 })();

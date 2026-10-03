@@ -157,6 +157,42 @@ input:focus,textarea:focus,select:focus{
  .grid{gap:10px}
  .topbar{gap:10px}
 }
+</style><style>
+/* AI Teams — chat-first home */
+body.chat-first-home .topbar,
+body.chat-first-home .footer,
+body.chat-first-home .grid > section:not(:last-child){display:none!important}
+body.chat-first-home .main{
+  max-width:1180px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:28px;
+}
+body.chat-first-home .grid{
+  display:block;
+  width:100%;
+}
+body.chat-first-home .grid > section:last-child{
+  display:block!important;
+  width:100%;
+  min-height:min(82vh,820px);
+  margin:0;
+  padding:18px;
+}
+body.chat-first-home .grid > section:last-child > div[style*="margin-bottom"]{
+  margin-bottom:10px!important;
+}
+body.chat-first-home #chat{
+  min-height:calc(min(82vh,820px) - 170px);
+  max-height:none;
+}
+@media(max-width:920px){
+  body.chat-first-home .main{padding:12px 9px}
+  body.chat-first-home .grid > section:last-child{min-height:calc(100vh - 24px);padding:12px}
+  body.chat-first-home #chat{min-height:calc(100vh - 170px);max-height:none}
+}
 </style><script>
 (function(){
   try{

@@ -124,6 +124,7 @@ let busy=false;
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
 function selectedAgent(id){return state.agents.find(function(a){return a.id===id})}
+function agentAiLabel(a){const m=String(a.model||'').toLowerCase();const p=String(a.provider||'').toLowerCase();if(m.includes('deepseek'))return 'DeepSeek';if(m.includes('claude'))return 'Claude';if(m.includes('gemini'))return 'Gemini';if(m.includes('gpt')||p==='openai')return 'GPT / OpenAI';if(m.includes('grok'))return 'Grok';if(m.includes('mistral'))return 'Mistral';if(m.includes('qwen'))return 'Qwen';if(m.includes('llama'))return 'Llama';if(p==='horde')return 'AI Horde';if(p==='openrouter')return 'OpenRouter';if(p==='custom')return 'Custom';return a.model||a.provider||'نامشخص'}
 function configuredCount(){return state.agents.filter(function(a){return a.enabled&&a.endpoint&&a.model&&(a.provider==='horde'||a.apiKey)}).length}
 
 function render(){
@@ -140,7 +141,7 @@ function render(){
  document.getElementById('modeNotice').style.display=state.mode==='demo'?'block':'none';
 
  document.getElementById('agentList').innerHTML=state.agents.map(function(a){
-  return '<div class="agent-card"><div class="avatar">'+esc(a.icon)+'</div><div class="details"><b>'+esc(a.name)+'</b><small>'+esc(a.role)+'</small></div><span class="dot '+(a.enabled?'':'off')+'"></span></div>';
+  return '<div class="agent-card"><div class="avatar">'+esc(a.icon)+'</div><div class="details"><b>'+esc(a.name)+'</b><small>'+esc(a.role)+'</small><small style="color:#8fd7ff">هوش مصنوعی: '+esc(agentAiLabel(a))+'</small></div><span class="dot '+(a.enabled?'':'off')+'"></span></div>';
  }).join('');
 
  document.getElementById('editor').innerHTML=state.agents.map(function(a,index){
@@ -175,7 +176,7 @@ function renderChat(){
 }
 function renderSidebarOnly(){
  document.getElementById('agentList').innerHTML=state.agents.map(function(a){
-  return '<div class="agent-card"><div class="avatar">'+esc(a.icon)+'</div><div class="details"><b>'+esc(a.name)+'</b><small>'+esc(a.role)+'</small></div><span class="dot '+(a.enabled?'':'off')+'"></span></div>';
+  return '<div class="agent-card"><div class="avatar">'+esc(a.icon)+'</div><div class="details"><b>'+esc(a.name)+'</b><small>'+esc(a.role)+'</small><small style="color:#8fd7ff">هوش مصنوعی: '+esc(agentAiLabel(a))+'</small></div><span class="dot '+(a.enabled?'':'off')+'"></span></div>';
  }).join('');
  document.getElementById('countPill').textContent=state.agents.length+' عضو';
  document.getElementById('configuredPill').textContent=configuredCount()+' اتصال آماده';

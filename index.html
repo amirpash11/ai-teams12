@@ -744,22 +744,7 @@ function moveHomeOptionsToRightDrawer(){
  if(!sidebar.contains(panel))sidebar.appendChild(panel);
  sidebar.dataset.optionsMoved='1';
 }
-function bindDrawerControls(){
- var r=document.getElementById('drawerToggle'),l=document.getElementById('leftDrawerToggle');
- if(r&&!r.dataset.bound){r.addEventListener('click',function(){
-   var hidden=localStorage.getItem('ai-teams-drawer-hidden-v1')==='1';
-   localStorage.setItem('ai-teams-drawer-hidden-v1',hidden?'0':'1');
-   document.querySelector('.app').classList.toggle('drawer-hidden',!hidden);
-   r.textContent=hidden?'◀':'▶';
- });r.dataset.bound='1';}
- if(l&&!l.dataset.bound){l.addEventListener('click',function(){
-   var hidden=localStorage.getItem('ai-teams-left-drawer-hidden-v1')==='1';
-   localStorage.setItem('ai-teams-left-drawer-hidden-v1',hidden?'0':'1');
-   document.querySelector('.app').classList.toggle('left-drawer-hidden',!hidden);
-   l.textContent=hidden?'▶':'◀';
- });l.dataset.bound='1';}
-}
-function init(){moveHomeOptionsToRightDrawer();bindDrawerControls();}
+function init(){moveHomeOptionsToRightDrawer();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script src="provider-manager.js?v=6"></script>

@@ -44,7 +44,7 @@
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
   <div class="section-title">اعضای تیم</div>
   <div id="agentList" class="agent-list"></div>
-  <button class="btn primary" id="addAgentBtn">＋ افزودن هوش مصنوعی</button>
+  <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button>
   <button class="btn" id="providersBtn">⚙ مدیریت و افزودن سرویس</button>
   <button class="btn" id="aiCatalogBtn">🔎 جستجوی هوش مصنوعی</button>
   <div id="providerMiniList" class="tiny" style="margin-top:8px"></div>
@@ -140,6 +140,7 @@ function load(){
  return defaults();
 }
 let state=load();
+state.agents=(state.agents||[]).map(function(a){if(!a.kind)a.kind='ai';return a});
 let collapsed=new Set(state.agents.map(function(a){return a.id;}));
 let busy=false;
 
@@ -147,7 +148,7 @@ function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
 function selectedAgent(id){return state.agents.find(function(a){return a.id===id})}
 function agentAiLabel(a){const m=String(a.model||'').toLowerCase();const p=String(a.provider||'').toLowerCase();if(m.includes('deepseek'))return 'DeepSeek';if(m.includes('claude'))return 'Claude';if(m.includes('gemini'))return 'Gemini';if(m.includes('gpt')||p==='openai')return 'GPT / OpenAI';if(m.includes('grok'))return 'Grok';if(m.includes('mistral'))return 'Mistral';if(m.includes('qwen'))return 'Qwen';if(m.includes('llama'))return 'Llama';if(p==='horde')return 'AI Horde';if(p==='openrouter')return 'OpenRouter';if(p==='custom')return 'Custom';return a.model||a.provider||'نامشخص'}
-function configuredCount(){return state.agents.filter(function(a){return a.enabled&&a.endpoint&&a.model&&(a.provider==='horde'||a.apiKey)}).length}
+function configuredCount(){return state.agents.filter(function(a){return a.kind!=='human'&&a.enabled&&a.endpoint&&a.model&&(a.provider==='horde'||a.apiKey)}).length}
 
 function render(){
  document.getElementById('teamTitle').textContent=state.teamName||'تیم هوش مصنوعی من';
@@ -213,7 +214,13 @@ function updateAgent(e){
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
 function addAgent(){
- const newAgent={id:uid(),name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true};
+ const choice=prompt('نوع عضو: 1 = هوش مصنوعی، 2 = عضو انسانی','1');
+ if(choice===null)return;
+ if(choice==='2'){
+  const human={id:uid(),kind:'human',name:'عضو انسانی '+(state.agents.filter(function(a){return a.kind==='human'}).length+1),role:'عضو تیم',icon:'👤',provider:'',endpoint:'',model:'',apiKey:'',system:'',enabled:true};
+  state.agents.push(human);collapsed.add(human.id);save();render();return;
+ }
+ const newAgent={id:uid(),kind:'ai',name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true};
  state.agents.push(newAgent);collapsed.add(newAgent.id);
  save();render();
  const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
@@ -281,7 +288,7 @@ async function runAdminTurn(){
  const input=document.getElementById('adminChatInput');
  const userText=input.value.trim();
  if(!userText)return;
- const active=state.agents.filter(function(a){return a.enabled});
+ const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
  if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=document.getElementById('goal').value.trim();

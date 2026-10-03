@@ -118,7 +118,7 @@ function load(){
  return defaults();
 }
 let state=load();
-let collapsed=new Set();
+let collapsed=new Set(state.agents.map(function(a){return a.id;}));
 let busy=false;
 
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
@@ -190,7 +190,8 @@ function updateAgent(e){
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
 function addAgent(){
- state.agents.push({id:uid(),name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true});
+ const newAgent={id:uid(),name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',apiKey:'',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true};
+ state.agents.push(newAgent);collapsed.add(newAgent.id);
  save();render();
  const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
 }

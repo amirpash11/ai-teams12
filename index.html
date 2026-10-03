@@ -306,7 +306,13 @@ const presets=[
  {name:'AI Horde',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',provider:'horde',free:true}
 ];
 let allModels=presets.slice();
-const CACHE_KEY='ai-teams-live-catalog-v1', CACHE_TTL=15*60*1000;
+const CACHE_KEY='ai-teams-live-catalog-v1', CACHE_TTL=15*60*1000, FAV_KEY='ai-teams-favorites-v1';
+let favorites=loadFavorites();
+function loadFavorites(){try{const x=JSON.parse(localStorage.getItem(FAV_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return []}}
+function saveFavorites(){localStorage.setItem(FAV_KEY,JSON.stringify(favorites))}
+function isFavorite(item){return favorites.indexOf((item.provider||'')+'::'+(item.model||item.name||''))>=0}
+function toggleFavorite(item){const key=(item.provider||'')+'::'+(item.model||item.name||'');const i=favorites.indexOf(key);if(i>=0)favorites.splice(i,1);else favorites.push(key);saveFavorites();filter()}
+function sortFavorites(list){return list.slice().sort(function(a,b){return Number(isFavorite(b))-Number(isFavorite(a));})}
 function esc2(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]});}
 function open(){
  let modal=document.getElementById('searchAiModal');
@@ -316,10 +322,11 @@ function open(){
   '<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🔎 جستجوی هوش مصنوعی</h3><button id="sacClose" class="icon-btn">✕</button></div>'+
   '<div class="notice" style="margin-top:10px">اسم سرویس یا مدل را جستجو کن. نتایج اولیه بدون اینترنت نمایش داده می‌شوند و سپس فهرست آنلاین به‌روزرسانی می‌شود.</div>'+
   '<div style="display:flex;gap:8px;margin-top:12px"><input id="sacInput" placeholder="Claude، Gemini، GPT، Grok، DeepSeek..." style="flex:1"><button id="sacBtn" class="btn primary" style="width:auto;margin:0">جستجو</button></div>'+
-  '<div id="sacStatus" class="tiny" style="margin-top:8px"></div><div id="sacResults" class="editor" style="margin-top:10px;max-height:60vh"></div></div>';
+  '<div id="sacStatus" class="tiny" style="margin-top:8px"></div><button id="sacFavOnly" class="mode" style="margin-top:8px">★ فقط علاقه‌مندی‌ها</button><div id="sacResults" class="editor" style="margin-top:10px;max-height:60vh"></div></div>';
   document.body.appendChild(modal);
   document.getElementById('sacClose').onclick=function(){modal.style.display='none'};
   document.getElementById('sacBtn').onclick=filter;
+  document.getElementById('sacFavOnly').onclick=function(){this.classList.toggle('active');filter();};
   document.getElementById('sacInput').oninput=filter;
   document.getElementById('sacInput').onkeydown=function(ev){if(ev.key==='Enter')filter()};
  }
@@ -338,8 +345,8 @@ function filter(){
  const q=(document.getElementById('sacInput')?.value||'').trim().toLowerCase();
  const list=allModels.filter(function(x){return !q||[x.name,x.model,x.provider].join(' ').toLowerCase().includes(q)}).slice(0,150);
  const box=document.getElementById('sacResults');const st=document.getElementById('sacStatus');if(!box)return;
- st.textContent=list.length+' نتیجه';
- box.innerHTML=list.map(function(x,i){return '<div class="agent-row"><div class="agent-head"><strong>'+esc2(x.name)+'</strong><span class="pill">'+esc2(x.provider)+(x.free?' · رایگان':'')+'</span></div><div class="tiny">'+esc2(x.model)+'</div><button class="btn primary sacAdd" style="margin-top:8px;width:auto" data-i="'+i+'">＋ افزودن به تیم</button></div>';}).join('')||( '<div class="empty">موردی پیدا نشد.</div>' );
+ st.textContent=list.length+' نتیجه'+(favorites.length?' · '+favorites.length+' مورد ستاره‌دار در صدر':'' );
+ box.innerHTML=list.map(function(x,i){return '<div class="agent-row"><div class="agent-head"><strong>'+esc2(x.name)+'</strong><span style="display:flex;gap:6px;align-items:center"><button class="icon-btn sacFav" title="'+(isFavorite(x)?'حذف از علاقه‌مندی‌ها':'افزودن به علاقه‌مندی‌ها')+'" data-i="'+i+'" style="font-size:20px;color:'+(isFavorite(x)?'#ffd45c':'#77839d')+'">'+(isFavorite(x)?'★':'☆')+'</button><span class="pill">'+esc2(x.provider)+(x.free?' · رایگان':'')+'</span></span></div><div class="tiny">'+esc2(x.model)+'</div><button class="btn primary sacAdd" style="margin-top:8px;width:auto" data-i="'+i+'">＋ افزودن به تیم</button></div>';}).join('')||( '<div class="empty">موردی پیدا نشد.</div>' );
  box.querySelectorAll('.sacAdd').forEach(function(b){b.onclick=function(){add(allModels[findDisplayedIndex(list,Number(b.dataset.i))]);}});
 }
 function findDisplayedIndex(list,i){const x=list[i];return allModels.indexOf(x);}

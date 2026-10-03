@@ -451,7 +451,28 @@ function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)==='
 (function(){var r=document.getElementById('drawerToggle'),l=document.getElementById('leftDrawerToggle');if(!r||!l)return;r.onclick=function(){var h=localStorage.getItem(__drawerState.key)==='1';localStorage.setItem(__drawerState.key,h?'0':'1');if(h)localStorage.setItem(__leftDrawerState.key,'1');applyDrawer();applyLeftDrawer();};l.onclick=function(){var h=localStorage.getItem(__leftDrawerState.key)==='1';localStorage.setItem(__leftDrawerState.key,h?'0':'1');if(h)localStorage.setItem(__drawerState.key,'1');applyDrawer();applyLeftDrawer();};applyDrawer();applyLeftDrawer();window.addEventListener('pageshow',function(){applyDrawer();applyLeftDrawer();});})();
 
 // Back button: if either drawer is open, close it first instead of navigating away.
-(function(){var closedByBack=false;function closeDrawersOnBack(){var app=document.querySelector('.app');if(!app)return false;var rightOpen=localStorage.getItem(__drawerState.key)!=='1';var leftOpen=localStorage.getItem(__leftDrawerState.key)!=='1';if(rightOpen||leftOpen){localStorage.setItem(__drawerState.key,'1');localStorage.setItem(__leftDrawerState.key,'1');applyDrawer();applyLeftDrawer();return true;}return false;}window.addEventListener('popstate',function(ev){if(closeDrawersOnBack()){history.pushState({aiTeamsDrawer:true},'','#ai-teams');}});history.pushState({aiTeamsDrawer:true},'','#ai-teams');})();</script>
+(function(){
+  var backGuard=false;
+  function anyDrawerOpen(){return localStorage.getItem(__drawerState.key)!=='1'||localStorage.getItem(__leftDrawerState.key)!=='1';}
+  function closeOpenDrawers(){
+    if(!anyDrawerOpen())return false;
+    localStorage.setItem(__drawerState.key,'1');
+    localStorage.setItem(__leftDrawerState.key,'1');
+    applyDrawer();applyLeftDrawer();
+    return true;
+  }
+  // Put a guard entry behind the current page. Back closes an open drawer first.
+  history.replaceState({aiTeamsBase:true},'',location.href);
+  history.pushState({aiTeamsGuard:true},'',location.href);
+  window.addEventListener('popstate',function(){
+    if(backGuard)return;
+    if(closeOpenDrawers()){
+      backGuard=true;
+      history.pushState({aiTeamsGuard:true},'',location.href);
+      backGuard=false;
+    }
+  });
+})();</script>
 <script src="provider-manager.js?v=6"></script>
 <script src="multiplayer.js?v=1"></script>
 <script>

@@ -195,7 +195,7 @@ function addAgent(){
  save();render();
  const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
 }
-function fillDemo(){ state=defaults();save();render();alert('تنظیمات نمونه برگشت داده شد.'); }
+function fillDemo(){ state=defaults();collapsed=new Set(state.agents.map(function(a){return a.id;}));save();render();alert('تنظیمات نمونه برگشت داده شد.'); }
 function setMode(m){state.mode=m;save();render()}
 function msg(name,icon,text,type,error){state.chat.push({name:name,icon:icon,text:text,type:type||'agent',error:!!error});renderChat();save()}
 

@@ -563,27 +563,49 @@ async function runTeam(){
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=goal;
  if(!goal)return alert('اول هدف تیم را وارد کن.');
- const active=state.agents.filter(function(a){return a.enabled});
- if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
- busy=true;document.getElementById('runBtn').disabled=true;
+ const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
+ busy=true;document.getElementById('runBtn').disabled=true;document.getElementById('dialogueBtn').disabled=true;document.getElementById('adminChatBtn').disabled=true;
  state.chat=[];msg('شما','👤','هدف: '+goal,'user',false);
- let transcript=buildTeamRoster(active)+'\\n\\nشروع اجرای تیم:\\n';
- for(const a of active){
-  msg(a.name,a.icon,state.mode==='demo'?'در حال تحلیل هدف در حالت نمایشی...':'در حال ارسال درخواست به مدل...','agent',false);
+ let transcript=buildTeamRoster(active)+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
+ for(let i=0;i<active.length;i++){
+  const a=active[i];
+  msg(a.name,a.icon,(i===0?'مرحله ۱ — در حال تحلیل اولیه...':'مرحله '+(i+1)+' — در حال بررسی خروجی اعضای قبلی...'),'agent',false);
   try{
-   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal,transcript);
+   const context=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
+    '\\n\\nتو عضو شماره '+(i+1)+' از '+active.length+' هستی و نقش تو «'+(a.role||'عضو تیم')+'» است.'+
+    '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+
+    '\\nاگر عضو قبلی راه‌حل ناقص یا اشتباهی داده، بدون تعارف آن بخش را مشخص و اصلاح کن.';
+   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,context,transcript);
    state.chat[state.chat.length-1].text=result;state.chat[state.chat.length-1].error=false;
-   transcript+=(transcript?'\\n\\n':'')+'['+a.name+']\\n'+result;
+   transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    renderChat();save();
   }catch(e){
    state.chat[state.chat.length-1].text='خطا: '+e.message;state.chat[state.chat.length-1].error=true;
    renderChat();save();
-   if(state.mode==='real'){
-    transcript+=(transcript?'\\n\\n':'')+'['+a.name+' - خطا]\\n'+e.message;
-   }
+   transcript+='\\n\\n[مرحله '+(i+1)+' | '+a.name+' - خطا]\\n'+e.message;
   }
  }
- busy=false;document.getElementById('runBtn').disabled=false;save();
+ const coordinator=active[active.length-1];
+ msg('جمع‌بندی تیم','🧠','در حال جمع‌بندی خروجی همه اعضا...','agent',false);
+ try{
+  let finalResult;
+  if(state.mode==='demo'){
+   finalResult='خلاصه اجرای تیم برای هدف «'+goal+'» آماده شد.\\n\\nخروجی اعضا به‌ترتیب بررسی و تکمیل شدند و آخرین عضو تیم نقش جمع‌بندی‌کننده را بر عهده گرفت.';
+  }else{
+   const finalGoal=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
+    '\\n\\nوظیفه نهایی: خروجی تمام مراحل زیر را بررسی کن و یک جمع‌بندی اجرایی ارائه بده. نتیجه باید شامل: ۱) نتیجه اصلی، ۲) نکات مهم و اختلاف‌نظرها، ۳) مواردی که هنوز نیاز به بررسی دارند، ۴) قدم‌های بعدی مشخص باشد. فقط بر اساس اطلاعات موجود تصمیم‌گیری کن و چیزی را که در خروجی اعضا نیست به‌عنوان واقعیت قطعی اضافه نکن.';
+   finalResult=await callAgent(coordinator,finalGoal,transcript);
+  }
+  state.chat[state.chat.length-1].text=finalResult;state.chat[state.chat.length-1].error=false;
+  transcript+='\\n\\n[جمع‌بندی نهایی | '+coordinator.name+']\\n'+finalResult;
+  renderChat();save();
+ }catch(e){
+  state.chat[state.chat.length-1].text='خطا در جمع‌بندی نهایی: '+e.message;state.chat[state.chat.length-1].error=true;
+  renderChat();save();
+ }
+ msg('سیستم','✅','اجرای زنجیره‌ای تیم تمام شد؛ خروجی هر عضو به مرحله بعد منتقل شد و جمع‌بندی نهایی تولید شد.','agent',false);
+ busy=false;document.getElementById('runBtn').disabled=false;document.getElementById('dialogueBtn').disabled=false;document.getElementById('adminChatBtn').disabled=false;save();
 }
 function clearChat(){state.chat=[];save();renderChat()}
 function exportConfig(){

@@ -30,7 +30,7 @@
   .app:not(.drawer-hidden) .sidebar{transform:translateX(0)}
   .drawer-hidden .sidebar{display:block;width:min(86vw,340px);padding:70px 14px 18px;transform:translateX(105%)}
   .drawer-toggle{position:fixed !important;top:10px;right:10px;left:auto;z-index:1500}
-  .drawer-hidden .drawer-toggle{right:10px}
+  .drawer-hidden .drawer-toggle{right:10px;background:#20a05a;border-color:#67d99a;color:#fff}
   .grid{grid-template-columns:1fr}.main{padding:14px}.topbar{align-items:flex-start;flex-direction:column}.top-actions{width:100%}.top-actions .btn{flex:1}.two{grid-template-columns:1fr}
   .left-sidebar{width:min(86vw,320px);padding:70px 14px 14px}.left-drawer-toggle{top:10px;left:10px}
 }
@@ -38,7 +38,7 @@
 </head>
 <body>
 <div class="app">
-<aside class="sidebar"><button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست">◀</button>
+<button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست">◀</button><aside class="sidebar">
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
   <div class="section-title">اعضای تیم</div>
   <div id="agentList" class="agent-list"></div>

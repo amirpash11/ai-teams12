@@ -1,4 +1,3 @@
-import { withSupabase } from "npm:@supabase/server@1";
 import { createClient } from "npm:@supabase/supabase-js@2";
 const GITHUB_CLIENT_ID=Deno.env.get("GITHUB_CLIENT_ID")||"";
 const GITHUB_CLIENT_SECRET=Deno.env.get("GITHUB_CLIENT_SECRET")||"";
@@ -57,7 +56,7 @@ Deno.serve(async req=>{
       const {data:st}=await admin.from(STATE_TABLE).select("*").eq("state",state).maybeSingle();
       if(!st||new Date(st.expires_at).getTime()<Date.now())throw new Error("OAuth state expired");
       await admin.from(STATE_TABLE).delete().eq("state",state);
-      const cb=u.origin+u.pathname+"?action=oauth-callback";
+      const cb=APP_ORIGIN+new URL(req.url).pathname+"?action=oauth-callback";
       const tokenResp=await fetch("https://github.com/login/oauth/access_token",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json"},body:JSON.stringify({client_id:GITHUB_CLIENT_ID,client_secret:GITHUB_CLIENT_SECRET,code,redirect_uri:cb})});
       const tok=await tokenResp.json();if(!tok.access_token)throw new Error(tok.error_description||"GitHub token exchange failed");
       const me=await gh(tok.access_token,"https://api.github.com/user");

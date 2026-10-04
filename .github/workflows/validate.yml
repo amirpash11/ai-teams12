@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate index JavaScript
         run: |
@@ -56,10 +56,11 @@ jobs:
           ! grep -q "oai.stablehorde.net/v1/chat/completions" supabase/functions/ai-gateway/index.ts
           grep -q "expires_at" supabase/functions/github-gateway/index.ts
           grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
+          grep -q "Content-Security-Policy" index.html
           echo "Gateway and GitHub security invariants passed."
 
       - name: Validate Supabase Edge Functions
-        uses: denoland/setup-deno@v1
+        uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 

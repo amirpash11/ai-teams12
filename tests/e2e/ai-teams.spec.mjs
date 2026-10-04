@@ -11,6 +11,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#rightTeamMembersToggle').click();
     await expect(page.locator('#agentList')).toBeVisible();
     const before = await page.locator('#agentList .agent-card').count();
+    page.once('dialog', dialog => dialog.accept('1'));
     await page.locator('#addAgentBtn').click();
     await expect(page.locator('#agentList .agent-card')).toHaveCount(before + 1);
 
@@ -35,9 +36,9 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#adminChatInput')).toBeVisible();
 
     await page.locator('#drawerToggle').click();
-    await expect(page.locator('.app')).toHaveClass(/drawer-hidden/);
+    await expect(page.locator('.app')).toHaveClass(/(^| )drawer-hidden( |$)/);
     await page.locator('#drawerToggle').click();
-    await expect(page.locator('.app')).not.toHaveClass(/drawer-hidden/);
+    await expect(page.locator('.app')).not.toHaveClass(/(^| )drawer-hidden( |$)/);
 
     const inputBox = await page.locator('#adminChatInput').boundingBox();
     const buttonBox = await page.locator('#adminChatBtn').boundingBox();

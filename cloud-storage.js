@@ -167,10 +167,10 @@ async function syncFromCloud(){
       if(core){
         applyingRemote=true;
         const current=core.getState();
-        const remote=r.data.state;
+        const remote=(r.data.state&&typeof r.data.state==='object')?r.data.state:{};
         Object.keys(current).forEach(function(k){delete current[k]});
         Object.keys(remote).forEach(function(k){current[k]=remote[k]});
-        localStorage.setItem('ai-teams12-state-v2',JSON.stringify(current));
+        core.save();
         core.render();
         applyingRemote=false;
         status('نسخه ابری پروژه بازیابی شد.',true);

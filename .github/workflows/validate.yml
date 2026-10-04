@@ -88,12 +88,12 @@ jobs:
       - name: Public provider smoke tests
         run: |
           set -euo pipefail
-          openrouter_json="$(curl -fsS --retry 4 --retry-all-errors --max-time 20 https://openrouter.ai/api/v1/models)"
-          horde_json="$(curl -fsS --retry 4 --retry-all-errors --max-time 20 -H 'Authorization: Bearer 0000000000' https://oai.aihorde.net/v1/models)"
-          node - "$openrouter_json" "$horde_json" <<'NODE'
-          const [openrouterRaw, hordeRaw] = process.argv.slice(2);
-          const openrouter = JSON.parse(openrouterRaw);
-          const horde = JSON.parse(hordeRaw);
+          curl -fsS --retry 4 --retry-all-errors --max-time 20 https://openrouter.ai/api/v1/models -o /tmp/openrouter-models.json
+          curl -fsS --retry 4 --retry-all-errors --max-time 20 -H 'Authorization: Bearer 0000000000' https://oai.aihorde.net/v1/models -o /tmp/horde-models.json
+          node <<'NODE'
+          const fs = require('fs');
+          const openrouter = JSON.parse(fs.readFileSync('/tmp/openrouter-models.json','utf8'));
+          const horde = JSON.parse(fs.readFileSync('/tmp/horde-models.json','utf8'));
           if (!Array.isArray(openrouter.data) || openrouter.data.length < 1) throw new Error('OpenRouter model catalog is empty');
           if (!Array.isArray(horde.data) || horde.data.length < 1) throw new Error('AI Horde model catalog is empty');
           console.log('OpenRouter models:', openrouter.data.length);

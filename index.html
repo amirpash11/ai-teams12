@@ -707,52 +707,63 @@ async function runTeamParallel(){
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
  state.chat=[];
- msg('شما','👤','هدف: '+goal,'user',false);
- msg('سیستم','⚡','اجرای موازی شروع شد؛ همه اعضای فعال تقریباً هم‌زمان روی یک زمینه مشترک کار می‌کنند.','agent',false);
- const baseContext=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nحافظه دائمی پروژه:\n'+memoryContext(8)+'\n\nقانون اجرای موازی: خروجی سایر اعضا هنوز در دسترس نیست؛ مستقل تحلیل کن و نتیجه تخصصی خودت را ارائه بده.';
- const results=await Promise.all(active.map(async function(a){
-  const placeholder={name:a.name,icon:a.icon,text:'در حال اجرای موازی...',type:'agent',error:false};
-  state.chat.push(placeholder);renderChat();
-  try{
-   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,baseContext,'');
-   placeholder.text=result;
-   return {agent:a,result:result,error:null};
-  }catch(e){
-   placeholder.text='خطا: '+e.message;
-   placeholder.error=true;
-   return {agent:a,result:'',error:e.message};
-  }finally{renderChat();save();}
- }));
- const successful=results.filter(function(x){return x.result});
- const transcript=successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n');
- const coordinator=active[active.length-1];
- let finalResult='';
- msg('جمع‌بندی تیم','🧠','خروجی‌های موازی آماده شد؛ در حال جمع‌بندی و حل اختلاف‌ها...','agent',false);
  try{
-  if(state.mode==='demo'){
-   finalResult='اجرای موازی برای هدف «'+goal+'» انجام شد و خروجی اعضا برای جمع‌بندی در اختیار هماهنگ‌کننده قرار گرفت.';
-  }else{
-   finalResult=await callAgent(coordinator,buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nخروجی اعضای اجراشده به‌صورت موازی:\n'+(transcript||'هیچ خروجی موفقی دریافت نشد.')+'\n\nوظیفه تو: اختلاف‌ها را مشخص کن، ادعاهای ضعیف را حذف کن و یک نتیجه اجرایی نهایی با قدم‌های بعدی ارائه بده.',transcript);
+  msg('شما','👤','هدف: '+goal,'user',false);
+  msg('سیستم','⚡','اجرای موازی شروع شد؛ همه اعضای فعال مستقل روی یک زمینه مشترک کار می‌کنند.','agent',false);
+  const baseContext=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nحافظه دائمی پروژه:\n'+memoryContext(8)+'\n\nقانون اجرای موازی: خروجی سایر اعضا هنوز در دسترس نیست؛ مستقل تحلیل کن و نتیجه تخصصی خودت را ارائه بده.';
+  const results=await Promise.all(active.map(async function(a){
+   const placeholder={name:a.name,icon:a.icon,text:'در حال اجرای موازی...',type:'agent',error:false};
+   state.chat.push(placeholder);
+   renderChat();
+   try{
+    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,baseContext,'');
+    placeholder.text=result;
+    placeholder.error=false;
+    return {agent:a,result:result,error:null};
+   }catch(e){
+    placeholder.text='خطا: '+e.message;
+    placeholder.error=true;
+    return {agent:a,result:'',error:e.message};
+   }finally{renderChat();save();}
+  }));
+  const successful=results.filter(function(x){return x.result});
+  const transcript=successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n');
+  const coordinator=active[active.length-1];
+  msg('جمع‌بندی تیم','🧠','خروجی‌های موازی آماده شد؛ در حال جمع‌بندی و حل اختلاف‌ها...','agent',false);
+  const finalIndex=state.chat.length-1;
+  let finalResult='';
+  try{
+   if(state.mode==='demo'){
+    finalResult='اجرای موازی برای هدف «'+goal+'» انجام شد و خروجی اعضا برای جمع‌بندی در اختیار هماهنگ‌کننده قرار گرفت.';
+   }else{
+    const finalGoal=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+
+     '\n\nوظیفه تو: به‌عنوان هماهنگ‌کننده نهایی، خروجی مستقل اعضا را مقایسه کن، اختلاف‌ها را مشخص کن، ادعاهای ضعیف یا بدون پشتوانه را علامت بزن و یک نتیجه اجرایی تولید کن.\n'+
+     '\nساختار اجباری:\n1) نتیجه نهایی\n2) مهم‌ترین دلایل و شواهد\n3) اختلاف‌نظرها و تصمیم درباره آن‌ها\n4) ریسک‌ها و موارد نیازمند بررسی\n5) قدم‌های بعدی\n\nفقط بر اساس اطلاعات ارائه‌شده تصمیم بگیر و کمبود اطلاعات را صریح اعلام کن.';
+    finalResult=await callAgent(coordinator,finalGoal,transcript||'هیچ خروجی موفقی دریافت نشد.');
+   }
+   state.chat[finalIndex].text=finalResult;
+   state.chat[finalIndex].error=false;
+  }catch(e){
+   state.chat[finalIndex].text='خطا در جمع‌بندی نهایی: '+e.message;
+   state.chat[finalIndex].error=true;
   }
-  state.chat[state.chat.length-1].text=finalResult;
-  state.chat[state.chat.length-1].error=false;
+  renderChat();
+  const summary=String(finalResult||'').slice(0,5000);
+  state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,type:'parallel',members:active.map(function(a){return a.name}),summary:summary,messages:state.chat.slice()});
+  state.runs=state.runs.slice(0,20);
+  rememberRun(goal,summary,active.map(function(a){return a.name}));
+  msg('سیستم','✅','اجرای موازی پایان یافت. خروجی مستقل اعضا توسط هماهنگ‌کننده نهایی بررسی شد.','agent',false);
  }catch(e){
-  state.chat[state.chat.length-1].text='خطا در جمع‌بندی نهایی: '+e.message;
-  state.chat[state.chat.length-1].error=true;
+  msg('سیستم','⚠️','اجرای موازی با خطای غیرمنتظره متوقف شد: '+e.message,'agent',true);
+ }finally{
+  busy=false;
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('parallelBtn').disabled=false;
+  document.getElementById('dialogueBtn').disabled=false;
+  document.getElementById('adminChatBtn').disabled=false;
+  save();
  }
- const summary=String(finalResult||'').slice(0,5000);
- state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,type:'parallel',members:active.map(function(a){return a.name}),summary:summary,messages:state.chat.slice()});
- state.runs=state.runs.slice(0,20);
- rememberRun(goal,summary,active.map(function(a){return a.name}));
- msg('سیستم','✅','اجرای موازی پایان یافت. خروجی اعضا مستقل تولید و سپس توسط هماهنگ‌کننده جمع‌بندی شد.','agent',false);
- busy=false;
- document.getElementById('runBtn').disabled=false;
- document.getElementById('parallelBtn').disabled=false;
- document.getElementById('dialogueBtn').disabled=false;
- document.getElementById('adminChatBtn').disabled=false;
- save();
 }
-
 async function runTeam(){
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();

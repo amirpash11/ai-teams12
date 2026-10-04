@@ -37,7 +37,10 @@ jobs:
             ['Horde retry', 'for(let attempt=1;attempt<=3;attempt++)'],
             ['outer finalResult', "let finalResult='';"],
             ['anonymous Horde key', 'Bearer 0000000000'],
-            ['Horde chat endpoint', 'oai.aihorde.net/v1/chat/completions']
+            ['Horde chat endpoint', 'oai.aihorde.net/v1/chat/completions'],
+            ['Sequential error propagation', "stageMessage.text='خطا: '+e.message;stageMessage.error=true;"],
+            ['Provider manager preserves core callAgent', "if(typeof window.callAgent!=='function')window.callAgent=universalCallAgent;"],
+            ['Horde retry in active callAgent', 'let lastError=null;']
           ];
           for (const [name, needle] of required) {
             if (!html.includes(needle)) throw new Error('Missing invariant: ' + name);
@@ -100,6 +103,7 @@ jobs:
           console.log('AI Horde models:', horde.data.length);
           NODE
           grep -q "openrouter/free" index.html
+          grep -q "await ensureHordeModel(a)" index.html
           grep -q "await ensureHordeModel(a)" index.html
           echo "Public provider endpoints and free-provider contracts passed."
 

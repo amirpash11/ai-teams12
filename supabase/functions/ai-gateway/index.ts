@@ -79,9 +79,16 @@ Deno.serve(async (req: Request) => {
       content: String(m?.content || '').slice(0, 20000)
     }))
     if (normalizedMessages.some((m: any) => !m.content.trim())) return json({ error: 'هر پیام باید متن داشته باشد.' }, 400)
-    if (!['openai','openrouter','claude','gemini','horde','custom'].includes(provider)) return json({ error: 'Provider مجاز نیست.' }, 400)
+    const fixedProviders = ['openai','openrouter','claude','gemini','horde']
+    const customEndpoints = customEndpointMap()
+    const isConfiguredCustom = !fixedProviders.includes(provider) && provider !== 'custom' && !!customEndpoints[provider]
+    if (!fixedProviders.includes(provider) && provider !== 'custom' && !isConfiguredCustom) return json({ error: 'Provider مجاز یا در Gateway تنظیم نشده است.' }, 400)
     const endpoint = endpointFor(provider, model)
     if (!endpoint) return json({ error: 'Endpoint سرویس مشخص نشده است.' }, 400)
+    try {
+      const endpointUrl = new URL(endpoint)
+      if (endpointUrl.protocol !== 'https:') return json({ error: 'Endpoint باید HTTPS باشد.' }, 400)
+    } catch { return json({ error: 'Endpoint نامعتبر است.' }, 400) }
 
     const key = provider === 'horde' ? '' : getSecretKey(provider)
     if (provider !== 'horde' && !key) {

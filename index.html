@@ -856,6 +856,7 @@ async function runTeam(){
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    renderChat();save();
   }catch(e){
+   teamHadError=true;
    stageMessage.text='خطا: '+e.message;stageMessage.error=true;
    renderChat();save();
    transcript+='\\n\\n[مرحله '+(i+1)+' | '+a.name+' - خطا]\\n'+e.message;

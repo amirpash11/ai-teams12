@@ -43,7 +43,7 @@ jobs:
             if (!html.includes(needle)) throw new Error('Missing invariant: ' + name);
           }
           const duplicateIds = ids => ids.filter((id,i)=>ids.indexOf(id)!==i);
-          const ids = [...html.matchAll(/\\bid=["']([^"']+)["']/g)].map(m=>m[1]);
+          const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
           if (duplicateIds(ids).length) throw new Error('Duplicate HTML ids: ' + duplicateIds(ids).join(', '));
           console.log('Validated', scripts.length, 'inline scripts, unique IDs, and all critical invariants.');
           NODE

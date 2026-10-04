@@ -637,11 +637,13 @@ async function runAdminTurn(){
     placeholder.text=result;
     placeholder.error=false;
     transcript+='\\n\\n['+a.name+' در پاسخ به ادمین]\\n'+result;
+   transcript=compactContext(transcript,30000);
    }catch(e){
     turnHadError=true;
     placeholder.text='خطا: '+e.message;
     placeholder.error=true;
     transcript+='\\n\\n['+a.name+' - خطا در پاسخ به ادمین]\\n'+e.message;
+    transcript=compactContext(transcript,30000);
    }
    renderChat();
    save();
@@ -700,11 +702,13 @@ async function runDialogue(){
      placeholder.text=result;
      placeholder.error=false;
      transcript+=(transcript?'\\n\\n':'')+'[دور '+round+' | '+a.name+']\\n'+result;
+   transcript=compactContext(transcript,30000);
     }catch(e){
      dialogueHadError=true;
      placeholder.text='خطا: '+e.message;
      placeholder.error=true;
      transcript+=(transcript?'\\n\\n':'')+'[دور '+round+' | '+a.name+' - خطا]\\n'+e.message;
+     transcript=compactContext(transcript,30000);
     }
     renderChat();
     save();
@@ -867,12 +871,14 @@ async function runTeam(){
    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,context,transcript);
    stageMessage.text=result;stageMessage.error=false;
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
+   transcript=compactContext(transcript,30000);
    renderChat();save();
   }catch(e){
    teamHadError=true;
    stageMessage.text='خطا: '+e.message;stageMessage.error=true;
    renderChat();save();
    transcript+='\\n\\n[مرحله '+(i+1)+' | '+a.name+' - خطا]\\n'+e.message;
+   transcript=compactContext(transcript,30000);
   }
  }
  const coordinator=active[active.length-1];

@@ -57,7 +57,7 @@ function makeModal(){
  '<div class="two"><div class="field"><label>نام</label><input id="pmName" placeholder="مثلاً DeepSeek"></div><div class="field"><label>شناسه</label><input id="pmId" placeholder="مثلاً deepseek"></div></div>'+
  '<div class="two"><div class="field"><label>پروتکل</label><select id="pmProtocol"><option value="openai">OpenAI-compatible</option><option value="anthropic">Anthropic Messages</option><option value="gemini">Gemini generateContent</option><option value="generic">Custom JSON</option></select></div><div class="field"><label>احراز هویت</label><select id="pmAuth"><option value="none">بدون کلید</option><option value="bearer">Bearer</option><option value="x-api-key">x-api-key</option><option value="custom-header">Header سفارشی</option><option value="query">Query Parameter</option></select></div></div>'+
  '<div class="field"><label>Endpoint</label><input id="pmEndpoint" placeholder="https://api.example.com/..."></div>'+
- '<div class="two"><div class="field"><label>مدل پیش‌فرض</label><input id="pmModel" placeholder="نام مدل"></div><div class="field"><label>API Key</label><input type="password" id="pmKey" placeholder="در صورت نیاز"></div></div>'+
+ '<div class="two"><div class="field"><label>مدل پیش‌فرض</label><input id="pmModel" placeholder="نام مدل"></div><div class="field"><label>API Key</label><input type="password" id="pmKey" autocomplete="new-password" placeholder="فقط برای تنظیم Gateway امن"></div></div><div class="notice warn" style="margin-bottom:10px">برای امنیت، کلید API داخل localStorage ذخیره نمی‌شود و از مرورگر مستقیماً به Providerهای پولی ارسال نمی‌شود. کلید سرویس پولی باید در Gateway امن تنظیم شود.</div>'+
  '<div class="two"><div class="field"><label>Header سفارشی</label><input id="pmHeader" placeholder="X-API-Key"></div><div class="field"><label>Query Parameter</label><input id="pmQuery" placeholder="key"></div></div>'+
  '<div class="field"><label>JSON Template برای Custom JSON</label><textarea id="pmTemplate" placeholder="{&quot;model&quot;:&quot;{{model}}&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;{{prompt}}&quot;}]}"></textarea></div>'+
  '<div class="field"><label>مسیر پاسخ</label><input id="pmResponse" placeholder="choices.0.message.content"></div>'+
@@ -75,7 +75,7 @@ function addProvider(){
  const protocol=document.getElementById('pmProtocol').value, auth=document.getElementById('pmAuth').value, endpoint=document.getElementById('pmEndpoint').value.trim();
  if(!name||!id||!endpoint)return alert('نام، شناسه و Endpoint را کامل کن.');
  if(state.providers.some(function(p){return p.id===id}))return alert('این شناسه قبلاً ثبت شده است.');
- state.providers.push({id:id,name:name,protocol:protocol,auth:auth,endpoint:endpoint,header:document.getElementById('pmHeader').value.trim(),query:document.getElementById('pmQuery').value.trim(),model:document.getElementById('pmModel').value.trim(),apiKey:document.getElementById('pmKey').value,template:document.getElementById('pmTemplate').value,responsePath:document.getElementById('pmResponse').value.trim()||'choices.0.message.content',builtIn:false});
+ state.providers.push({id:id,name:name,protocol:protocol,auth:auth,endpoint:endpoint,header:document.getElementById('pmHeader').value.trim(),query:document.getElementById('pmQuery').value.trim(),model:document.getElementById('pmModel').value.trim(),apiKey:'',template:document.getElementById('pmTemplate').value,responsePath:document.getElementById('pmResponse').value.trim()||'choices.0.message.content',builtIn:false});
  save();render();openModal();alert('سرویس اضافه شد. حالا آن را از Provider هر Agent انتخاب کن.');
 }
 function renderProviderMini(){
@@ -98,7 +98,7 @@ function syncAgentFromProvider(id){
  const p=providerById(a.provider);if(!p)return;
  if(p.endpoint)a.endpoint=p.endpoint;
  if(p.model)a.model=p.model;
- if(p.apiKey)a.apiKey=p.apiKey;
+ // API keys are intentionally never copied into the browser-side Agent state.
  save();
 }
 function attachProviderChange(){

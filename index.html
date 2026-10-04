@@ -739,7 +739,7 @@ async function runTeamParallel(){
     const finalGoal=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+
      '\n\nوظیفه تو: به‌عنوان هماهنگ‌کننده نهایی، خروجی مستقل اعضا را مقایسه کن، اختلاف‌ها را مشخص کن، ادعاهای ضعیف یا بدون پشتوانه را علامت بزن و یک نتیجه اجرایی تولید کن.\n'+
      '\nساختار اجباری:\n1) نتیجه نهایی\n2) مهم‌ترین دلایل و شواهد\n3) اختلاف‌نظرها و تصمیم درباره آن‌ها\n4) ریسک‌ها و موارد نیازمند بررسی\n5) قدم‌های بعدی\n\nفقط بر اساس اطلاعات ارائه‌شده تصمیم بگیر و کمبود اطلاعات را صریح اعلام کن.';
-    finalResult=await callAgent(coordinator,finalGoal,transcript||'هیچ خروجی موفقی دریافت نشد.');
+    finalResult=await callAgent(coordinator,finalGoal,'خروجی اعضا:\n'+transcript||'هیچ خروجی موفقی دریافت نشد.');
    }
    state.chat[finalIndex].text=finalResult;
    state.chat[finalIndex].error=false;

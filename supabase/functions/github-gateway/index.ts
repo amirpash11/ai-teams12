@@ -12,12 +12,12 @@ const STATE_TABLE="github_oauth_states";
 function adminKey(){try{const x=JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")||"{}");return x.default||"";}catch(_){return "";}}
 function adminClient(){return createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||adminKey());}
 
-function json(x,status=200,extraHeaders={}){return new Response(JSON.stringify(x),{status,headers:{...corsHeaders,"Content-Type":"application/json",...extraHeaders}});}
-function hexToBytes(h){if(!/^[0-9a-fA-F]{64}$/.test(h))throw new Error("GITHUB_TOKEN_ENCRYPTION_KEY must be exactly 32 bytes of hex");return new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));}
+function json(x:unknown,status=200,extraHeaders:Record<string,string>={}){return new Response(JSON.stringify(x),{status,headers:{...corsHeaders,"Content-Type":"application/json",...extraHeaders}});}
+function hexToBytes(h:string){if(!/^[0-9a-fA-F]{64}$/.test(h))throw new Error("GITHUB_TOKEN_ENCRYPTION_KEY must be exactly 32 bytes of hex");return new Uint8Array((h.match(/.{1,2}/g)||[]).map((x:string)=>parseInt(x,16)));}
 async function key(){if(!ENC_KEY)throw new Error("GITHUB_TOKEN_ENCRYPTION_KEY is not configured");return crypto.subtle.importKey("raw",hexToBytes(ENC_KEY),"AES-GCM",false,["encrypt","decrypt"]);}
-async function enc(s){const iv=crypto.getRandomValues(new Uint8Array(12));const k=await key();const b=new TextEncoder().encode(s);const c=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},k,b));const out=new Uint8Array(iv.length+c.length);out.set(iv);out.set(c,iv.length);return btoa(String.fromCharCode(...out));}
-async function dec(s){const a=Uint8Array.from(atob(s),c=>c.charCodeAt(0)),iv=a.slice(0,12),c=a.slice(12);const k=await key();const p=await crypto.subtle.decrypt({name:"AES-GCM",iv},k,c);return new TextDecoder().decode(p);}
-async function gh(token,url,init={}){const r=await fetch(url,{...init,headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json",...(init.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||"GitHub API error");return j;}
+async function enc(s:string){const iv=crypto.getRandomValues(new Uint8Array(12));const k=await key();const b=new TextEncoder().encode(s);const c=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},k,b));const out=new Uint8Array(iv.length+c.length);out.set(iv);out.set(c,iv.length);return btoa(String.fromCharCode(...out));}
+async function dec(s:string){const a=Uint8Array.from(atob(s),(c:string)=>c.charCodeAt(0)),iv=a.slice(0,12),c=a.slice(12);const k=await key();const p=await crypto.subtle.decrypt({name:"AES-GCM",iv},k,c);return new TextDecoder().decode(p);}
+async function gh(token:string,url:string,init:RequestInit={}){const r=await fetch(url,{...init,headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json",...(init.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||"GitHub API error");return j;}
 
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
@@ -31,13 +31,14 @@ Deno.serve(async req=>{
     if(action==="oauth-start"){
       if(!GITHUB_CLIENT_ID)throw new Error("GITHUB_CLIENT_ID is not configured");
       const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
-      if(error)return json({error:error.message},error.status);
+      if(error||!ctx?.userClaims?.id)return json({error:error?.message||"Authentication required"},error?.status||401);
+      const userId=ctx.userClaims.id;
       const requestedReturn=u.searchParams.get("return_to")||APP_URL;
       const ret=new URL(requestedReturn,APP_URL).origin===APP_ORIGIN?requestedReturn:APP_URL;
       const state=crypto.randomUUID();
       const admin=ctx.supabaseAdmin;
       await admin.from(STATE_TABLE).delete().lt("expires_at",new Date().toISOString());
-      await admin.from(STATE_TABLE).insert({state,user_id:ctx.userClaims.id,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
+      await admin.from(STATE_TABLE).insert({state,user_id:userId,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
       const cb=u.origin+u.pathname+"?action=oauth-callback";
       const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email offline_access")+"&state="+encodeURIComponent(state);
       return json({url:auth});
@@ -59,7 +60,7 @@ Deno.serve(async req=>{
       return Response.redirect(ret+(ret.includes("?")?"&":"?")+"github=connected",302);
     }
     const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
-    if(error)return json({error:error.message},error.status);
+    if(error||!ctx?.userClaims?.id)return json({error:error?.message||"Authentication required"},error?.status||401);
     const uid=ctx.userClaims.id;
     const admin=ctx.supabaseAdmin;
     const {data:conn}=await admin.from(TABLE).select("*").eq("user_id",uid).maybeSingle();

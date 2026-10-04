@@ -508,13 +508,22 @@ async function ensureHordeModel(a){
   }catch(e){}
 }
 
+function compactContext(value,max){
+ const s=String(value||'');
+ if(s.length<=max)return s;
+ const head=Math.max(1000,Math.floor(max*0.35));
+ const tail=Math.max(1000,max-head);
+ return s.slice(0,head)+'\\n\\n… بخش میانی برای کنترل حجم Context کوتاه شد …\\n\\n'+s.slice(-tail);
+}
 async function callAgent(a,goal,transcript){
  if(!a||a.kind==='human')throw new Error('عضو انسانی نمی‌تواند به‌عنوان Provider هوش مصنوعی اجرا شود.');
  const provider=a.provider||'horde';
  const system=a.system||('تو عضو تیم با نقش '+a.role+' هستی.');
+ const safeGoal=compactContext(goal,7000);
+ const safeTranscript=compactContext(transcript,11000);
  const messages=[
-  {role:'system',content:system},
-  {role:'user',content:'هدف تیم:\n'+goal+'\n\nخروجی اعضای قبلی:\n'+(transcript||'هنوز خروجی قبلی وجود ندارد.')+'\n\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.'}
+  {role:'system',content:compactContext(system,10000)},
+  {role:'user',content:'هدف تیم:\n'+safeGoal+'\n\nخروجی اعضای قبلی:\n'+(safeTranscript||'هنوز خروجی قبلی وجود ندارد.')+'\n\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.'}
  ];
  if(provider!=='horde'){
   if(!window.aiTeamsCloud||!window.aiTeamsCloud.isReady())throw new Error('برای Providerهای غیررایگان، ابتدا وارد حساب ابری شو و Gateway امن را فعال کن.');

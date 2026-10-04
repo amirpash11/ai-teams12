@@ -154,7 +154,8 @@ function secureProviderStatus(){
 }
 
 ensureProviders();wrapRender();makeModal();attachProviderButton();attachProviderChange();decorateProviderSelects();renderProviderMini();setTimeout(secureProviderStatus,700);
-window.callAgent=universalCallAgent;
+window.aiTeamsUniversalCallAgent=universalCallAgent;
+if(typeof window.callAgent!=='function')window.callAgent=universalCallAgent;
 window.aiTeamsEnsureProviders=ensureProviders;
 window.aiTeamsCore={getState:function(){return state;},save:save,render:render,esc:esc,providerById:providerById,importState:window.aiTeamsImportState};
 })();

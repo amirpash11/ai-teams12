@@ -242,7 +242,7 @@ body.chat-first-home #chat{
     <button class="mode" id="realModeBtn">اتصال واقعی</button>
       </div>
       <div id="modeNotice" class="notice" style="margin-top:10px">حالت نمایشی برای تست رابط و جریان همکاری است و بدون API کار می‌کند.</div>
-      <div id="realNotice" class="notice warn" style="display:none;margin-top:10px">در حالت واقعی، API Key داخل مرورگر ذخیره می‌شود. برای استفاده شخصی مناسب تست است؛ برای محصول عمومی باید backend امن بسازیم.</div>
+      <div id="realNotice" class="notice warn" style="display:none;margin-top:10px">در حالت واقعی، AI Horde مستقیم و بدون کلید کار می‌کند؛ Providerهای دیگر از Gateway امن استفاده می‌کنند و کلیدشان داخل مرورگر ذخیره نمی‌شود.</div>
       <div class="stats"><span class="pill" id="countPill"></span><span class="pill" id="configuredPill"></span></div>
     </section>
 
@@ -330,7 +330,14 @@ sanitizeBrowserSecrets();
 let collapsed=new Set(state.agents.map(function(a){return a.id;}));
 let busy=false;
 
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){
+ try{
+  state.chat=(state.chat||[]).slice(-200).map(function(m){return {name:String(m.name||'').slice(0,160),icon:String(m.icon||'').slice(0,16),text:String(m.text||'').slice(0,12000),type:m.type==='user'?'user':'agent',error:!!m.error,remoteHumanId:m.remoteHumanId||undefined};});
+  state.memory=(state.memory||[]).slice(0,30).map(function(x){return {id:x.id,createdAt:x.createdAt,goal:String(x.goal||'').slice(0,1000),summary:String(x.summary||'').slice(0,5000),members:Array.isArray(x.members)?x.members.slice(0,30):[]};});
+  state.runs=(state.runs||[]).slice(0,20).map(function(r){return Object.assign({},r,{goal:String(r.goal||'').slice(0,1000),summary:String(r.summary||'').slice(0,5000),members:Array.isArray(r.members)?r.members.slice(0,30):[],messages:Array.isArray(r.messages)?r.messages.slice(-80).map(function(m){return {name:String(m.name||'').slice(0,160),icon:String(m.icon||'').slice(0,16),text:String(m.text||'').slice(0,6000),type:m.type==='user'?'user':'agent',error:!!m.error};}):[]});});
+  localStorage.setItem(KEY,JSON.stringify(state));
+ }catch(e){try{console.warn('AI Teams local save failed:',e&&e.message||e)}catch(_){} }
+}
 function memoryContext(limit){return (state.memory||[]).slice(0,limit||10).map(function(x){return '['+(x.createdAt||'')+'] '+(x.goal||'')+'\nخلاصه: '+(x.summary||'')}).join('\n\n')||'حافظه دائمی تیم هنوز خالی است.'}
 function rememberRun(goal,summary,members){if(!summary)return;state.memory=state.memory||[];state.memory.unshift({id:uid(),createdAt:new Date().toISOString(),goal:String(goal||'').slice(0,1000),summary:String(summary||'').slice(0,5000),members:Array.isArray(members)?members.slice(0,30):[]});state.memory=state.memory.slice(0,30)}
 function openMemoryPanel(){
@@ -401,7 +408,7 @@ function updateAgent(e){
  const a=selectedAgent(e.target.dataset.id);if(!a)return;
  const k=e.target.dataset.k;let v=e.target.value;if(k==='enabled')v=v==='true';
  a[k]=v;
- if(k==='provider'&&v==='horde'){a.endpoint='https://oai.aihorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';delete a.apiKey;}
+ if(k==='provider'&&v==='horde'){a.endpoint='https://oai.aihorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';delete a.apiKey;}else if(k==='endpoint'&&v&&!/^https:\/\/[^\s]+$/i.test(v)){alert('Endpoint باید یک آدرس HTTPS معتبر باشد.');e.target.value=a.endpoint||'';return;}
  save();renderSidebarOnly();if((k==='provider'||k==='model')&&e.type==='change')render();
 }
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}

@@ -18,14 +18,14 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#goal').fill('یک آزمایش کامل رابط و اجرای تیم انجام بده.');
     await page.locator('#demoModeBtn').click();
     await page.locator('#runBtn').click();
-    await expect(page.locator('#chat')).toContainText('اجرای زنجیره‌ای تیم', { timeout: 15000 });
+    await expect(page.locator('#chat')).toContainText('اجرای زنجیره‌ای تیم تمام شد', { timeout: 15000 });
 
     await page.locator('#parallelBtn').click();
-    await expect(page.locator('#chat')).toContainText('اجرای موازی', { timeout: 15000 });
+    await expect(page.locator('#chat')).toContainText('اجرای موازی پایان یافت', { timeout: 15000 });
 
     await page.locator('#dialogueRounds').fill('1');
     await page.locator('#dialogueBtn').click();
-    await expect(page.locator('#chat')).toContainText('جمع‌بندی نهایی تیم', { timeout: 15000 });
+    await expect(page.locator('#chat')).toContainText('بحث چندعاملی پایان یافت', { timeout: 15000 });
   });
 
   test('mobile chat-first layout and drawer behavior', async ({ page }) => {

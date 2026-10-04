@@ -559,6 +559,8 @@ async function runAdminTurn(){
  document.getElementById('adminChatBtn').disabled=true;
  document.getElementById('dialogueBtn').disabled=true;
  document.getElementById('runBtn').disabled=true;
+ document.getElementById('parallelBtn').disabled=true;
+ let turnHadError=false;
  try{
   msg('شما','👤',userText,'user',false);
   let transcript=buildTeamRoster(active)+'\\n\\nسابقه گفتگو:\\n'+state.chat.map(function(m){return '['+(m.type==='user'?'شما (انسان)':'عضو هوش مصنوعی: '+(m.name||'تیم'))+']\\n'+m.text}).join('\\n\\n');
@@ -580,6 +582,7 @@ async function runAdminTurn(){
     placeholder.error=false;
     transcript+='\\n\\n['+a.name+' در پاسخ به ادمین]\\n'+result;
    }catch(e){
+    turnHadError=true;
     placeholder.text='خطا: '+e.message;
     placeholder.error=true;
     transcript+='\\n\\n['+a.name+' - خطا در پاسخ به ادمین]\\n'+e.message;
@@ -587,7 +590,7 @@ async function runAdminTurn(){
    renderChat();
    save();
   }
-  msg('سیستم','💬','اعضای فعال به پیام شما پاسخ دادند. می‌توانی مثل یک گفت‌وگوی عادی پیام بعدی را بفرستی.','agent',false);
+  msg('سیستم','💬',turnHadError?'پاسخ این نوبت با یک یا چند خطا همراه بود؛ پاسخ‌های موفق همچنان ثبت شدند.':'اعضای فعال به پیام شما پاسخ دادند. می‌توانی مثل یک گفت‌وگوی عادی پیام بعدی را بفرستی.','agent',turnHadError);
  }catch(e){
   msg('سیستم','⚠️','اجرای دستور متوقف شد: '+e.message,'agent',true);
  }finally{
@@ -595,6 +598,7 @@ async function runAdminTurn(){
   document.getElementById('adminChatBtn').disabled=false;
   document.getElementById('dialogueBtn').disabled=false;
   document.getElementById('runBtn').disabled=false;
+  document.getElementById('parallelBtn').disabled=false;
   save();
  }
 }
@@ -615,6 +619,7 @@ async function runDialogue(){
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
  state.chat=[];
+ let dialogueHadError=false;
  try{
   msg('مدیر پروژه','👤','موضوع بحث و کار موردنظر:\\n'+goal+'\\n\\nاعضا باید درباره بهترین روش انجام این کار بحث کنند.','user',false);
   let transcript=buildTeamRoster(active)+'\\n\\nحافظه دائمی پروژه:\\n'+memoryContext(8)+'\\n\\nشروع بحث:\\n';
@@ -640,6 +645,7 @@ async function runDialogue(){
      placeholder.error=false;
      transcript+=(transcript?'\\n\\n':'')+'[دور '+round+' | '+a.name+']\\n'+result;
     }catch(e){
+     dialogueHadError=true;
      placeholder.text='خطا: '+e.message;
      placeholder.error=true;
      transcript+=(transcript?'\\n\\n':'')+'[دور '+round+' | '+a.name+' - خطا]\\n'+e.message;
@@ -668,6 +674,7 @@ async function runDialogue(){
    renderChat();
    save();
   }catch(e){
+   dialogueHadError=true;
    state.chat[finalIndex].text='خطا در جمع‌بندی نهایی: '+e.message;
    state.chat[finalIndex].error=true;
    renderChat();
@@ -688,12 +695,13 @@ async function runDialogue(){
   });
   state.runs=state.runs.slice(0,20);
   rememberRun(goal,dialogueSummary,active.map(function(a){return a.name}));
-  msg('سیستم','✅','بحث چندعاملی پایان یافت؛ همه دورها بررسی و یک جمع‌بندی نهایی اجرایی تولید شد.','agent',false);
+  msg('سیستم','✅',dialogueHadError?'بحث چندعاملی پایان یافت، اما یک یا چند مرحله خطا داشت؛ خروجی‌های موفق و خطاها حفظ شدند.':'بحث چندعاملی پایان یافت؛ همه دورها بررسی و یک جمع‌بندی نهایی اجرایی تولید شد.','agent',dialogueHadError);
  }catch(e){
   msg('سیستم','⚠️','اجرای گفت‌وگوی تیم با خطای غیرمنتظره متوقف شد: '+e.message,'agent',true);
  }finally{
   busy=false;
   document.getElementById('runBtn').disabled=false;
+  document.getElementById('parallelBtn').disabled=false;
   document.getElementById('dialogueBtn').disabled=false;
   document.getElementById('adminChatBtn').disabled=false;
   save();
@@ -716,6 +724,7 @@ async function runTeamParallel(){
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
  state.chat=[];
+ let parallelHadError=false;
  try{
   msg('شما','👤','هدف: '+goal,'user',false);
   msg('سیستم','⚡','اجرای موازی شروع شد؛ همه اعضای فعال مستقل روی یک زمینه مشترک کار می‌کنند.','agent',false);
@@ -730,6 +739,7 @@ async function runTeamParallel(){
     placeholder.error=false;
     return {agent:a,result:result,error:null};
    }catch(e){
+    parallelHadError=true;
     placeholder.text='خطا: '+e.message;
     placeholder.error=true;
     return {agent:a,result:'',error:e.message};
@@ -753,6 +763,7 @@ async function runTeamParallel(){
    state.chat[finalIndex].text=finalResult;
    state.chat[finalIndex].error=false;
   }catch(e){
+   parallelHadError=true;
    state.chat[finalIndex].text='خطا در جمع‌بندی نهایی: '+e.message;
    state.chat[finalIndex].error=true;
   }
@@ -761,7 +772,7 @@ async function runTeamParallel(){
   state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,type:'parallel',members:active.map(function(a){return a.name}),summary:summary,messages:state.chat.slice()});
   state.runs=state.runs.slice(0,20);
   rememberRun(goal,summary,active.map(function(a){return a.name}));
-  msg('سیستم','✅','اجرای موازی پایان یافت. خروجی مستقل اعضا توسط هماهنگ‌کننده نهایی بررسی شد.','agent',false);
+  msg('سیستم','✅',parallelHadError?'اجرای موازی پایان یافت، اما یک یا چند عضو یا مرحله جمع‌بندی با خطا روبه‌رو شد.':'اجرای موازی پایان یافت. خروجی مستقل اعضا توسط هماهنگ‌کننده نهایی بررسی شد.','agent',parallelHadError);
  }catch(e){
   msg('سیستم','⚠️','اجرای موازی با خطای غیرمنتظره متوقف شد: '+e.message,'agent',true);
  }finally{
@@ -785,7 +796,9 @@ async function runTeam(){
  busy=true;document.getElementById('runBtn').disabled=true;document.getElementById('parallelBtn').disabled=true;document.getElementById('dialogueBtn').disabled=true;document.getElementById('adminChatBtn').disabled=true;
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
- state.chat=[];msg('شما','👤','هدف: '+goal,'user',false);
+ state.chat=[];
+ let teamHadError=false;
+ msg('شما','👤','هدف: '+goal,'user',false);
  let transcript=buildTeamRoster(active)+'\\n\\nحافظه اخیر تیم:\\n'+(previousMemory||'موردی وجود ندارد.')+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
  try{ for(let i=0;i<active.length;i++){
   const a=active[i];
@@ -820,10 +833,11 @@ async function runTeam(){
   transcript+='\\n\\n[جمع‌بندی نهایی | '+coordinator.name+']\\n'+finalResult;
   renderChat();save();
  }catch(e){
+  teamHadError=true;
   finalMessage.text='خطا در جمع‌بندی نهایی: '+e.message;finalMessage.error=true;
   renderChat();save();
  }
- msg('سیستم','✅','اجرای زنجیره‌ای تیم تمام شد؛ خروجی هر عضو به مرحله بعد منتقل شد و جمع‌بندی نهایی تولید شد.','agent',false);
+ msg('سیستم','✅',teamHadError?'اجرای زنجیره‌ای تیم پایان یافت، اما یک یا چند مرحله یا جمع‌بندی با خطا روبه‌رو شد.':'اجرای زنجیره‌ای تیم تمام شد؛ خروجی هر عضو به مرحله بعد منتقل شد و جمع‌بندی نهایی تولید شد.','agent',teamHadError);
  const finalSummary=String(finalResult||'').slice(0,5000);
   rememberRun(goal,finalSummary,active.map(function(a){return a.name}));
   state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,type:'team',members:active.map(function(a){return a.name}),summary:finalSummary,messages:state.chat.slice()});

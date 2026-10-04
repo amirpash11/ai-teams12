@@ -317,6 +317,7 @@ function load(){
  return defaults();
 }
 let state=load();
+state.memory=Array.isArray(state.memory)?state.memory:[];
 state.agents=(state.agents||[]).map(function(a){if(!a.kind)a.kind='ai';return a});
 function sanitizeBrowserSecrets(){
  let changed=false;
@@ -542,7 +543,7 @@ async function runDialogue(){
  document.getElementById('dialogueBtn').disabled=true;
  state.chat=[];
  msg('مدیر پروژه','👤','موضوع بحث و کار موردنظر:\n'+goal+'\n\nاعضا باید درباره بهترین روش انجام این کار بحث کنند.','user',false);
- let transcript=buildTeamRoster(active)+'\\n\\nشروع بحث:\\n';
+ let transcript=buildTeamRoster(active)+'\\n\\nحافظه دائمی پروژه:\\n'+memoryContext(8)+'\\n\\nشروع بحث:\\n';
  for(let round=1;round<=rounds;round++){
   msg('مدیر پروژه','🧩','دور '+round+' از '+rounds+' — هر عضو نظر قبلی را بررسی می‌کند و درباره همان کار پاسخ می‌دهد.','agent',false);
   for(const a of active){

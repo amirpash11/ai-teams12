@@ -1,6 +1,8 @@
 import { createSupabaseContext } from 'npm:@supabase/server@1'
 
 const APP_ORIGIN = (Deno.env.get('AI_TEAMS_APP_ORIGIN') || 'https://amirpash11.github.io').replace(/\/$/, '')
+const RATE_LIMIT = 30
+const RATE_WINDOW_SECONDS = 60
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': APP_ORIGIN,
@@ -59,6 +61,10 @@ Deno.serve(async (req: Request) => {
     const contentLength = Number(req.headers.get('content-length') || 0)
     if (contentLength > 1200000) return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
     const input = await req.json()
+    const rate = await ctx.supabaseAdmin.rpc('consume_ai_gateway_rate_limit', { p_user_id: ctx.userClaims.id, p_limit: RATE_LIMIT, p_window_seconds: RATE_WINDOW_SECONDS })
+    if (rate.error) return json({ error: 'کنترل مصرف Gateway در دسترس نیست.' }, 503)
+    const row = Array.isArray(rate.data) ? rate.data[0] : rate.data
+    if (!row?.allowed) return json({ error: 'تعداد درخواست‌ها در دقیقه بیش از حد مجاز است.' }, 429, { 'Retry-After': String(RATE_WINDOW_SECONDS), 'X-RateLimit-Limit': String(RATE_LIMIT), 'X-RateLimit-Remaining': '0' })
     const provider = String(input?.provider || '').trim() as Provider
     const model = String(input?.model || '').trim()
     const messages = Array.isArray(input?.messages) ? input.messages : []

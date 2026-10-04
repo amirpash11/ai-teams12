@@ -431,6 +431,45 @@ function mockResponse(a,goal,history){
  return 'در نقش «'+a.role+'»، هدف را بررسی کردم و یک خروجی مرحله‌ای برای ادامه کار پیشنهاد می‌دهم.';
 }
 
+async function refreshHordeModels(){
+  const endpoint='https://oai.stablehorde.net/v1/models';
+  try{
+    const res=await fetch(endpoint,{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const models=Array.isArray(data.data)?data.data:[];
+    const usable=models.map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean);
+    if(!usable.length)return [];
+    state.hordeModels=usable.slice(0,100);
+    const active=(state.agents||[]).filter(function(a){return a.provider==='horde'&&a.enabled&&a.kind!=='human'});
+    active.forEach(function(a){
+      if(!a.model||usable.indexOf(a.model)<0){
+        const preferred=usable.find(function(m){return /llama|qwen|mistral|gemma|deepseek|phi/i.test(m)})||usable[0];
+        a.model=preferred;
+      }
+      a.endpoint='https://oai.stablehorde.net/v1/chat/completions';
+    });
+    save();render();
+    return usable;
+  }catch(e){return [];}
+}
+async function ensureHordeModel(a){
+  if(a.provider!=='horde')return;
+  if(Array.isArray(state.hordeModels)&&state.hordeModels.indexOf(a.model)>=0)return;
+  try{
+    const res=await fetch('https://oai.stablehorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+    if(!res.ok)return;
+    const data=await res.json();
+    const models=Array.isArray(data.data)?data.data.map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean):[];
+    state.hordeModels=models;
+    if(models.length&&models.indexOf(a.model)<0){
+      a.model=models.find(function(m){return /llama|qwen|mistral|gemma|deepseek|phi/i.test(m)})||models[0];
+      a.endpoint='https://oai.stablehorde.net/v1/chat/completions';
+      save();
+    }
+  }catch(e){}
+}
+
 async function callAgent(a,goal,transcript){
  const provider=a.provider||'horde';
  const system=a.system||('تو عضو تیم با نقش '+a.role+' هستی.');
@@ -741,7 +780,7 @@ function moveHomeOptionsToRightDrawer(){
  if(!sidebar.contains(panel))sidebar.appendChild(panel);
  sidebar.dataset.optionsMoved='1';
 }
-function init(){moveHomeOptionsToRightDrawer();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
+function init(){moveHomeOptionsToRightDrawer();refreshHordeModels();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script src="provider-manager.js?v=6"></script>

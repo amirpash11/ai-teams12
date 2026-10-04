@@ -50,13 +50,12 @@ create table if not exists public.github_connections (
   updated_at timestamptz not null default now()
 );
 alter table public.github_connections enable row level security;
+-- GitHub OAuth tokens are written/read only by the Edge Function with its server key.
+-- The browser must never have direct table access to encrypted tokens.
 drop policy if exists "github own connection select" on public.github_connections;
-create policy "github own connection select" on public.github_connections for select to authenticated using (auth.uid()=user_id);
 drop policy if exists "github own connection insert" on public.github_connections;
-create policy "github own connection insert" on public.github_connections for insert to authenticated with check (auth.uid()=user_id);
 drop policy if exists "github own connection update" on public.github_connections;
-create policy "github own connection update" on public.github_connections for update to authenticated using (auth.uid()=user_id) with check (auth.uid()=user_id);
-grant select,insert,update on public.github_connections to authenticated;
+revoke all on public.github_connections from anon, authenticated;
 
 create table if not exists public.github_oauth_states (
   state text primary key,

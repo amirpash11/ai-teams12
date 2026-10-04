@@ -256,5 +256,5 @@ async function newProject(name){
   }
   await syncNow(false); return id;
 }
-window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true)},isReady:function(){return cloudReady&&!!cloudUser},invokeAI:invokeAIGateway,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser}}};
+window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true)},isReady:function(){return cloudReady&&!!cloudUser},invokeAI:invokeAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser}}};
 })();

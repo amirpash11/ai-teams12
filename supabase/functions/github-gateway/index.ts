@@ -1,11 +1,15 @@
 import { withSupabase } from "npm:@supabase/server@1";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js/cors";
-
 const GITHUB_CLIENT_ID=Deno.env.get("GITHUB_CLIENT_ID")||"";
 const GITHUB_CLIENT_SECRET=Deno.env.get("GITHUB_CLIENT_SECRET")||"";
 const APP_URL=Deno.env.get("AI_TEAMS_APP_URL")||"https://amirpash11.github.io/ai-teams12/";
 const APP_ORIGIN=new URL(APP_URL).origin;
+const corsHeaders: Record<string,string>={
+  "Access-Control-Allow-Origin":APP_ORIGIN,
+  "Vary":"Origin",
+  "Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods":"GET, POST, OPTIONS"
+};
 const ENC_KEY=Deno.env.get("GITHUB_TOKEN_ENCRYPTION_KEY")||"";
 const TABLE="github_connections";
 const STATE_TABLE="github_oauth_states";
@@ -26,7 +30,8 @@ Deno.serve(async req=>{
   const origin=req.headers.get("origin");
   if(origin && origin!==APP_ORIGIN)return json({error:"Origin not allowed"},403);
   try{
-    const contentLength=Number(req.headers.get('content-length')||0);
+    const contentLength=Number(req.headers.get("content-length")||0);
+    if(!Number.isFinite(contentLength)||contentLength<0)throw new Error("Invalid Content-Length");
     if(Number.isFinite(contentLength)&&contentLength>2600000)return json({error:"Request is too large"},413);
     if(action==="oauth-start"){
       if(!GITHUB_CLIENT_ID)throw new Error("GITHUB_CLIENT_ID is not configured");
@@ -39,7 +44,7 @@ Deno.serve(async req=>{
       const admin=ctx.supabaseAdmin;
       await admin.from(STATE_TABLE).delete().lt("expires_at",new Date().toISOString());
       await admin.from(STATE_TABLE).insert({state,user_id:userId,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
-      const cb=u.origin+u.pathname+"?action=oauth-callback";
+      const cb=APP_ORIGIN+new URL(req.url).pathname+"?action=oauth-callback";
       const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email offline_access")+"&state="+encodeURIComponent(state);
       return json({url:auth});
     }
@@ -47,6 +52,7 @@ Deno.serve(async req=>{
       if(!GITHUB_CLIENT_ID||!GITHUB_CLIENT_SECRET)throw new Error("GitHub OAuth secrets are not configured");
       const code=u.searchParams.get("code"),state=u.searchParams.get("state")||"";
       if(!code||!state)throw new Error("GitHub authorization data missing");
+      if(state.length>256||code.length>4096)throw new Error("GitHub authorization data is invalid");
       const admin=adminClient();
       const {data:st}=await admin.from(STATE_TABLE).select("*").eq("state",state).maybeSingle();
       if(!st||new Date(st.expires_at).getTime()<Date.now())throw new Error("OAuth state expired");

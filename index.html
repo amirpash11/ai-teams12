@@ -992,6 +992,7 @@ window.aiTeamsImportState=function(incoming){
  }):base.agents;
  state=next;
  sanitizeBrowserSecrets();
+ if(window.aiTeamsEnsureProviders)window.aiTeamsEnsureProviders();
  collapsed=new Set(state.agents.map(function(a){return a.id;}));
  save();
  render();

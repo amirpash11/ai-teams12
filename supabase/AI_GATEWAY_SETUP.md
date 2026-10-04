@@ -26,7 +26,16 @@ The browser sends the user's Supabase session to the gateway. The gateway valida
 
 ## Custom provider
 
-For a custom provider, configure `custom` in `AI_TEAMS_PROVIDER_KEYS` and set the provider endpoint in the app. The endpoint is treated as configuration; the secret remains server-side.
+For a custom provider, put its secret in `AI_TEAMS_PROVIDER_KEYS` and its endpoint in a second Edge Function secret named `AI_TEAMS_CUSTOM_ENDPOINTS`, for example:
+
+```json
+{
+  "custom": "https://api.example.com/v1/chat/completions",
+  "my-provider": "https://api.example.com/v1/chat/completions"
+}
+```
+
+The browser-supplied Endpoint is not trusted by the Gateway. This prevents an authenticated user from turning the server into a request proxy for arbitrary internal or private URLs.
 
 ## Important
 

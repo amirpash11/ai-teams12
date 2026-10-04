@@ -318,8 +318,36 @@ function load(){
  return defaults();
 }
 let state=load();
-state.memory=Array.isArray(state.memory)?state.memory:[];
-state.agents=(state.agents||[]).map(function(a){if(!a.kind)a.kind='ai';return a});
+function normalizeStateShape(){
+ const d=defaults();
+ if(!state||typeof state!=='object')state=d;
+ state.version=2;
+ state.teamName=String(state.teamName||d.teamName).slice(0,200);
+ state.goal=String(state.goal||d.goal).slice(0,10000);
+ state.mode=state.mode==='demo'?'demo':'real';
+ state.chat=Array.isArray(state.chat)?state.chat.slice(-200):[];
+ state.memory=Array.isArray(state.memory)?state.memory.slice(0,30):[];
+ state.runs=Array.isArray(state.runs)?state.runs.slice(0,20):[];
+ state.providers=Array.isArray(state.providers)?state.providers.slice(0,50).map(function(p){return Object.assign({},p,{id:String(p.id||'').slice(0,80),name:String(p.name||'').slice(0,160),protocol:String(p.protocol||'').slice(0,40),auth:String(p.auth||'').slice(0,40),endpoint:String(p.endpoint||'').slice(0,500),model:String(p.model||'').slice(0,200),header:String(p.header||'').slice(0,100),query:String(p.query||'').slice(0,100),template:String(p.template||'').slice(0,12000),responsePath:String(p.responsePath||'').slice(0,300)});}):[];
+ const source=Array.isArray(state.agents)&&state.agents.length?state.agents:d.agents;
+ state.agents=source.slice(0,50).map(function(a,i){
+   const base=d.agents[i%d.agents.length]||d.agents[0];
+   return Object.assign({},base,a,{
+     id:String(a&&a.id||uid()).slice(0,120),
+     kind:a&&a.kind==='human'?'human':'ai',
+     name:String(a&&a.name||base.name).slice(0,160),
+     role:String(a&&a.role||base.role).slice(0,500),
+     icon:String(a&&a.icon||base.icon).slice(0,16),
+     system:String(a&&a.system||base.system).slice(0,20000),
+     provider:String(a&&a.provider||base.provider).slice(0,80),
+     endpoint:String(a&&a.endpoint||base.endpoint).slice(0,500),
+     model:String(a&&a.model||base.model).slice(0,200),
+     enabled:a&&a.enabled!==false
+   });
+ });
+}
+normalizeStateShape();
+
 function sanitizeBrowserSecrets(){
  let changed=false;
  (state.agents||[]).forEach(function(a){if(Object.prototype.hasOwnProperty.call(a,'apiKey')){delete a.apiKey;changed=true;}});
@@ -439,15 +467,18 @@ function mockResponse(a,goal,history){
 }
 
 async function refreshHordeModels(){
+  if(state.hordeModelsFetchedAt&&Date.now()-state.hordeModelsFetchedAt<10*60*1000)return state.hordeModels||[];
   const endpoint='https://oai.aihorde.net/v1/models';
+  const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},15000);
   try{
-    const res=await fetch(endpoint,{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+    const res=await fetch(endpoint,{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store',signal:controller.signal});
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
     const models=Array.isArray(data.data)?data.data:[];
     const usable=models.map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean);
     if(!usable.length)return [];
     state.hordeModels=usable.slice(0,100);
+    state.hordeModelsFetchedAt=Date.now();
     const active=(state.agents||[]).filter(function(a){return a.provider==='horde'&&a.enabled&&a.kind!=='human'});
     active.forEach(function(a){
       if(!a.model||usable.indexOf(a.model)<0){

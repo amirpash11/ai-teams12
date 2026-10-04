@@ -124,7 +124,12 @@ Deno.serve(async (req: Request) => {
       const raw = (await upstream.text()).slice(0, 2000000)
       let data: any = {}
       try { data = JSON.parse(raw) } catch {}
-      if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status)
+      const upstreamHeaders: Record<string, string> = {}
+      for (const name of ['retry-after', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset']) {
+        const value = upstream.headers.get(name)
+        if (value) upstreamHeaders[name] = value
+      }
+      if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status), upstreamHeaders)
           const output = String(extract(data, provider) || '').slice(0, 100000)
       if (!output) return json({ error: 'مدل پاسخ متنی قابل استخراجی برنگرداند.' }, 502)
       return json({ output, provider, model })

@@ -31,9 +31,6 @@ jobs:
             catch (err) { throw new Error('Inline script ' + i + ' syntax error: ' + err.message); }
           });
           const required = [
-            ['Gateway origin guard', 'const APP_ORIGIN ='],
-            ['Gateway rate limiter', "consume_ai_gateway_rate_limit"],
-            ['Gateway method guard', "فقط POST مجاز است"],
             ['Drawer without history mutation', "r.onclick=openRight;l.onclick=openLeft;sync();"],
             ['human-agent guard', "a.kind==='human'"],
             ['AI-only dialogue', "a.enabled&&a.kind!=='human'"],

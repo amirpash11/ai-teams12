@@ -66,6 +66,9 @@ jobs:
           grep -q "aiTeamsImportState" index.html
           grep -q "importState:window.aiTeamsImportState" provider-manager.js
           grep -q "aiTeamsEnsureProviders" provider-manager.js
+          grep -q "normalizeStateShape" index.html
+          grep -q "compactContext" index.html
+          grep -q "compactText" supabase/functions/ai-gateway/index.ts
           grep -q "Content-Security-Policy" index.html
           echo "Gateway and GitHub security invariants passed."
 

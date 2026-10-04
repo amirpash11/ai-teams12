@@ -2,10 +2,22 @@
 (function(){
 'use strict';
 
+const CONFIG_KEY = 'ai-teams-supabase-config-v1';
 const CONFIG = {
   url: 'YOUR_SUPABASE_PROJECT_URL',
   publishableKey: 'YOUR_SUPABASE_PUBLISHABLE_KEY'
 };
+function readConfig(){
+  try{
+    const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
+    if(x.url&&x.publishableKey){CONFIG.url=String(x.url).trim();CONFIG.publishableKey=String(x.publishableKey).trim();}
+  }catch(e){}
+}
+function saveConfig(url,key){
+  CONFIG.url=String(url||'').trim();CONFIG.publishableKey=String(key||'').trim();
+  if(CONFIG.url&&CONFIG.publishableKey)localStorage.setItem(CONFIG_KEY,JSON.stringify({url:CONFIG.url,publishableKey:CONFIG.publishableKey}));
+}
+readConfig();
 const SCRIPT_SRC = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const TABLE = 'ai_teams_projects';
 const LOCAL_KEY = 'ai-teams12-cloud-project-id-v1';
@@ -51,6 +63,10 @@ function panel(){
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">☁ ذخیره‌سازی ابری</h3><button class="icon-btn" id="cloudClose">✕</button></div>'+
     '<div id="cloudStatus" class="notice" style="margin-top:12px">در حال بررسی اتصال...</div>'+
     '<div id="cloudAuth" style="margin-top:12px">'+
+      '<div class="notice">برای راه‌اندازی، Project URL و Publishable Key پروژه Supabase را وارد کن. این دو مقدار محرمانه نیستند؛ Secretهای Gateway فقط داخل Supabase نگهداری می‌شوند.</div>'+
+      '<div class="field"><label>Supabase Project URL</label><input id="cloudProjectUrl" placeholder="https://xxxx.supabase.co"></div>'+
+      '<div class="field"><label>Supabase Publishable Key</label><input id="cloudPublishableKey" type="password" placeholder="sb_publishable_..."></div>'+
+      '<div class="actions"><button class="btn" style="width:auto" id="cloudSaveConfig">ذخیره تنظیمات Supabase</button></div>'+
       '<div class="field"><label>ایمیل</label><input id="cloudEmail" type="email" placeholder="ایمیل حساب"></div>'+
       '<div class="field"><label>رمز عبور</label><input id="cloudPassword" type="password" placeholder="حداقل رمز امن"></div>'+
       '<div class="actions"><button class="btn primary" style="width:auto" id="cloudSignIn">ورود</button><button class="btn" style="width:auto" id="cloudSignUp">ساخت حساب</button></div>'+
@@ -68,6 +84,12 @@ function panel(){
   document.getElementById('cloudSignIn').onclick=signIn;
   document.getElementById('cloudSignUp').onclick=signUp;
   document.getElementById('cloudSignOut').onclick=signOut;
+  document.getElementById('cloudSaveConfig').onclick=async function(){
+    const u=document.getElementById('cloudProjectUrl').value.trim(),k=document.getElementById('cloudPublishableKey').value.trim();
+    if(!/^https:\/\/[^\s]+$/.test(u)||!k)return alert('Project URL و Publishable Key معتبر وارد کن.');
+    saveConfig(u,k);
+    location.reload();
+  };
   document.getElementById('cloudSync').onclick=function(){syncNow(true)};
 }
 function status(t,good){
@@ -104,6 +126,9 @@ async function init(){
 }
 
 function refreshAuthUI(){
+  const cu=document.getElementById('cloudProjectUrl'),ck=document.getElementById('cloudPublishableKey');
+  if(cu)cu.value=CONFIG.url.indexOf('YOUR_')===0?'':CONFIG.url;
+  if(ck)ck.value=CONFIG.publishableKey.indexOf('YOUR_')===0?'':CONFIG.publishableKey;
   if(!cloudReady){
     status('اتصال ابری نیاز به تنظیم Supabase دارد.',false);return;
   }

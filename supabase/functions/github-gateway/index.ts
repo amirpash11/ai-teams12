@@ -26,6 +26,8 @@ Deno.serve(async req=>{
   const origin=req.headers.get("origin");
   if(origin && origin!==APP_ORIGIN)return json({error:"Origin not allowed"},403);
   try{
+    const contentLength=Number(req.headers.get('content-length')||0);
+    if(Number.isFinite(contentLength)&&contentLength>2600000)return json({error:"Request is too large"},413);
     if(action==="oauth-start"){
       if(!GITHUB_CLIENT_ID)throw new Error("GITHUB_CLIENT_ID is not configured");
       const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
@@ -67,7 +69,7 @@ Deno.serve(async req=>{
     const token=await dec(conn.access_token_enc);
     if(action==="repos"){const j=await gh(token,"https://api.github.com/user/repos?per_page=100&sort=updated");return json({repos:j.map((x:any)=>({full_name:x.full_name,private:x.private}))});}
     if(action==="put-file"||action==="get-file"){
-      const body=await req.json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path||path.length>500)throw new Error("Invalid repository or path");
+      const body=await req.json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path||path.length>500||/[\u0000-\u001F\u007F]/.test(path)||path.split("/").some((part)=>part===".."||part==="."))throw new Error("Invalid repository or path");
       const url="https://api.github.com/repos/"+repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
       if(action==="get-file"){const j=await gh(token,url);const encoded=String(j.content||"").replace(/\n/g,"");if(encoded.length>2800000)throw new Error("File is too large");const raw=atob(encoded);const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const decoded=new TextDecoder().decode(bytes);return json({content:decoded,sha:j.sha});}
       const old=await gh(token,url).catch(()=>null);const source=String(body.content||"");if(source.length>2000000)throw new Error("File content is too large");const content=btoa(unescape(encodeURIComponent(source)));const payload:any={message:String(body.message||"AI Teams backup").slice(0,200),content};if(old?.sha)payload.sha=old.sha;const j=await gh(token,url,{method:"PUT",body:JSON.stringify(payload)});return json({ok:true,sha:j.content?.sha||null});

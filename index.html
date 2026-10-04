@@ -1044,6 +1044,7 @@ window.aiTeamsImportState=function(incoming){
    });
  }):base.agents;
  state=next;
+ normalizeStateShape();
  sanitizeBrowserSecrets();
  if(window.aiTeamsEnsureProviders)window.aiTeamsEnsureProviders();
  collapsed=new Set(state.agents.map(function(a){return a.id;}));

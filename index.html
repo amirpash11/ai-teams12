@@ -229,7 +229,7 @@ body.chat-first-home #chat{
 <main class="main">
   <div class="topbar">
     <div class="title"><h2 id="teamTitle">تیم هوش مصنوعی من</h2><p>چند عامل می‌توانند هدف مشترک را مرحله‌به‌مرحله اجرا کنند.</p></div>
-    <div class="top-actions"><button class="btn" id="exportBtn">خروجی تنظیمات</button><button class="btn primary" id="runBtn">▶ اجرای تیم</button></div>
+    <div class="top-actions"><button class="btn" id="exportBtn">خروجی تنظیمات</button><button class="btn primary" id="runBtn">▶ اجرای زنجیره‌ای</button><button class="btn" id="parallelBtn">⚡ اجرای موازی</button></div>
   </div>
 
   <div class="grid">
@@ -649,6 +649,68 @@ async function runDialogue(){
  save();
 }
 
+async function runTeamParallel(){
+ if(busy)return;
+ const goal=document.getElementById('goal').value.trim();
+ state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
+ state.goal=goal;
+ if(!goal)return alert('اول هدف تیم را وارد کن.');
+ const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
+ busy=true;
+ document.getElementById('runBtn').disabled=true;
+ document.getElementById('parallelBtn').disabled=true;
+ document.getElementById('dialogueBtn').disabled=true;
+ document.getElementById('adminChatBtn').disabled=true;
+ const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
+ state.runs=state.runs||[];
+ state.chat=[];
+ msg('شما','👤','هدف: '+goal,'user',false);
+ msg('سیستم','⚡','اجرای موازی شروع شد؛ همه اعضای فعال تقریباً هم‌زمان روی یک زمینه مشترک کار می‌کنند.','agent',false);
+ const baseContext=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nحافظه دائمی پروژه:\n'+memoryContext(8)+'\n\nقانون اجرای موازی: خروجی سایر اعضا هنوز در دسترس نیست؛ مستقل تحلیل کن و نتیجه تخصصی خودت را ارائه بده.';
+ const results=await Promise.all(active.map(async function(a){
+  const placeholder={name:a.name,icon:a.icon,text:'در حال اجرای موازی...',type:'agent',error:false};
+  state.chat.push(placeholder);renderChat();
+  try{
+   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,baseContext,'');
+   placeholder.text=result;
+   return {agent:a,result:result,error:null};
+  }catch(e){
+   placeholder.text='خطا: '+e.message;
+   placeholder.error=true;
+   return {agent:a,result:'',error:e.message};
+  }finally{renderChat();save();}
+ }));
+ const successful=results.filter(function(x){return x.result});
+ const transcript=successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n');
+ const coordinator=active[active.length-1];
+ let finalResult='';
+ msg('جمع‌بندی تیم','🧠','خروجی‌های موازی آماده شد؛ در حال جمع‌بندی و حل اختلاف‌ها...','agent',false);
+ try{
+  if(state.mode==='demo'){
+   finalResult='اجرای موازی برای هدف «'+goal+'» انجام شد و خروجی اعضا برای جمع‌بندی در اختیار هماهنگ‌کننده قرار گرفت.';
+  }else{
+   finalResult=await callAgent(coordinator,buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nخروجی اعضای اجراشده به‌صورت موازی:\n'+(transcript||'هیچ خروجی موفقی دریافت نشد.')+'\n\nوظیفه تو: اختلاف‌ها را مشخص کن، ادعاهای ضعیف را حذف کن و یک نتیجه اجرایی نهایی با قدم‌های بعدی ارائه بده.',transcript);
+  }
+  state.chat[state.chat.length-1].text=finalResult;
+  state.chat[state.chat.length-1].error=false;
+ }catch(e){
+  state.chat[state.chat.length-1].text='خطا در جمع‌بندی نهایی: '+e.message;
+  state.chat[state.chat.length-1].error=true;
+ }
+ const summary=String(finalResult||'').slice(0,5000);
+ state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,type:'parallel',members:active.map(function(a){return a.name}),summary:summary,messages:state.chat.slice()});
+ state.runs=state.runs.slice(0,20);
+ rememberRun(goal,summary,active.map(function(a){return a.name}));
+ msg('سیستم','✅','اجرای موازی پایان یافت. خروجی اعضا مستقل تولید و سپس توسط هماهنگ‌کننده جمع‌بندی شد.','agent',false);
+ busy=false;
+ document.getElementById('runBtn').disabled=false;
+ document.getElementById('parallelBtn').disabled=false;
+ document.getElementById('dialogueBtn').disabled=false;
+ document.getElementById('adminChatBtn').disabled=false;
+ save();
+}
+
 async function runTeam(){
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();
@@ -733,6 +795,7 @@ document.getElementById('addAgentBtn').onclick=addAgent;
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;
+document.getElementById('parallelBtn').onclick=runTeamParallel;
 document.getElementById('dialogueBtn').onclick=runDialogue;
 document.getElementById('adminChatBtn').onclick=runAdminTurn;
 document.getElementById('adminChatInput').addEventListener('keydown',function(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();runAdminTurn();}});

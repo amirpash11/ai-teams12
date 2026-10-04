@@ -773,31 +773,31 @@ async function runTeam(){
  const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
  const previousMemory=(state.chat||[]).slice(-12).map(function(m){return '['+(m.name||'عضو')+'] '+String(m.text||'').slice(0,1200)}).join('\\n');
  if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
- busy=true;document.getElementById('runBtn').disabled=true;document.getElementById('dialogueBtn').disabled=true;document.getElementById('adminChatBtn').disabled=true;
+ busy=true;document.getElementById('runBtn').disabled=true;document.getElementById('parallelBtn').disabled=true;document.getElementById('dialogueBtn').disabled=true;document.getElementById('adminChatBtn').disabled=true;
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
  state.chat=[];msg('شما','👤','هدف: '+goal,'user',false);
  let transcript=buildTeamRoster(active)+'\\n\\nحافظه اخیر تیم:\\n'+(previousMemory||'موردی وجود ندارد.')+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
  for(let i=0;i<active.length;i++){
   const a=active[i];
-  msg(a.name,a.icon,(i===0?'مرحله ۱ — در حال تحلیل اولیه...':'مرحله '+(i+1)+' — در حال بررسی خروجی اعضای قبلی...'),'agent',false);
+  const stageMessage={name:a.name,icon:a.icon,text:(i===0?'مرحله ۱ — در حال تحلیل اولیه...':'مرحله '+(i+1)+' — در حال بررسی خروجی اعضای قبلی...'),kind:'agent',error:false}; state.chat.push(stageMessage); renderChat();
   try{
    const context=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
     '\\n\\nتو عضو شماره '+(i+1)+' از '+active.length+' هستی و نقش تو «'+(a.role||'عضو تیم')+'» است.'+
     '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+
     '\\nاگر عضو قبلی راه‌حل ناقص یا اشتباهی داده، بدون تعارف آن بخش را مشخص و اصلاح کن.';
    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,context,transcript);
-   state.chat[state.chat.length-1].text=result;state.chat[state.chat.length-1].error=false;
+   stageMessage.text=result;stageMessage.error=false;
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    renderChat();save();
   }catch(e){
-   state.chat[state.chat.length-1].text='خطا: '+e.message;state.chat[state.chat.length-1].error=true;
+   stageMessage.text='خطا: '+e.message;stageMessage.error=true;
    renderChat();save();
    transcript+='\\n\\n[مرحله '+(i+1)+' | '+a.name+' - خطا]\\n'+e.message;
   }
  }
  const coordinator=active[active.length-1];
- msg('جمع‌بندی تیم','🧠','در حال جمع‌بندی خروجی همه اعضا...','agent',false);
+ const finalMessage={name:'جمع‌بندی تیم',icon:'🧠',text:'در حال جمع‌بندی خروجی همه اعضا...',kind:'agent',error:false}; state.chat.push(finalMessage); renderChat();
  let finalResult='';
  try{
   if(state.mode==='demo'){
@@ -807,11 +807,11 @@ async function runTeam(){
     '\\n\\nوظیفه نهایی: خروجی تمام مراحل زیر را بررسی کن و یک جمع‌بندی اجرایی ارائه بده. نتیجه باید شامل: ۱) نتیجه اصلی، ۲) نکات مهم و اختلاف‌نظرها، ۳) مواردی که هنوز نیاز به بررسی دارند، ۴) قدم‌های بعدی مشخص باشد. فقط بر اساس اطلاعات موجود تصمیم‌گیری کن و چیزی را که در خروجی اعضا نیست به‌عنوان واقعیت قطعی اضافه نکن.';
    finalResult=await callAgent(coordinator,finalGoal,transcript);
   }
-  state.chat[state.chat.length-1].text=finalResult;state.chat[state.chat.length-1].error=false;
+  finalMessage.text=finalResult;finalMessage.error=false;
   transcript+='\\n\\n[جمع‌بندی نهایی | '+coordinator.name+']\\n'+finalResult;
   renderChat();save();
  }catch(e){
-  state.chat[state.chat.length-1].text='خطا در جمع‌بندی نهایی: '+e.message;state.chat[state.chat.length-1].error=true;
+  finalMessage.text='خطا در جمع‌بندی نهایی: '+e.message;finalMessage.error=true;
   renderChat();save();
  }
  msg('سیستم','✅','اجرای زنجیره‌ای تیم تمام شد؛ خروجی هر عضو به مرحله بعد منتقل شد و جمع‌بندی نهایی تولید شد.','agent',false);
@@ -819,7 +819,7 @@ async function runTeam(){
   rememberRun(goal,finalSummary,active.map(function(a){return a.name}));
   state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,type:'team',members:active.map(function(a){return a.name}),summary:finalSummary,messages:state.chat.slice()});
  state.runs=state.runs.slice(0,20);
- busy=false;document.getElementById('runBtn').disabled=false;document.getElementById('dialogueBtn').disabled=false;document.getElementById('adminChatBtn').disabled=false;save();
+ busy=false;document.getElementById('runBtn').disabled=false;document.getElementById('parallelBtn').disabled=false;document.getElementById('dialogueBtn').disabled=false;document.getElementById('adminChatBtn').disabled=false;save();
 }
 function clearChat(){state.chat=[];save();renderChat()}
 function exportConfig(){

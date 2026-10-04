@@ -963,6 +963,41 @@ function moveHomeOptionsToRightDrawer(){
 function init(){moveHomeOptionsToRightDrawer();refreshHordeModels();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+</script><script>
+(function(){
+'use strict';
+window.aiTeamsImportState=function(incoming){
+ const source=incoming&&typeof incoming==='object'?incoming:{};
+ const base=defaults();
+ const next=Object.assign({},base,source);
+ next.version=2;
+ next.teamName=String(next.teamName||base.teamName).slice(0,200);
+ next.goal=String(next.goal||'').slice(0,10000);
+ next.mode=next.mode==='demo'?'demo':'real';
+ next.chat=Array.isArray(next.chat)?next.chat.slice(-200):[];
+ next.memory=Array.isArray(next.memory)?next.memory.slice(0,30):[];
+ next.runs=Array.isArray(next.runs)?next.runs.slice(0,20):[];
+ next.providers=Array.isArray(next.providers)?next.providers.slice(0,50):[];
+ next.agents=Array.isArray(next.agents)&&next.agents.length?next.agents.map(function(a,i){
+   const d=base.agents[i%base.agents.length]||base.agents[0];
+   return Object.assign({},d,a,{
+     id:String(a&&a.id||uid()),
+     kind:a&&a.kind==='human'?'human':'ai',
+     name:String(a&&a.name||d.name).slice(0,160),
+     role:String(a&&a.role||d.role).slice(0,500),
+     icon:String(a&&a.icon||d.icon).slice(0,16),
+     system:String(a&&a.system||d.system).slice(0,20000),
+     enabled:a&&a.enabled!==false
+   });
+ }):base.agents;
+ state=next;
+ sanitizeBrowserSecrets();
+ collapsed=new Set(state.agents.map(function(a){return a.id;}));
+ save();
+ render();
+ return state;
+};
+})();
 </script><script src="provider-manager.js?v=8"></script>
 <script src="multiplayer.js?v=1"></script>
 <script>

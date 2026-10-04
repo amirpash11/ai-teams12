@@ -487,7 +487,9 @@ async function callAgent(a,goal,transcript){
   if(!data||typeof data.output!=='string'||!data.output.trim())throw new Error('Gateway پاسخ متنی معتبری برنگرداند.');
   return data.output;
  }
- const endpoint=(a.endpoint||'https://oai.aihorde.net/v1/chat/completions').replace(/\{\{model\}\}/g,encodeURIComponent(a.model||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'));
+ const hordeEndpoint='https://oai.aihorde.net/v1/chat/completions';
+ if(a.endpoint&&a.endpoint!==hordeEndpoint)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
+ const endpoint=hordeEndpoint;
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const body={model:a.model||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',messages:messages,temperature:0.2};
  let lastError=null;

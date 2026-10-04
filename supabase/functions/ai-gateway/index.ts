@@ -34,6 +34,14 @@ function customEndpointMap() {
   try { return JSON.parse(raw) as Record<string, string> } catch { return {} }
 }
 
+function compactText(value: unknown, max: number) {
+  const s = String(value ?? '')
+  if (s.length <= max) return s
+  const head = Math.max(1000, Math.floor(max * 0.35))
+  const tail = Math.max(1000, max - head)
+  return s.slice(0, head) + '\n\n… بخش میانی برای کنترل حجم Context کوتاه شد …\n\n' + s.slice(-tail)
+}
+
 function endpointFor(provider: Provider, model: string) {
   if (provider === 'openai') return 'https://api.openai.com/v1/chat/completions'
   if (provider === 'openrouter') return 'https://openrouter.ai/api/v1/chat/completions'
@@ -76,7 +84,7 @@ Deno.serve(async (req: Request) => {
     if (messages.length > 50) return json({ error: 'تعداد پیام‌ها بیش از حد مجاز است.' }, 413)
     const normalizedMessages = messages.map((m: any) => ({
       role: ['system','user','assistant'].includes(String(m?.role || 'user')) ? String(m?.role || 'user') : 'user',
-      content: String(m?.content || '').slice(0, 20000)
+      content: compactText(m?.content || '', 20000)
     }))
     if (normalizedMessages.some((m: any) => !m.content.trim())) return json({ error: 'هر پیام باید متن داشته باشد.' }, 400)
     const fixedProviders = ['openai','openrouter','claude','gemini','horde']
@@ -103,7 +111,7 @@ Deno.serve(async (req: Request) => {
       headers['anthropic-version'] = '2023-06-01'
       const requestedMaxTokens = Number(input?.max_tokens || 1200)
       const maxTokens = Number.isFinite(requestedMaxTokens) ? Math.min(4096, Math.max(256, Math.floor(requestedMaxTokens))) : 1200
-      body = { model, max_tokens: maxTokens, system: system.slice(0,20000), messages: normalizedMessages.filter((m: any) => m.role !== 'system') }
+      body = { model, max_tokens: maxTokens, system: compactText(system,20000), messages: normalizedMessages.filter((m: any) => m.role !== 'system') }
     } else if (provider === 'gemini') {
       headers['x-goog-api-key'] = key
       body = {

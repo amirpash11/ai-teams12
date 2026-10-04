@@ -1,7 +1,15 @@
 /* AI Teams - GitHub cloud workspace */
 (function(){
 'use strict';
+const CONFIG_KEY='ai-teams-supabase-config-v1';
 const CONFIG={supabaseUrl:'YOUR_SUPABASE_PROJECT_URL',publishableKey:'YOUR_SUPABASE_PUBLISHABLE_KEY'};
+function readConfig(){
+  try{
+    const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
+    if(x.url&&x.publishableKey){CONFIG.supabaseUrl=String(x.url).trim();CONFIG.publishableKey=String(x.publishableKey).trim();}
+  }catch(e){}
+}
+readConfig();
 const FN='github-gateway';
 let client=null,ready=false;
 function configured(){return !CONFIG.supabaseUrl.includes('YOUR_')&&!CONFIG.publishableKey.includes('YOUR_');}

@@ -287,7 +287,7 @@ function defaults(){
  return {
   version:2,teamName:'تیم هوش مصنوعی من',
   goal:'یک ایده نرم‌افزاری را تحلیل کن، راه‌حل طراحی کن و یک برنامه اجرای مرحله‌ای بده.',
-  mode:'demo',
+  mode:'real',
   agents:[
    {id:uid(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو تحلیل‌گر تیم هستی. هدف را دقیق به نیازمندی‌ها، فرضیات، ریسک‌ها و خروجی‌های قابل اجرا تبدیل کن.',enabled:true},
    {id:uid(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو طراح راه‌حل هستی. با توجه به هدف و تحلیل قبلی، معماری، جریان کار و اجزای لازم را پیشنهاد بده.',enabled:true},
@@ -876,7 +876,7 @@ function moveHomeOptionsToRightDrawer(){
 function init(){moveHomeOptionsToRightDrawer();refreshHordeModels();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
-</script><script src="provider-manager.js?v=7"></script>
+</script><script src="provider-manager.js?v=8"></script>
 <script src="multiplayer.js?v=1"></script>
 <script>
 (function(){

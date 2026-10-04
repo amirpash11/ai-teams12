@@ -961,7 +961,7 @@ document.getElementById('goal').addEventListener('input',function(e){state.goal=
 render();
 const __drawerState={key:'ai-teams-drawer-hidden-v1'};const __leftDrawerState={key:'ai-teams-left-drawer-hidden-v1'};
 function applyDrawer(){var h=localStorage.getItem(__drawerState.key)==='1';document.querySelector('.app').classList.toggle('drawer-hidden',h);document.documentElement.classList.remove('boot-right-hidden');var b=document.getElementById('drawerToggle');if(b){b.textContent=h?'▶':'◀';b.title=h?'نمایش کشوی سمت راست':'مخفی کردن کشوی سمت راست';}}
-function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)==='1',s=document.getElementById('leftSidebar');document.querySelector('.app').classList.toggle('left-drawer-hidden',h);if(s)s.classList.toggle('open',!h);document.documentElement.classList.remove('boot-left-hidden');var b=document.getElementById('leftDrawerToggle');if(b){b.textContent=h?'◀':'▶';b.title=h?'نمایش کشوی سمت چپ':'مخفی کردن کشوی سمت چپ';}}
+function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)!=='0',s=document.getElementById('leftSidebar');document.querySelector('.app').classList.toggle('left-drawer-hidden',h);if(s)s.classList.toggle('open',!h);document.documentElement.classList.remove('boot-left-hidden');var b=document.getElementById('leftDrawerToggle');if(b){b.textContent=h?'◀':'▶';b.title=h?'نمایش کشوی سمت چپ':'مخفی کردن کشوی سمت چپ';}}
 (function(){
   var r=document.getElementById('drawerToggle'),l=document.getElementById('leftDrawerToggle');
   if(!r||!l)return;

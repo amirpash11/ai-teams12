@@ -24,13 +24,18 @@ function getSecretKey(provider: string) {
   return keys[provider] || Deno.env.get('AI_TEAMS_' + provider.toUpperCase() + '_API_KEY') || ''
 }
 
-function endpointFor(provider: Provider, model: string, customEndpoint?: string) {
+function customEndpointMap() {
+  const raw = Deno.env.get('AI_TEAMS_CUSTOM_ENDPOINTS') || '{}'
+  try { return JSON.parse(raw) as Record<string, string> } catch { return {} }
+}
+
+function endpointFor(provider: Provider, model: string) {
   if (provider === 'openai') return 'https://api.openai.com/v1/chat/completions'
   if (provider === 'openrouter') return 'https://openrouter.ai/api/v1/chat/completions'
   if (provider === 'claude') return 'https://api.anthropic.com/v1/messages'
   if (provider === 'gemini') return 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent'
   if (provider === 'horde') return 'https://oai.stablehorde.net/v1/chat/completions'
-  return customEndpoint || ''
+  return customEndpointMap()[provider] || ''
 }
 
 function extract(data: any, provider: Provider) {
@@ -51,10 +56,9 @@ Deno.serve(async (req: Request) => {
     const model = String(input?.model || '')
     const messages = Array.isArray(input?.messages) ? input.messages : []
     const system = String(input?.system || '')
-    const customEndpoint = String(input?.endpoint || '')
 
     if (!provider || !model || !messages.length) return json({ error: 'provider، model و messages الزامی هستند.' }, 400)
-    const endpoint = endpointFor(provider, model, customEndpoint)
+    const endpoint = endpointFor(provider, model)
     if (!endpoint) return json({ error: 'Endpoint سرویس مشخص نشده است.' }, 400)
 
     const key = provider === 'horde' ? '' : getSecretKey(provider)

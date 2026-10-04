@@ -329,6 +329,14 @@ let collapsed=new Set(state.agents.map(function(a){return a.id;}));
 let busy=false;
 
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function memoryContext(limit){return (state.memory||[]).slice(0,limit||10).map(function(x){return '['+(x.createdAt||'')+'] '+(x.goal||'')+'\nخلاصه: '+(x.summary||'')}).join('\n\n')||'حافظه دائمی تیم هنوز خالی است.'}
+function rememberRun(goal,summary,members){if(!summary)return;state.memory=state.memory||[];state.memory.unshift({id:uid(),createdAt:new Date().toISOString(),goal:String(goal||'').slice(0,1000),summary:String(summary||'').slice(0,5000),members:Array.isArray(members)?members.slice(0,30):[]});state.memory=state.memory.slice(0,30)}
+function openMemoryPanel(){
+ let el=document.getElementById('teamMemoryPanel');
+ if(!el){el=document.createElement('div');el.id='teamMemoryPanel';el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:3200;padding:14px;overflow:auto;display:none';el.innerHTML='<div class="card" style="max-width:760px;margin:25px auto;background:#121a2d"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">🧠 حافظه دائمی تیم</h3><button class="icon-btn" id="memoryClose">✕</button></div><div class="notice" style="margin:10px 0">خلاصه اجرای تیم‌ها در این پروژه نگهداری می‌شود و در اجرای بعدی به‌عنوان زمینه تصمیم‌گیری در اختیار اعضا قرار می‌گیرد.</div><div id="memoryList"></div><div style="display:flex;gap:7px;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button></div></div>';document.body.appendChild(el);document.getElementById('memoryClose').onclick=function(){el.style.display='none'};document.getElementById('memoryClear').onclick=function(){if(confirm('تمام حافظه دائمی این پروژه پاک شود؟')){state.memory=[];save();renderMemory();}};document.getElementById('memoryRefresh').onclick=renderMemory;}
+ renderMemory();el.style.display='block';
+}
+function renderMemory(){const box=document.getElementById('memoryList');if(!box)return;const items=state.memory||[];box.innerHTML=items.length?items.map(function(x){return '<div class="agent-row" style="margin-top:8px"><div class="agent-head"><strong>'+esc(x.goal||'اجرای تیم')+'</strong><span class="pill">'+esc(x.createdAt||'')+'</span></div><div class="tiny">'+esc(x.summary||'') .replace(/\\n/g,'<br>')+'</div></div>'}).join(''):'<div class="empty" style="min-height:120px">حافظه هنوز خالی است.</div>';}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
 function selectedAgent(id){return state.agents.find(function(a){return a.id===id})}
 function agentAiLabel(a){const m=String(a.model||'').toLowerCase();const p=String(a.provider||'').toLowerCase();if(m.includes('deepseek'))return 'DeepSeek';if(m.includes('claude'))return 'Claude';if(m.includes('gemini'))return 'Gemini';if(m.includes('gpt')||p==='openai')return 'GPT / OpenAI';if(m.includes('grok'))return 'Grok';if(m.includes('mistral'))return 'Mistral';if(m.includes('qwen'))return 'Qwen';if(m.includes('llama'))return 'Llama';if(p==='horde')return 'AI Horde';if(p==='openrouter')return 'OpenRouter';if(p==='custom')return 'Custom';return a.model||a.provider||'نامشخص'}
@@ -729,7 +737,7 @@ function moveHomeOptionsToRightDrawer(){
  if(!sidebar.contains(panel))sidebar.appendChild(panel);
  sidebar.dataset.optionsMoved='1';
 }
-function init(){moveHomeOptionsToRightDrawer();}
+function init(){moveHomeOptionsToRightDrawer();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script src="provider-manager.js?v=6"></script>

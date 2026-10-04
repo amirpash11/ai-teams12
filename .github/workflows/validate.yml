@@ -86,6 +86,9 @@ jobs:
           grep -q "@media(max-width:920px)" index.html
           grep -q "@media(max-width:520px)" index.html
           grep -q "chat-first-home" index.html
+          grep -q "const RETRY_DELAYS=\[500,1000,2000\]" github-storage.js
+          grep -q "fetchWithRetry" github-storage.js
+          grep -q "transcript=compactContext(transcript,30000)" index.html
           echo "Gateway and GitHub security invariants passed."
 
       - name: Validate Supabase Edge Functions
@@ -117,6 +120,15 @@ jobs:
           grep -q "await ensureHordeModel(a)" index.html
           echo "Public provider endpoints and free-provider contracts passed."
 
+      - name: Validate browser E2E suite
+        run: |
+          test -f tests/e2e/ai-teams.spec.mjs
+          test -f .github/workflows/e2e.yml
+          grep -q "@playwright/test@1.63.0" .github/workflows/e2e.yml
+          grep -q "desktop core controls and demo execution" tests/e2e/ai-teams.spec.mjs
+          grep -q "mobile chat-first layout and drawer behavior" tests/e2e/ai-teams.spec.mjs
+          echo "Browser E2E suite is present and pinned."
+      
       - name: Validate deployment workflow
         run: |
           test -f .github/workflows/pages.yml

@@ -74,16 +74,12 @@ function addProvider(){
  const id=(document.getElementById('pmId').value.trim()||name.toLowerCase().replace(/[^a-z0-9]+/g,'-')).replace(/^-+|-+$/g,'');
  const protocol=document.getElementById('pmProtocol').value, auth=document.getElementById('pmAuth').value, endpoint=document.getElementById('pmEndpoint').value.trim();
  if(!name||!id||!endpoint)return alert('نام، شناسه و Endpoint را کامل کن.');
+ if(!/^https:\/\/[^\s]+$/i.test(endpoint))return alert('Endpoint باید یک آدرس HTTPS معتبر باشد.');
  if(state.providers.some(function(p){return p.id===id}))return alert('این شناسه قبلاً ثبت شده است.');
  state.providers.push({id:id,name:name,protocol:protocol,auth:auth,endpoint:endpoint,header:document.getElementById('pmHeader').value.trim(),query:document.getElementById('pmQuery').value.trim(),model:document.getElementById('pmModel').value.trim(),template:document.getElementById('pmTemplate').value,responsePath:document.getElementById('pmResponse').value.trim()||'choices.0.message.content',builtIn:false});
  save();render();openModal();alert('سرویس اضافه شد. حالا آن را از Provider هر Agent انتخاب کن.');
 }
-function renderProviderMini(){
- const list=document.getElementById('providerList');
- if(list)list.innerHTML=state.providers.map(function(p){return '<div class="agent-row"><div class="agent-head"><strong>'+esc(p.name)+'</strong><span class="pill">'+esc(p.protocol)+'</span></div><div class="tiny">Endpoint: '+esc(p.endpoint)+'<br>احراز: '+esc(p.auth)+(p.builtIn?' · آماده':'')+'</div></div>';}).join('');
- const mini=document.getElementById('providerMiniList');if(mini)mini.innerHTML=state.providers.map(function(p){return '• '+esc(p.name);}).join('<br>');
-}
-function attachProviderButton(){
+
  let btn=document.getElementById('providersBtn');
  if(!btn){
   const sidebar=document.querySelector('.sidebar');
@@ -129,7 +125,9 @@ async function universalCallAgent(a,goal,transcript){
   });
   return data.output;
  }
- let endpoint=(a.endpoint||p.endpoint||'').replace(/\\{\\{model\\}\\}/g,encodeURIComponent(a.model||p.model||''));
+ const hordeEndpoint='https://oai.aihorde.net/v1/chat/completions';
+ if((a.endpoint||p.endpoint||'')!==hordeEndpoint)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
+ let endpoint=hordeEndpoint;
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const body={model:a.model||p.model,messages:messages,temperature:0.2};
  const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);

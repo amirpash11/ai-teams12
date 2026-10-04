@@ -6,7 +6,10 @@ const GITHUB_CLIENT_ID=Deno.env.get("GITHUB_CLIENT_ID")||"";
 const GITHUB_CLIENT_SECRET=Deno.env.get("GITHUB_CLIENT_SECRET")||"";
 const APP_URL=Deno.env.get("AI_TEAMS_APP_URL")||"https://amirpash11.github.io/ai-teams12/";
 const ENC_KEY=Deno.env.get("GITHUB_TOKEN_ENCRYPTION_KEY")||"";
-const TABLE="github_connections";\nconst STATE_TABLE="github_oauth_states";\nfunction adminKey(){try{const x=JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")||"{}");return x.default||"";}catch(_){return "";}}\nfunction adminClient(){return createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||adminKey());}
+const TABLE="github_connections";
+const STATE_TABLE="github_oauth_states";
+function adminKey(){try{const x=JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")||"{}");return x.default||"";}catch(_){return "";}}
+function adminClient(){return createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||adminKey());}
 
 function json(x,status=200){return new Response(JSON.stringify(x),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});}
 function hexToBytes(h){return new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));}
@@ -57,9 +60,8 @@ Deno.serve(async req=>{
     if(!conn)return json({error:"GitHub is not connected"},400);
     const token=await dec(conn.access_token_enc);
     if(action==="repos"){const j=await gh(token,"https://api.github.com/user/repos?per_page=100&sort=updated");return json({repos:j.map((x:any)=>({full_name:x.full_name,private:x.private}))});}
-    if(action==="get-file"){const repo=String((await req.json()).repo),path=String((await req.json()).path);void repo;void path;return json({error:"invalid request"},400);}
     if(action==="put-file"||action==="get-file"){
-      const body=await req.clone().json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path)throw new Error("Invalid repository or path");
+      const body=await req.json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path)throw new Error("Invalid repository or path");
       const url="https://api.github.com/repos/"+repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
       if(action==="get-file"){const j=await gh(token,url);const raw=atob(String(j.content||"").replace(/\n/g,""));return json({content:raw,sha:j.sha});}
       const old=await gh(token,url).catch(()=>null);const content=btoa(unescape(encodeURIComponent(String(body.content||""))));const payload:any={message:String(body.message||"AI Teams backup"),content};if(old?.sha)payload.sha=old.sha;const j=await gh(token,url,{method:"PUT",body:JSON.stringify(payload)});return json({ok:true,sha:j.content?.sha||null});

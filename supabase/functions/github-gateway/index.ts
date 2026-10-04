@@ -5,6 +5,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js/cors";
 const GITHUB_CLIENT_ID=Deno.env.get("GITHUB_CLIENT_ID")||"";
 const GITHUB_CLIENT_SECRET=Deno.env.get("GITHUB_CLIENT_SECRET")||"";
 const APP_URL=Deno.env.get("AI_TEAMS_APP_URL")||"https://amirpash11.github.io/ai-teams12/";
+const APP_ORIGIN=new URL(APP_URL).origin;
 const ENC_KEY=Deno.env.get("GITHUB_TOKEN_ENCRYPTION_KEY")||"";
 const TABLE="github_connections";
 const STATE_TABLE="github_oauth_states";
@@ -21,12 +22,15 @@ async function gh(token,url,init={}){const r=await fetch(url,{...init,headers:{"
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
   const u=new URL(req.url), action=u.searchParams.get("action");
+  const origin=req.headers.get("origin");
+  if(origin && origin!==APP_ORIGIN)return json({error:"Origin not allowed"},403);
   try{
     if(action==="oauth-start"){
       if(!GITHUB_CLIENT_ID)throw new Error("GITHUB_CLIENT_ID is not configured");
       const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
       if(error)return json({error:error.message},error.status);
-      const ret=u.searchParams.get("return_to")||APP_URL;
+      const requestedReturn=u.searchParams.get("return_to")||APP_URL;
+      const ret=new URL(requestedReturn,APP_URL).origin===APP_ORIGIN?requestedReturn:APP_URL;
       const state=crypto.randomUUID();
       const admin=ctx.supabaseAdmin;
       await admin.from(STATE_TABLE).insert({state,user_id:ctx.userClaims.id,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
@@ -41,13 +45,13 @@ Deno.serve(async req=>{
       const admin=adminClient();
       const {data:st}=await admin.from(STATE_TABLE).select("*").eq("state",state).maybeSingle();
       if(!st||new Date(st.expires_at).getTime()<Date.now())throw new Error("OAuth state expired");
+      await admin.from(STATE_TABLE).delete().eq("state",state);
       const cb=u.origin+u.pathname+"?action=oauth-callback";
       const tokenResp=await fetch("https://github.com/login/oauth/access_token",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json"},body:JSON.stringify({client_id:GITHUB_CLIENT_ID,client_secret:GITHUB_CLIENT_SECRET,code,redirect_uri:cb})});
       const tok=await tokenResp.json();if(!tok.access_token)throw new Error(tok.error_description||"GitHub token exchange failed");
       const me=await gh(tok.access_token,"https://api.github.com/user");
       await admin.from(TABLE).upsert({user_id:st.user_id,github_user_id:me.id,github_login:me.login,access_token_enc:await enc(tok.access_token),refresh_token_enc:tok.refresh_token?await enc(tok.refresh_token):null,expires_at:tok.expires_in?new Date(Date.now()+Number(tok.expires_in)*1000).toISOString():null,scopes:tok.scope||"",updated_at:new Date().toISOString()});
-      await admin.from(STATE_TABLE).delete().eq("state",state);
-      const ret=st.return_to||APP_URL;
+      const ret=new URL(st.return_to||APP_URL,APP_URL).origin===APP_ORIGIN?(st.return_to||APP_URL):APP_URL;
       return Response.redirect(ret+(ret.includes("?")?"&":"?")+"github=connected",302);
     }
     const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});

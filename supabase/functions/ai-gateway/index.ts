@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
     if (provider.length > 64 || model.length > 200 || system.length > 20000) return json({ error: 'اندازه ورودی بیش از حد مجاز است.' }, 413)
     if (messages.length > 50) return json({ error: 'تعداد پیام‌ها بیش از حد مجاز است.' }, 413)
     const normalizedMessages = messages.map((m: any) => ({
-      role: String(m?.role || 'user').slice(0, 32),
+      role: ['system','user','assistant'].includes(String(m?.role || 'user')) ? String(m?.role || 'user') : 'user',
       content: String(m?.content || '').slice(0, 20000)
     }))
     if (normalizedMessages.some((m: any) => !m.content.trim())) return json({ error: 'هر پیام باید متن داشته باشد.' }, 400)
@@ -79,15 +79,11 @@ Deno.serve(async (req: Request) => {
     if (provider === 'claude') {
       headers['x-api-key'] = key
       headers['anthropic-version'] = '2023-06-01'
-      body = { model, max_tokens: Math.min(4096, Math.max(256, Number(input?.max_tokens || 1200))), system: system.slice(0,20000), messages: normalizedMessages }
+      const requestedMaxTokens = Number(input?.max_tokens || 1200)
+      const maxTokens = Number.isFinite(requestedMaxTokens) ? Math.min(4096, Math.max(256, Math.floor(requestedMaxTokens))) : 1200
+      body = { model, max_tokens: maxTokens, system: system.slice(0,20000), messages: normalizedMessages.filter((m: any) => m.role !== 'system') }
     } else if (provider === 'gemini') {
       headers['x-goog-api-key'] = key
-      const contents = messages
-        .filter((m: any) => m?.role !== 'system')
-        .map((m: any) => ({
-          role: m?.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: String(m?.content || '') }]
-        }))
       body = {
         systemInstruction: system ? { parts: [{ text: system.slice(0,20000) }] } : undefined,
         contents: normalizedMessages.filter((m: any) => m?.role !== 'system').map((m: any) => ({ role: m?.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }))

@@ -75,7 +75,7 @@ function addProvider(){
  const protocol=document.getElementById('pmProtocol').value, auth=document.getElementById('pmAuth').value, endpoint=document.getElementById('pmEndpoint').value.trim();
  if(!name||!id||!endpoint)return alert('نام، شناسه و Endpoint را کامل کن.');
  if(state.providers.some(function(p){return p.id===id}))return alert('این شناسه قبلاً ثبت شده است.');
- state.providers.push({id:id,name:name,protocol:protocol,auth:auth,endpoint:endpoint,header:document.getElementById('pmHeader').value.trim(),query:document.getElementById('pmQuery').value.trim(),model:document.getElementById('pmModel').value.trim(),apiKey:'',template:document.getElementById('pmTemplate').value,responsePath:document.getElementById('pmResponse').value.trim()||'choices.0.message.content',builtIn:false});
+ state.providers.push({id:id,name:name,protocol:protocol,auth:auth,endpoint:endpoint,header:document.getElementById('pmHeader').value.trim(),query:document.getElementById('pmQuery').value.trim(),model:document.getElementById('pmModel').value.trim(),template:document.getElementById('pmTemplate').value,responsePath:document.getElementById('pmResponse').value.trim()||'choices.0.message.content',builtIn:false});
  save();render();openModal();alert('سرویس اضافه شد. حالا آن را از Provider هر Agent انتخاب کن.');
 }
 function renderProviderMini(){

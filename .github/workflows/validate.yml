@@ -36,7 +36,7 @@ jobs:
             ['Horde retry', 'for(let attempt=1;attempt<=3;attempt++)'],
             ['outer finalResult', "let finalResult='';"],
             ['anonymous Horde key', 'Bearer 0000000000'],
-            ['Horde chat endpoint', 'oai.stablehorde.net/v1/chat/completions']
+            ['Horde chat endpoint', 'oai.aihorde.net/v1/chat/completions']
           ];
           for (const [name, needle] of required) {
             if (!html.includes(needle)) throw new Error('Missing invariant: ' + name);

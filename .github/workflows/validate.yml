@@ -76,6 +76,10 @@ jobs:
           grep -q "compactContext" index.html
           grep -q "compactText" supabase/functions/ai-gateway/index.ts
           grep -q "Content-Security-Policy" index.html
+          grep -q "function safeAgentId" index.html
+          grep -q "@media(max-width:920px)" index.html
+          grep -q "@media(max-width:520px)" index.html
+          grep -q "chat-first-home" index.html
           echo "Gateway and GitHub security invariants passed."
 
       - name: Validate Supabase Edge Functions

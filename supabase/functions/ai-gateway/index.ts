@@ -129,7 +129,7 @@ Deno.serve(async (req: Request) => {
         const value = upstream.headers.get(name)
         if (value) upstreamHeaders[name] = value
       }
-      if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status), upstreamHeaders)
+      if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status, upstreamHeaders)
           const output = String(extract(data, provider) || '').slice(0, 100000)
       if (!output) return json({ error: 'مدل پاسخ متنی قابل استخراجی برنگرداند.' }, 502)
       return json({ output, provider, model })

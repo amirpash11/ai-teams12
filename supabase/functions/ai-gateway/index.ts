@@ -75,7 +75,16 @@ Deno.serve(async (req: Request) => {
       body = { model, max_tokens: Number(input?.max_tokens || 1200), system, messages }
     } else if (provider === 'gemini') {
       headers['x-goog-api-key'] = key
-      body = { contents: [{ parts: [{ text: (system ? system + '\n\n' : '') + String(messages.map((m: any) => m?.content || '').join('\n\n')) }] }] }
+      const contents = messages
+        .filter((m: any) => m?.role !== 'system')
+        .map((m: any) => ({
+          role: m?.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: String(m?.content || '') }]
+        }))
+      body = {
+        systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+        contents
+      }
     } else {
       if (provider === 'horde') headers['Authorization'] = 'Bearer 0000000000'
       else headers['Authorization'] = 'Bearer ' + key

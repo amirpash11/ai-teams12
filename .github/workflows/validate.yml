@@ -63,6 +63,7 @@ jobs:
           grep -q "1200000" supabase/functions/ai-gateway/index.ts
           grep -q "expires_at" supabase/functions/github-gateway/index.ts
           grep -q '"Access-Control-Allow-Origin":APP_ORIGIN' supabase/functions/github-gateway/index.ts
+          grep -q "Access-Control-Allow-Headers" supabase/functions/github-gateway/index.ts
           grep -q "APP_ORIGIN+new URL(req.url).pathname" supabase/functions/github-gateway/index.ts
           ! grep -q 'u.origin+u.pathname+"?action=oauth-callback"' supabase/functions/github-gateway/index.ts
           grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
@@ -79,6 +80,9 @@ jobs:
           grep -q "compactText" supabase/functions/ai-gateway/index.ts
           grep -q "Content-Security-Policy" index.html
           grep -q "function safeAgentId" index.html
+          grep -q "function stripBrowserSecrets" index.html
+          grep -q "stripBrowserSecrets(p)" index.html
+          grep -q "core.importState(x.project)" github-storage.js
           grep -q "@media(max-width:920px)" index.html
           grep -q "@media(max-width:520px)" index.html
           grep -q "chat-first-home" index.html

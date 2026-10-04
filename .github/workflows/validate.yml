@@ -88,6 +88,7 @@ jobs:
           grep -q "chat-first-home" index.html
           grep -q "body.chat-first-home .right-home-options .topbar" index.html
           grep -q "s.classList.toggle('open',!h)" index.html
+          grep -q "getItem(__leftDrawerState.key)!=='0'" index.html
           grep -q "const RETRY_DELAYS=\[500,1000,2000\]" github-storage.js
           grep -q "fetchWithRetry" github-storage.js
           grep -q "transcript=compactContext(transcript,30000)" index.html

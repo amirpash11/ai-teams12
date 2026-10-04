@@ -63,7 +63,7 @@ Deno.serve(async req=>{
     if(action==="put-file"||action==="get-file"){
       const body=await req.json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path)throw new Error("Invalid repository or path");
       const url="https://api.github.com/repos/"+repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
-      if(action==="get-file"){const j=await gh(token,url);const raw=atob(String(j.content||"").replace(/\n/g,""));return json({content:raw,sha:j.sha});}
+      if(action==="get-file"){const j=await gh(token,url);const raw=atob(String(j.content||"").replace(/\n/g,""));const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const decoded=new TextDecoder().decode(bytes);return json({content:decoded,sha:j.sha});}
       const old=await gh(token,url).catch(()=>null);const content=btoa(unescape(encodeURIComponent(String(body.content||""))));const payload:any={message:String(body.message||"AI Teams backup"),content};if(old?.sha)payload.sha=old.sha;const j=await gh(token,url,{method:"PUT",body:JSON.stringify(payload)});return json({ok:true,sha:j.content?.sha||null});
     }
     return json({error:"Unknown action"},400);

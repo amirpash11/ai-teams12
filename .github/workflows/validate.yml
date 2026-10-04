@@ -31,6 +31,7 @@ jobs:
             catch (err) { throw new Error('Inline script ' + i + ' syntax error: ' + err.message); }
           });
           const required = [
+            ['Drawer without history mutation', "r.onclick=openRight;l.onclick=openLeft;sync();"],
             ['human-agent guard', "a.kind==='human'"],
             ['AI-only dialogue', "a.enabled&&a.kind!=='human'"],
             ['Horde retry', 'for(let attempt=1;attempt<=3;attempt++)'],
@@ -41,8 +42,21 @@ jobs:
           for (const [name, needle] of required) {
             if (!html.includes(needle)) throw new Error('Missing invariant: ' + name);
           }
-          console.log('Validated', scripts.length, 'inline scripts and all critical invariants.');
+          const duplicateIds = ids => ids.filter((id,i)=>ids.indexOf(id)!==i);
+          const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
+          if (duplicateIds(ids).length) throw new Error('Duplicate HTML ids: ' + duplicateIds(ids).join(', '));
+          console.log('Validated', scripts.length, 'inline scripts, unique IDs, and all critical invariants.');
           NODE
+
+      - name: Validate Gateway security invariants
+        run: |
+          grep -q "Access-Control-Allow-Origin': APP_ORIGIN" supabase/functions/ai-gateway/index.ts
+          grep -q "consume_ai_gateway_rate_limit" supabase/functions/ai-gateway/index.ts
+          grep -q "oai.aihorde.net/v1/chat/completions" supabase/functions/ai-gateway/index.ts
+          ! grep -q "oai.stablehorde.net/v1/chat/completions" supabase/functions/ai-gateway/index.ts
+          grep -q "expires_at" supabase/functions/github-gateway/index.ts
+          grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
+          echo "Gateway and GitHub security invariants passed."
 
       - name: Validate Supabase Edge Functions
         uses: denoland/setup-deno@v1

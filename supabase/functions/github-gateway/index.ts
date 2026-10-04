@@ -21,6 +21,7 @@ async function gh(token,url,init={}){const r=await fetch(url,{...init,headers:{"
 
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
+  if(req.method!=="GET" && req.method!=="POST")return json({error:"Method not allowed"},405,{Allow:"GET, POST, OPTIONS"});
   const u=new URL(req.url), action=u.searchParams.get("action");
   const origin=req.headers.get("origin");
   if(origin && origin!==APP_ORIGIN)return json({error:"Origin not allowed"},403);
@@ -33,6 +34,7 @@ Deno.serve(async req=>{
       const ret=new URL(requestedReturn,APP_URL).origin===APP_ORIGIN?requestedReturn:APP_URL;
       const state=crypto.randomUUID();
       const admin=ctx.supabaseAdmin;
+      await admin.from(STATE_TABLE).delete().lt("expires_at",new Date().toISOString());
       await admin.from(STATE_TABLE).insert({state,user_id:ctx.userClaims.id,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
       const cb=u.origin+u.pathname+"?action=oauth-callback";
       const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email offline_access")+"&state="+encodeURIComponent(state);
@@ -65,10 +67,10 @@ Deno.serve(async req=>{
     const token=await dec(conn.access_token_enc);
     if(action==="repos"){const j=await gh(token,"https://api.github.com/user/repos?per_page=100&sort=updated");return json({repos:j.map((x:any)=>({full_name:x.full_name,private:x.private}))});}
     if(action==="put-file"||action==="get-file"){
-      const body=await req.json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path)throw new Error("Invalid repository or path");
+      const body=await req.json();const repo=String(body.repo||""),path=String(body.path||"");if(!/^[^/]+\/[^/]+$/.test(repo)||!path||path.length>500)throw new Error("Invalid repository or path");
       const url="https://api.github.com/repos/"+repo+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
-      if(action==="get-file"){const j=await gh(token,url);const raw=atob(String(j.content||"").replace(/\n/g,""));const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const decoded=new TextDecoder().decode(bytes);return json({content:decoded,sha:j.sha});}
-      const old=await gh(token,url).catch(()=>null);const content=btoa(unescape(encodeURIComponent(String(body.content||""))));const payload:any={message:String(body.message||"AI Teams backup"),content};if(old?.sha)payload.sha=old.sha;const j=await gh(token,url,{method:"PUT",body:JSON.stringify(payload)});return json({ok:true,sha:j.content?.sha||null});
+      if(action==="get-file"){const j=await gh(token,url);const encoded=String(j.content||"").replace(/\n/g,"");if(encoded.length>2800000)throw new Error("File is too large");const raw=atob(encoded);const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const decoded=new TextDecoder().decode(bytes);return json({content:decoded,sha:j.sha});}
+      const old=await gh(token,url).catch(()=>null);const source=String(body.content||"");if(source.length>2000000)throw new Error("File content is too large");const content=btoa(unescape(encodeURIComponent(source)));const payload:any={message:String(body.message||"AI Teams backup").slice(0,200),content};if(old?.sha)payload.sha=old.sha;const j=await gh(token,url,{method:"PUT",body:JSON.stringify(payload)});return json({ok:true,sha:j.content?.sha||null});
     }
     return json({error:"Unknown action"},400);
   }catch(e){return json({error:e instanceof Error?e.message:String(e)},500);}

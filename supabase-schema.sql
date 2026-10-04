@@ -66,3 +66,59 @@ create table if not exists public.github_oauth_states (
 alter table public.github_oauth_states enable row level security;
 -- OAuth state is created/consumed only by the Edge Function using its server key.
 revoke all on public.github_oauth_states from anon, authenticated;
+
+
+-- AI Gateway abuse protection: per-user fixed-window limiter.
+create table if not exists public.ai_gateway_rate_limits (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  window_started_at timestamptz not null default now(),
+  request_count integer not null default 0,
+  updated_at timestamptz not null default now(),
+  constraint ai_gateway_rate_limits_count_nonnegative check (request_count >= 0)
+);
+alter table public.ai_gateway_rate_limits enable row level security;
+revoke all on public.ai_gateway_rate_limits from anon, authenticated;
+
+create or replace function public.consume_ai_gateway_rate_limit(
+  p_user_id uuid,
+  p_limit integer default 30,
+  p_window_seconds integer default 60
+) returns table(allowed boolean, remaining integer)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_now timestamptz := now();
+  v_started timestamptz;
+  v_count integer;
+begin
+  p_limit := greatest(1, least(p_limit, 1000));
+  p_window_seconds := greatest(1, least(p_window_seconds, 3600));
+
+  select window_started_at, request_count
+    into v_started, v_count
+    from public.ai_gateway_rate_limits
+    where user_id = p_user_id
+    for update;
+
+  if not found then
+    insert into public.ai_gateway_rate_limits(user_id, window_started_at, request_count, updated_at)
+    values(p_user_id, v_now, 1, v_now);
+    return query select true, p_limit - 1;
+  elsif v_started <= v_now - make_interval(secs => p_window_seconds) then
+    update public.ai_gateway_rate_limits
+      set window_started_at=v_now, request_count=1, updated_at=v_now
+      where user_id=p_user_id;
+    return query select true, p_limit - 1;
+  elsif v_count >= p_limit then
+    return query select false, 0;
+  else
+    update public.ai_gateway_rate_limits
+      set request_count=v_count+1, updated_at=v_now
+      where user_id=p_user_id;
+    return query select true, greatest(0, p_limit-v_count-1);
+  end if;
+end;
+$$;
+
+revoke all on function public.consume_ai_gateway_rate_limit(uuid, integer, integer) from public, anon, authenticated;
+grant execute on function public.consume_ai_gateway_rate_limit(uuid, integer, integer) to service_role;

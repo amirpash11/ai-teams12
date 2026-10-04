@@ -23,7 +23,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#parallelBtn').click();
     await expect(page.locator('#chat')).toContainText('اجرای موازی پایان یافت', { timeout: 15000 });
 
-    await page.locator('#dialogueRounds').fill('1');
+    await page.locator('#dialogueRounds').selectOption('1');
     await page.locator('#dialogueBtn').click();
     await expect(page.locator('#chat')).toContainText('بحث چندعاملی پایان یافت', { timeout: 15000 });
   });

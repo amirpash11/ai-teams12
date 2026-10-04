@@ -61,6 +61,11 @@ jobs:
           grep -q "1200000" supabase/functions/ai-gateway/index.ts
           grep -q "expires_at" supabase/functions/github-gateway/index.ts
           grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
+          grep -q "contentLength" supabase/functions/github-gateway/index.ts
+          grep -q "Invalid repository or path" supabase/functions/github-gateway/index.ts
+          grep -q "aiTeamsImportState" index.html
+          grep -q "importState:window.aiTeamsImportState" provider-manager.js
+          grep -q "aiTeamsEnsureProviders" provider-manager.js
           grep -q "Content-Security-Policy" index.html
           echo "Gateway and GitHub security invariants passed."
 

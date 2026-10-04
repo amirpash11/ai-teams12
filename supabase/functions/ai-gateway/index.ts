@@ -39,7 +39,7 @@ function endpointFor(provider: Provider, model: string) {
   if (provider === 'openrouter') return 'https://openrouter.ai/api/v1/chat/completions'
   if (provider === 'claude') return 'https://api.anthropic.com/v1/messages'
   if (provider === 'gemini') return 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent'
-  if (provider === 'horde') return 'https://oai.stablehorde.net/v1/chat/completions'
+  if (provider === 'horde') return 'https://oai.aihorde.net/v1/chat/completions'
   return customEndpointMap()[provider] || ''
 }
 
@@ -51,6 +51,7 @@ function extract(data: any, provider: Provider) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method !== 'POST') return json({ error: 'فقط POST مجاز است.' }, 405, { Allow: 'POST, OPTIONS' })
 
   const origin = req.headers.get('origin')
   if (origin && origin !== APP_ORIGIN) return json({ error: 'Origin مجاز نیست.' }, 403)
@@ -59,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const contentLength = Number(req.headers.get('content-length') || 0)
-    if (contentLength > 1200000) return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
+    if (Number.isFinite(contentLength) && contentLength > 1200000) return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
     const input = await req.json()
     const rate = await ctx.supabaseAdmin.rpc('consume_ai_gateway_rate_limit', { p_user_id: ctx.userClaims.id, p_limit: RATE_LIMIT, p_window_seconds: RATE_WINDOW_SECONDS })
     if (rate.error) return json({ error: 'کنترل مصرف Gateway در دسترس نیست.' }, 503)
@@ -117,7 +118,7 @@ Deno.serve(async (req: Request) => {
       let data: any = {}
       try { data = JSON.parse(raw) } catch {}
       if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status)
-          const output = extract(data, provider)
+          const output = String(extract(data, provider) || '').slice(0, 100000)
       if (!output) return json({ error: 'مدل پاسخ متنی قابل استخراجی برنگرداند.' }, 502)
       return json({ output, provider, model })
     } finally {

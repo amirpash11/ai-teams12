@@ -44,6 +44,16 @@ jobs:
           console.log('Validated', scripts.length, 'inline scripts and all critical invariants.');
           NODE
 
+      - name: Validate Supabase Edge Functions
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+
+      - name: Deno type check
+        run: |
+          deno check supabase/functions/ai-gateway/index.ts
+          deno check supabase/functions/github-gateway/index.ts
+
       - name: Validate deployment workflow
         run: |
           test -f .github/workflows/pages.yml

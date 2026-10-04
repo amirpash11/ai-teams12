@@ -191,14 +191,11 @@ async function syncFromCloud(){
       const core=window.aiTeamsCore;
       if(core){
         applyingRemote=true;
-        const current=core.getState();
         const remote=(r.data.state&&typeof r.data.state==='object')?r.data.state:{};
-        Object.keys(current).forEach(function(k){delete current[k]});
-        Object.keys(remote).forEach(function(k){current[k]=remote[k]});
-        core.save();
-        core.render();
+        if(typeof core.importState!=='function')throw new Error('هسته بازیابی پروژه آماده نیست.');
+        core.importState(remote);
         applyingRemote=false;
-        status('نسخه ابری پروژه بازیابی شد.',true);
+        status('نسخه ابری پروژه بازیابی شد و اعتبارسنجی شد.',true);
       }
     }else{
       await syncNow(false);

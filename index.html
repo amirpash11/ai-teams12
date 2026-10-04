@@ -550,37 +550,44 @@ async function runAdminTurn(){
  document.getElementById('adminChatBtn').disabled=true;
  document.getElementById('dialogueBtn').disabled=true;
  document.getElementById('runBtn').disabled=true;
- msg('شما','👤',userText,'user',false);
- let transcript=buildTeamRoster(active)+'\\n\\nسابقه گفتگو:\\n'+state.chat.map(function(m){return '['+(m.type==='user'?'شما (انسان)':'عضو هوش مصنوعی: '+(m.name||'تیم'))+']\\n'+m.text}).join('\\n\\n');
- for(const a of active){
-  msg(a.name,a.icon,'در حال پاسخ...','agent',false);
-  try{
-   let result;
-   if(state.mode==='demo'){
-    result='دستور ادمین دریافت شد. در نقش «'+a.role+'» آن را بررسی کردم و برای ادامه کار اقدام/پیشنهاد لازم را ارائه می‌دهم.\\n\\nپیام ادمین: '+userText;
-   }else{
-    const adminGoal=buildTeamRoster(active)+'\\n\\nهدف فعلی تیم:\\n'+(state.goal||'هدف هنوز مشخص نشده است')+
-      '\n\nپیام/دستور مستقیم ادمین:\n'+userText+
-      '\n\nقواعد: پیام ادمین را در اولویت قرار بده. اگر دستور مستقیماً یک عضو خاص را خطاب قرار داده، از نقش خودت فقط در همان محدوده استفاده کن. اگر دستور خطاب به کل تیم است، با نقش خودت پاسخ بده. پاسخ اعضای قبلی همین نوبت و سابقه گفتگو را بررسی کن، تکرار را کم کن و اگر نیاز به اصلاح داری دقیق و عملی توضیح بده.';
-    result=await callAgent(a,adminGoal,transcript);
+ try{
+  msg('شما','👤',userText,'user',false);
+  let transcript=buildTeamRoster(active)+'\\n\\nسابقه گفتگو:\\n'+state.chat.map(function(m){return '['+(m.type==='user'?'شما (انسان)':'عضو هوش مصنوعی: '+(m.name||'تیم'))+']\\n'+m.text}).join('\\n\\n');
+  for(const a of active){
+   const placeholder={name:a.name,icon:a.icon,text:'در حال پاسخ...',type:'agent',error:false};
+   state.chat.push(placeholder);
+   renderChat();
+   try{
+    let result;
+    if(state.mode==='demo'){
+     result='دستور ادمین دریافت شد. در نقش «'+a.role+'» آن را بررسی کردم و برای ادامه کار اقدام/پیشنهاد لازم را ارائه می‌دهم.\\n\\nپیام ادمین: '+userText;
+    }else{
+     const adminGoal=buildTeamRoster(active)+'\\n\\nهدف فعلی تیم:\\n'+(state.goal||'هدف هنوز مشخص نشده است')+
+       '\\n\\nپیام/دستور مستقیم ادمین:\\n'+userText+
+       '\\n\\nقواعد: پیام ادمین را در اولویت قرار بده. اگر دستور مستقیماً یک عضو خاص را خطاب قرار داده، از نقش خودت فقط در همان محدوده استفاده کن. اگر دستور خطاب به کل تیم است، با نقش خودت پاسخ بده. پاسخ اعضای قبلی همین نوبت و سابقه گفتگو را بررسی کن، تکرار را کم کن و اگر نیاز به اصلاح داری دقیق و عملی توضیح بده.';
+     result=await callAgent(a,adminGoal,transcript);
+    }
+    placeholder.text=result;
+    placeholder.error=false;
+    transcript+='\\n\\n['+a.name+' در پاسخ به ادمین]\\n'+result;
+   }catch(e){
+    placeholder.text='خطا: '+e.message;
+    placeholder.error=true;
+    transcript+='\\n\\n['+a.name+' - خطا در پاسخ به ادمین]\\n'+e.message;
    }
-   state.chat[state.chat.length-1].text=result;
-   state.chat[state.chat.length-1].error=false;
-   transcript+='\\n\\n['+a.name+' در پاسخ به ادمین]\\n'+result;
-   renderChat();save();
-  }catch(e){
-   state.chat[state.chat.length-1].text='خطا: '+e.message;
-   state.chat[state.chat.length-1].error=true;
-   renderChat();save();
-   transcript+='\\n\\n['+a.name+' - خطا در پاسخ به ادمین]\\n'+e.message;
+   renderChat();
+   save();
   }
+  msg('سیستم','💬','اعضای فعال به پیام شما پاسخ دادند. می‌توانی مثل یک گفت‌وگوی عادی پیام بعدی را بفرستی.','agent',false);
+ }catch(e){
+  msg('سیستم','⚠️','اجرای دستور متوقف شد: '+e.message,'agent',true);
+ }finally{
+  busy=false;
+  document.getElementById('adminChatBtn').disabled=false;
+  document.getElementById('dialogueBtn').disabled=false;
+  document.getElementById('runBtn').disabled=false;
+  save();
  }
- msg('سیستم','💬','اعضای فعال به پیام شما پاسخ دادند. می‌توانی مثل یک گفت‌وگوی عادی پیام بعدی را بفرستی.','agent',false);
- busy=false;
- document.getElementById('adminChatBtn').disabled=false;
- document.getElementById('dialogueBtn').disabled=false;
- document.getElementById('runBtn').disabled=false;
- save();
 }
 
 async function runDialogue(){
@@ -595,58 +602,93 @@ async function runDialogue(){
  busy=true;
  document.getElementById('runBtn').disabled=true;
  document.getElementById('dialogueBtn').disabled=true;
+ document.getElementById('adminChatBtn').disabled=true;
+ const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
+ state.runs=state.runs||[];
  state.chat=[];
- msg('مدیر پروژه','👤','موضوع بحث و کار موردنظر:\n'+goal+'\n\nاعضا باید درباره بهترین روش انجام این کار بحث کنند.','user',false);
- let transcript=buildTeamRoster(active)+'\\n\\nحافظه دائمی پروژه:\\n'+memoryContext(8)+'\\n\\nشروع بحث:\\n';
- for(let round=1;round<=rounds;round++){
-  msg('مدیر پروژه','🧩','دور '+round+' از '+rounds+' — هر عضو نظر قبلی را بررسی می‌کند و درباره همان کار پاسخ می‌دهد.','agent',false);
-  for(const a of active){
-   msg(a.name,a.icon,'دور '+round+' — در حال بررسی دیدگاه اعضا و ارائه نظر خود...','agent',false);
-   try{
-    let result;
-    if(state.mode==='demo'){
+ try{
+  msg('مدیر پروژه','👤','موضوع بحث و کار موردنظر:\\n'+goal+'\\n\\nاعضا باید درباره بهترین روش انجام این کار بحث کنند.','user',false);
+  let transcript=buildTeamRoster(active)+'\\n\\nحافظه دائمی پروژه:\\n'+memoryContext(8)+'\\n\\nشروع بحث:\\n';
+  for(let round=1;round<=rounds;round++){
+   msg('مدیر پروژه','🧩','دور '+round+' از '+rounds+' — هر عضو نظر قبلی را بررسی می‌کند و درباره همان کار پاسخ می‌دهد.','agent',false);
+   for(const a of active){
+    const placeholder={name:a.name,icon:a.icon,text:'دور '+round+' — در حال بررسی دیدگاه اعضا و ارائه نظر خود...',type:'agent',error:false};
+    state.chat.push(placeholder);
+    renderChat();
+    try{
+     let result;
+     if(state.mode==='demo'){
       result='دور '+round+' — '+mockResponse(a,goal,transcript);
-      if(round>1)result+='\n\nدر این دور، دیدگاه اعضای قبلی را بررسی کردم؛ موارد قابل اصلاح را نقد و پیشنهاد خودم را برای انجام این کار به‌روزرسانی کردم.';
-    }else{
+      if(round>1)result+='\\n\\nدر این دور، دیدگاه اعضای قبلی را بررسی کردم؛ موارد قابل اصلاح را نقد و پیشنهاد خودم را برای انجام این کار به‌روزرسانی کردم.';
+     }else{
       const dialogueGoal=buildTeamRoster(active)+'\\n\\nکار/موضوعی که تیم باید درباره آن بحث کند:\\n'+goal+
-        '\n\nاین دور '+round+' از '+rounds+' است. تو یکی از اعضای یک تیم چندعاملی هستی. دیدگاه و خروجی اعضای قبلی را دقیق بررسی کن. '+
+        '\\n\\nاین دور '+round+' از '+rounds+' است. تو یکی از اعضای یک تیم چندعاملی هستی. دیدگاه و خروجی اعضای قبلی را دقیق بررسی کن. '+
         (round===1?'نظر اولیه و راه‌حل خودت را برای انجام این کار ارائه بده.':'اگر با نظر اعضای قبلی موافق نیستی، دقیقاً بگو کدام بخش را قبول نداری و دلیل فنی/منطقی بیاور؛ سپس راه‌حل خودت را اصلاح یا تکمیل کن.')+
-        '\n\nقواعد بحث: فقط درباره همین کار صحبت کن؛ به خروجی قبلی‌ها ارجاع بده؛ نکات تکراری را کوتاه کن؛ اختلاف‌نظرها را شفاف کن؛ در پایان پیشنهاد عملی خودت را ارائه بده.';
+        '\\n\\nقواعد بحث: فقط درباره همین کار صحبت کن؛ به خروجی قبلی‌ها ارجاع بده؛ نکات تکراری را کوتاه کن؛ اختلاف‌نظرها را شفاف کن؛ در پایان پیشنهاد عملی خودت را ارائه بده.';
       result=await callAgent(a,dialogueGoal,transcript);
+     }
+     placeholder.text=result;
+     placeholder.error=false;
+     transcript+=(transcript?'\\n\\n':'')+'[دور '+round+' | '+a.name+']\\n'+result;
+    }catch(e){
+     placeholder.text='خطا: '+e.message;
+     placeholder.error=true;
+     transcript+=(transcript?'\\n\\n':'')+'[دور '+round+' | '+a.name+' - خطا]\\n'+e.message;
     }
-    state.chat[state.chat.length-1].text=result;
-    state.chat[state.chat.length-1].error=false;
-    transcript+=(transcript?'\n\n':'')+'[دور '+round+' | '+a.name+']\n'+result;
-    renderChat();save();
-   }catch(e){
-    state.chat[state.chat.length-1].text='خطا: '+e.message;
-    state.chat[state.chat.length-1].error=true;
-    renderChat();save();
-    transcript+=(transcript?'\n\n':'')+'[دور '+round+' | '+a.name+' - خطا]\n'+e.message;
+    renderChat();
+    save();
    }
   }
+
+  const coordinator=active[active.length-1];
+  msg('جمع‌بندی نهایی تیم','🧠','در حال تحلیل همه دورها و تولید تصمیم نهایی...','agent',false);
+  const finalIndex=state.chat.length-1;
+  let finalResult='';
+  try{
+   if(state.mode==='demo'){
+    finalResult='جمع‌بندی نهایی برای «'+goal+'» آماده شد. دیدگاه اعضا در '+rounds+' دور بررسی شد و اختلاف‌ها برای تصمیم اجرایی نهایی در نظر گرفته شدند.';
+   }else{
+    const finalGoal=buildTeamRoster(active)+'\\n\\nموضوع/هدف تیم:\\n'+goal+
+      '\\n\\nتو هماهنگ‌کننده نهایی تیم هستی. کل بحث و خروجی همه اعضا و همه دورها را که در متن ورودی آمده بررسی کن. پاسخ نهایی باید یک تصمیم/راه‌حل قابل اجرا باشد، نه صرفاً تکرار بحث.\\n'+
+      '\\nساختار اجباری خروجی:\\n1) نتیجه نهایی و پیشنهاد اصلی\\n2) دلایل و شواهد مهم از بحث\\n3) اختلاف‌نظرها و اینکه کدام دیدگاه پذیرفته شد و چرا\\n4) ریسک‌ها، ابهام‌ها و مواردی که هنوز نیاز به بررسی دارند\\n5) مراحل اجرایی بعدی به ترتیب اولویت\\n\\nفقط بر اساس اطلاعات موجود تصمیم‌گیری کن؛ اگر اطلاعات کافی نیست صریحاً بگو چه چیزی کم است و آن را به‌عنوان واقعیت قطعی نساز.';
+    finalResult=await callAgent(coordinator,finalGoal,transcript);
+   }
+   state.chat[finalIndex].text=finalResult;
+   state.chat[finalIndex].error=false;
+   transcript+='\\n\\n[جمع‌بندی نهایی | '+coordinator.name+']\\n'+finalResult;
+   renderChat();
+   save();
+  }catch(e){
+   state.chat[finalIndex].text='خطا در جمع‌بندی نهایی: '+e.message;
+   state.chat[finalIndex].error=true;
+   renderChat();
+   save();
+  }
+
+  const dialogueSummary=String(finalResult||'').slice(0,5000);
+  state.runs.unshift({
+   id:runId,
+   createdAt:new Date().toISOString(),
+   goal:goal,
+   mode:state.mode,
+   type:'dialogue',
+   rounds:rounds,
+   members:active.map(function(a){return a.name}),
+   summary:dialogueSummary,
+   messages:state.chat.slice()
+  });
+  state.runs=state.runs.slice(0,20);
+  rememberRun(goal,dialogueSummary,active.map(function(a){return a.name}));
+  msg('سیستم','✅','بحث چندعاملی پایان یافت؛ همه دورها بررسی و یک جمع‌بندی نهایی اجرایی تولید شد.','agent',false);
+ }catch(e){
+  msg('سیستم','⚠️','اجرای گفت‌وگوی تیم با خطای غیرمنتظره متوقف شد: '+e.message,'agent',true);
+ }finally{
+  busy=false;
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('dialogueBtn').disabled=false;
+  document.getElementById('adminChatBtn').disabled=false;
+  save();
  }
- msg('مدیر پروژه','👤','بحث اعضا درباره این کار پس از '+rounds+' دور به پایان رسید. اکنون می‌توانی دیدگاه‌ها، اختلاف‌نظرها و پیشنهادهای اجرایی را بررسی کنی.','agent',false);
- const dialogueSummary=state.chat.slice(-Math.min(state.chat.length,12)).map(function(m){return '['+(m.name||'عضو')+'] '+String(m.text||'').slice(0,900)}).join('\n\n');
- state.runs=state.runs||[];
- state.runs.unshift({
-  id:(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()),
-  createdAt:new Date().toISOString(),
-  goal:goal,
-  mode:state.mode,
-  type:'dialogue',
-  rounds:rounds,
-  members:active.map(function(a){return a.name}),
-  summary:dialogueSummary,
-  messages:state.chat.slice()
- });
- state.runs=state.runs.slice(0,20);
- rememberRun(goal,dialogueSummary,active.map(function(a){return a.name}));
- busy=false;
- document.getElementById('runBtn').disabled=false;
- document.getElementById('dialogueBtn').disabled=false;
- document.getElementById('adminChatBtn').disabled=false;
- save();
 }
 
 async function runTeamParallel(){

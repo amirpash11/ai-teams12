@@ -54,6 +54,11 @@ jobs:
           grep -q "consume_ai_gateway_rate_limit" supabase/functions/ai-gateway/index.ts
           grep -q "oai.aihorde.net/v1/chat/completions" supabase/functions/ai-gateway/index.ts
           ! grep -q "oai.stablehorde.net/v1/chat/completions" supabase/functions/ai-gateway/index.ts
+          grep -q "upstreamHeaders" supabase/functions/ai-gateway/index.ts
+          grep -q "retry-after" supabase/functions/ai-gateway/index.ts
+          grep -q "x-ratelimit-remaining" supabase/functions/ai-gateway/index.ts
+          grep -q "protocol !== 'https:'" supabase/functions/ai-gateway/index.ts
+          grep -q "1200000" supabase/functions/ai-gateway/index.ts
           grep -q "expires_at" supabase/functions/github-gateway/index.ts
           grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
           grep -q "Content-Security-Policy" index.html

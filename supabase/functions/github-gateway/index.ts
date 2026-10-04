@@ -13,7 +13,7 @@ function adminKey(){try{const x=JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")|
 function adminClient(){return createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||adminKey());}
 
 function json(x,status=200){return new Response(JSON.stringify(x),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});}
-function hexToBytes(h){return new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));}
+function hexToBytes(h){if(!/^[0-9a-fA-F]{64}$/.test(h))throw new Error("GITHUB_TOKEN_ENCRYPTION_KEY must be exactly 32 bytes of hex");return new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));}
 async function key(){if(!ENC_KEY)throw new Error("GITHUB_TOKEN_ENCRYPTION_KEY is not configured");return crypto.subtle.importKey("raw",hexToBytes(ENC_KEY),"AES-GCM",false,["encrypt","decrypt"]);}
 async function enc(s){const iv=crypto.getRandomValues(new Uint8Array(12));const k=await key();const b=new TextEncoder().encode(s);const c=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},k,b));const out=new Uint8Array(iv.length+c.length);out.set(iv);out.set(c,iv.length);return btoa(String.fromCharCode(...out));}
 async function dec(s){const a=Uint8Array.from(atob(s),c=>c.charCodeAt(0)),iv=a.slice(0,12),c=a.slice(12);const k=await key();const p=await crypto.subtle.decrypt({name:"AES-GCM",iv},k,c);return new TextDecoder().decode(p);}

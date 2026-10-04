@@ -631,7 +631,9 @@ async function runTeam(){
   renderChat();save();
  }
  msg('سیستم','✅','اجرای زنجیره‌ای تیم تمام شد؛ خروجی هر عضو به مرحله بعد منتقل شد و جمع‌بندی نهایی تولید شد.','agent',false);
- const finalSummary=String(finalResult||'').slice(0,5000);\n  rememberRun(goal,finalSummary,active.map(function(a){return a.name}));\n  state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,members:active.map(function(a){return a.name}),summary:(state.chat[state.chat.length-2]&&state.chat[state.chat.length-2].text)||'',messages:state.chat.slice()});
+ const finalSummary=String(finalResult||'').slice(0,5000);
+  rememberRun(goal,finalSummary,active.map(function(a){return a.name}));
+  state.runs.unshift({id:runId,createdAt:new Date().toISOString(),goal:goal,mode:state.mode,members:active.map(function(a){return a.name}),summary:(state.chat[state.chat.length-2]&&state.chat[state.chat.length-2].text)||'',messages:state.chat.slice()});
  state.runs=state.runs.slice(0,20);
  busy=false;document.getElementById('runBtn').disabled=false;document.getElementById('dialogueBtn').disabled=false;document.getElementById('adminChatBtn').disabled=false;save();
 }

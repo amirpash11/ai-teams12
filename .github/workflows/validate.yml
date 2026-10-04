@@ -60,6 +60,9 @@ jobs:
           grep -q "protocol !== 'https:'" supabase/functions/ai-gateway/index.ts
           grep -q "1200000" supabase/functions/ai-gateway/index.ts
           grep -q "expires_at" supabase/functions/github-gateway/index.ts
+          grep -q 'Access-Control-Allow-Origin"'"'"'"'":"APP_ORIGIN' supabase/functions/github-gateway/index.ts
+          grep -q "APP_ORIGIN+new URL(req.url).pathname" supabase/functions/github-gateway/index.ts
+          ! grep -q 'u.origin+u.pathname+"?action=oauth-callback"' supabase/functions/github-gateway/index.ts
           grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
           grep -q "contentLength" supabase/functions/github-gateway/index.ts
           grep -q "Invalid repository or path" supabase/functions/github-gateway/index.ts

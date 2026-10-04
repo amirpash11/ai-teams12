@@ -108,9 +108,9 @@ Deno.serve(async (req: Request) => {
       let data: any = {}
       try { data = JSON.parse(raw) } catch {}
       if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status)
-      const output = extract(data, provider)
+          const output = extract(data, provider)
       if (!output) return json({ error: 'مدل پاسخ متنی قابل استخراجی برنگرداند.' }, 502)
-      return json({ output, provider, model, user_id: ctx.userClaims?.sub || null })
+      return json({ output, provider, model })
     } finally {
       clearTimeout(timer)
     }

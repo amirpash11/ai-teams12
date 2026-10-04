@@ -47,10 +47,14 @@ function extract(data: any, provider: Provider) {
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
+  const origin = req.headers.get('origin')
+  if (origin && origin !== APP_ORIGIN) return json({ error: 'Origin مجاز نیست.' }, 403)
   const { data: ctx, error: authError } = await createSupabaseContext(req, { auth: 'user' })
   if (authError) return json({ error: 'احراز هویت لازم است.', code: authError.code }, authError.status || 401)
 
   try {
+    const contentLength = Number(req.headers.get('content-length') || 0)
+    if (contentLength > 1200000) return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
     const input = await req.json()
     const provider = String(input?.provider || '').trim() as Provider
     const model = String(input?.model || '').trim()
@@ -65,6 +69,7 @@ Deno.serve(async (req: Request) => {
       content: String(m?.content || '').slice(0, 20000)
     }))
     if (normalizedMessages.some((m: any) => !m.content.trim())) return json({ error: 'هر پیام باید متن داشته باشد.' }, 400)
+    if (!['openai','openrouter','claude','gemini','horde','custom'].includes(provider)) return json({ error: 'Provider مجاز نیست.' }, 400)
     const endpoint = endpointFor(provider, model)
     if (!endpoint) return json({ error: 'Endpoint سرویس مشخص نشده است.' }, 400)
 
@@ -99,7 +104,7 @@ Deno.serve(async (req: Request) => {
     const timer = setTimeout(() => controller.abort(), 90000)
     try {
       const upstream = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal })
-      const raw = await upstream.text()
+      const raw = (await upstream.text()).slice(0, 2000000)
       let data: any = {}
       try { data = JSON.parse(raw) } catch {}
       if (!upstream.ok) return json({ error: data?.error?.message || data?.message || raw.slice(0, 600) || ('HTTP ' + upstream.status) }, upstream.status)

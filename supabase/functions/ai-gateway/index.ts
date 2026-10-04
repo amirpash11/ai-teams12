@@ -64,13 +64,14 @@ Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin')
   if (origin && origin !== APP_ORIGIN) return json({ error: 'Origin مجاز نیست.' }, 403)
   const { data: ctx, error: authError } = await createSupabaseContext(req, { auth: 'user' })
-  if (authError) return json({ error: 'احراز هویت لازم است.', code: authError.code }, authError.status || 401)
+  if (authError || !ctx?.userClaims?.id) return json({ error: 'احراز هویت لازم است.', code: authError?.code || 'AUTH_REQUIRED' }, authError?.status || 401)
+  const userId = ctx.userClaims.id
 
   try {
     const contentLength = Number(req.headers.get('content-length') || 0)
     if (Number.isFinite(contentLength) && contentLength > 1200000) return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
     const input = await req.json()
-    const rate = await ctx.supabaseAdmin.rpc('consume_ai_gateway_rate_limit', { p_user_id: ctx.userClaims.id, p_limit: RATE_LIMIT, p_window_seconds: RATE_WINDOW_SECONDS })
+    const rate = await ctx.supabaseAdmin.rpc('consume_ai_gateway_rate_limit', { p_user_id: userId, p_limit: RATE_LIMIT, p_window_seconds: RATE_WINDOW_SECONDS })
     if (rate.error) return json({ error: 'کنترل مصرف Gateway در دسترس نیست.' }, 503)
     const row = Array.isArray(rate.data) ? rate.data[0] : rate.data
     if (!row?.allowed) return json({ error: 'تعداد درخواست‌ها در دقیقه بیش از حد مجاز است.' }, 429, { 'Retry-After': String(RATE_WINDOW_SECONDS), 'X-RateLimit-Limit': String(RATE_LIMIT), 'X-RateLimit-Remaining': '0' })

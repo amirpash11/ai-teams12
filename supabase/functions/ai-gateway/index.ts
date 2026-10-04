@@ -52,12 +52,19 @@ Deno.serve(async (req: Request) => {
 
   try {
     const input = await req.json()
-    const provider = String(input?.provider || '') as Provider
-    const model = String(input?.model || '')
+    const provider = String(input?.provider || '').trim() as Provider
+    const model = String(input?.model || '').trim()
     const messages = Array.isArray(input?.messages) ? input.messages : []
     const system = String(input?.system || '')
 
     if (!provider || !model || !messages.length) return json({ error: 'provider، model و messages الزامی هستند.' }, 400)
+    if (provider.length > 64 || model.length > 200 || system.length > 20000) return json({ error: 'اندازه ورودی بیش از حد مجاز است.' }, 413)
+    if (messages.length > 50) return json({ error: 'تعداد پیام‌ها بیش از حد مجاز است.' }, 413)
+    const normalizedMessages = messages.map((m: any) => ({
+      role: String(m?.role || 'user').slice(0, 32),
+      content: String(m?.content || '').slice(0, 20000)
+    }))
+    if (normalizedMessages.some((m: any) => !m.content.trim())) return json({ error: 'هر پیام باید متن داشته باشد.' }, 400)
     const endpoint = endpointFor(provider, model)
     if (!endpoint) return json({ error: 'Endpoint سرویس مشخص نشده است.' }, 400)
 
@@ -72,7 +79,7 @@ Deno.serve(async (req: Request) => {
     if (provider === 'claude') {
       headers['x-api-key'] = key
       headers['anthropic-version'] = '2023-06-01'
-      body = { model, max_tokens: Number(input?.max_tokens || 1200), system, messages }
+      body = { model, max_tokens: Math.min(4096, Math.max(256, Number(input?.max_tokens || 1200))), system: system.slice(0,20000), messages: normalizedMessages }
     } else if (provider === 'gemini') {
       headers['x-goog-api-key'] = key
       const contents = messages
@@ -82,14 +89,14 @@ Deno.serve(async (req: Request) => {
           parts: [{ text: String(m?.content || '') }]
         }))
       body = {
-        systemInstruction: system ? { parts: [{ text: system }] } : undefined,
-        contents
+        systemInstruction: system ? { parts: [{ text: system.slice(0,20000) }] } : undefined,
+        contents: normalizedMessages.filter((m: any) => m?.role !== 'system').map((m: any) => ({ role: m?.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }))
       }
     } else {
       if (provider === 'horde') headers['Authorization'] = 'Bearer 0000000000'
       else headers['Authorization'] = 'Bearer ' + key
       if (provider === 'openrouter') headers['HTTP-Referer'] = String(input?.referer || 'https://ai-teams.local')
-      body = { model, messages, temperature: Number(input?.temperature ?? 0.2) }
+      body = { model, messages: normalizedMessages, temperature: Math.max(0, Math.min(2, Number(input?.temperature ?? 0.2))) }
     }
 
     const controller = new AbortController()

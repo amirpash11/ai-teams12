@@ -802,7 +802,7 @@ async function runTeamParallel(){
    }finally{renderChat();save();}
   }));
   const successful=results.filter(function(x){return x.result});
-  const transcript=successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n');
+  const transcript=compactContext(successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n'),30000);
   const coordinator=active[active.length-1];
   msg('جمع‌بندی تیم','🧠','خروجی‌های موازی آماده شد؛ در حال جمع‌بندی و حل اختلاف‌ها...','agent',false);
   const finalIndex=state.chat.length-1;

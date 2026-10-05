@@ -494,12 +494,12 @@ function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapse
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
 function agentBuilderModels(providerId){
  const p=(state.providers||[]).find(function(x){return x.id===providerId});
- const defaults={horde:['koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'],openai:['gpt-4o-mini','gpt-4o','gpt-5'],openrouter:['openrouter/free','deepseek/deepseek-chat-v3-0324:free','google/gemini-2.0-flash-exp:free'],claude:['claude-sonnet-4-5','claude-3-5-haiku'],gemini:['gemini-2.5-flash','gemini-2.5-pro'],custom:[]};
+ const defaults={horde:['koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix','Llama-3.3-70B-Instruct','Qwen2.5-72B-Instruct','Mistral-Small-24B-Instruct-2501'],openai:['gpt-4o-mini','gpt-4o','gpt-5'],openrouter:['openrouter/free','deepseek/deepseek-chat-v3-0324:free','google/gemini-2.0-flash-exp:free'],claude:['claude-sonnet-4-5','claude-3-5-haiku'],gemini:['gemini-2.5-flash','gemini-2.5-pro'],custom:[]};
  const list=(defaults[providerId]||[]).slice();if(p&&p.model&&list.indexOf(p.model)<0)list.unshift(p.model);return list;
 }
-function agentBuilderRefreshModels(){
+async function refreshHordeModels(){try{const r=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});if(!r.ok)return [];const j=await r.json();const models=(j.data||[]).map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean);if(models.length){state.hordeModels=models;save();}return models;}catch(e){return [];}}\nfunction agentBuilderRefreshModels(){
  const provider=document.getElementById('agentBuilderProvider'),input=document.getElementById('agentBuilderModel'),list=document.getElementById('agentBuilderModels');if(!provider||!input||!list)return;
- const models=agentBuilderModels(provider.value);list.innerHTML=models.map(function(m){return '<option value="'+esc(m)+'"></option>'}).join('');if(!input.value&&models[0])input.value=models[0];
+ let models=agentBuilderModels(provider.value);if(provider.value==='horde'&&Array.isArray(state.hordeModels)&&state.hordeModels.length)models=state.hordeModels.slice(0,100);list.innerHTML=models.map(function(m){return '<option value="'+esc(m)+'"></option>'}).join('');if(!input.value&&models[0])input.value=models[0];
 }
 function workflowSteps(){return (state.workflow&&Array.isArray(state.workflow.steps))?state.workflow.steps:[]}
 function openWorkflowBuilder(){
@@ -527,7 +527,7 @@ function renderWorkflowSteps(){
 }
 function stepsChange(i,k,v){const s=workflowSteps()[+i];if(s)s[k]=v}
 function moveWorkflowStep(i,d){const a=workflowSteps(),j=i+d;if(j<0||j>=a.length)return;const t=a[i];a[i]=a[j];a[j]=t;renderWorkflowSteps()}
-function openAgentBuilder(){
+function openAgentBuilder(){\n refreshHordeModels().then(function(){agentBuilderRefreshModels();});
  let modal=document.getElementById('agentBuilderModal');
  if(!modal){
   modal=document.createElement('div');modal.id='agentBuilderModal';modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:2000;padding:12px;overflow:auto';
@@ -636,7 +636,7 @@ async function callAgent(a,goal,transcript){
   }
   throw lastError||new Error('Gateway در دسترس نیست.');
  }
- const endpoints=['https://oai.aihorde.net/v1/chat/completions','https://oai.aihorde.net/v1/chat/completions'];
+ const endpoints=['https://oai.aihorde.net/v1/chat/completions'];
  if(a.endpoint&&endpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
  await ensureHordeModel(a);
  const model=String(a.model||((state.hordeModels||[])[0])||'').trim();

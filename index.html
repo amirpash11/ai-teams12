@@ -239,7 +239,7 @@ input,textarea,select{font-size:16px}
   <button type="button" id="rightTeamMembersToggle" class="section-title team-members-toggle" style="width:100%;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;border:1px solid var(--line);background:#18223a;color:var(--text);padding:10px 12px;border-radius:10px;margin:8px 0"> <span>اعضای تیم</span><span id="rightTeamMembersBtn" aria-hidden="true" style="font-size:20px;line-height:1">＋</span></button>
   <div id="rightTeamMembersBody" style="display:none!important">
     <div id="agentList" class="agent-list"></div>
-    <button class="btn primary" id="addAgentBtn">＋ افزودن عضو<button class="btn" id="workflowBuilderBtn" style="width:auto">⚙ Workflow</button></button>
+    <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button><button class="btn" id="workflowBuilderBtn">⚙ Workflow</button>
   </div>
   <button class="btn" id="providersBtn">⚙ مدیریت و افزودن سرویس</button>
   <button class="btn" id="aiCatalogBtn">🔎 جستجوی هوش مصنوعی</button>
@@ -728,7 +728,9 @@ async function runAdminTurn(){
  const input=document.getElementById('adminChatInput');
  const userText=input.value.trim();
  if(!userText)return;
- const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ let active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ const configured=workflowSteps().map(function(s){return state.agents.find(function(a){return a.id===s.agentId&&a.enabled&&a.kind!=='human'})}).filter(Boolean);
+ if(configured.length)active=configured.filter(function(a,i,arr){return arr.indexOf(a)===i});
  if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=document.getElementById('goal').value.trim();
@@ -1084,7 +1086,7 @@ function toggleRightMembers(){
 }
 document.getElementById('rightTeamMembersToggle').addEventListener('click',toggleRightMembers);
 applyRightMembers();
-document.getElementById('addAgentBtn').onclick=addAgent;
+document.getElementById('addAgentBtn').onclick=addAgent;\ndocument.getElementById('workflowBuilderBtn').onclick=openWorkflowBuilder;
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;

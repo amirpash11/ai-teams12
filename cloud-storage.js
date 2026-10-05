@@ -8,7 +8,7 @@ const TABLE='ai_teams_projects';
 const SCRIPT_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const MAX_STATE_BYTES=900000;
 const MAX_PROJECT_NAME=200;
-const CONFIG={url:'YOUR_SUPABASE_PROJECT_URL',publishableKey:'YOUR_SUPABASE_PUBLISHABLE_KEY'};
+const CONFIG={url:'https://gqymrljvbkxlgyvoykpv.supabase.co',publishableKey:"sb_publishable_qjQu9JBbYue3gIA7WiRulA_8dSxjQbY"};
 
 function normalizeUrl(value){
   try{const u=new URL(String(value||'').trim());if(u.protocol!=='https:')return '';return u.origin;}catch(e){return '';}

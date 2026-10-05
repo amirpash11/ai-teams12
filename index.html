@@ -590,15 +590,26 @@ async function callAgent(a,goal,transcript){
  throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
 }
 
-async function callAgentResilient(a,goal,transcript){
+async function callAgentStreaming(a,goal,transcript,onDelta){
+ if(typeof onDelta!=='function'||a.provider==='horde'||!window.aiTeamsCloud||!window.aiTeamsCloud.streamAI)return callAgent(a,goal,transcript);
+ const system=a.system||('تو عضو تیم با نقش '+a.role+' هستی.');
+ const messages=[
+  {role:'system',content:compactContext(system,10000)},
+  {role:'user',content:'هدف تیم:\n'+compactContext(goal,7000)+'\n\nخروجی اعضای قبلی:\n'+(compactContext(transcript,11000)||'هنوز خروجی قبلی وجود ندارد.')+'\n\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.'}
+ ];
+ const data=await window.aiTeamsCloud.streamAI({provider:a.provider,model:a.model,messages:messages,system:system,temperature:0.2,referer:location.origin},onDelta);
+ if(!data.trim())throw new Error('Streaming پاسخ متنی برنگرداند.');
+ return data;
+}
+async function callAgentResilient(a,goal,transcript,onDelta){
  let lastError=null;
  for(let attempt=1;attempt<=3;attempt++){
-  try{return await callAgent(a,goal,transcript);}
+  try{return await callAgentStreaming(a,goal,transcript,onDelta);}
   catch(e){lastError=e;if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1000);});}
  }
  if(a.provider!=='horde'){
   const horde=Object.assign({},a,{provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:(state.hordeModels&&state.hordeModels[0])||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'});
-  try{return await callAgentResilient(horde,goal,transcript);}
+  try{return await callAgent(horde,goal,transcript);}
   catch(e){lastError=new Error((lastError&&lastError.message||'Provider اصلی شکست خورد.')+' | Fallback AI Horde: '+e.message);}
  }
  throw lastError||new Error('اجرای Agent ناموفق بود.');
@@ -825,7 +836,7 @@ async function runTeamParallel(){
    state.chat.push(placeholder);
    renderChat();
    try{
-    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,baseContext,'');
+    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,baseContext,'',function(delta){placeholder.text=(placeholder.text||'').replace(/^در حال اجرای موازی\.\.\.$/,'')+delta;renderChat();});
     placeholder.text=result;
     placeholder.error=false;
     return {agent:a,result:result,error:null};
@@ -902,7 +913,7 @@ async function runTeam(){
     '\\n\\nتو عضو شماره '+(i+1)+' از '+active.length+' هستی و نقش تو «'+(a.role||'عضو تیم')+'» است.'+
     '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+
     '\\nاگر عضو قبلی راه‌حل ناقص یا اشتباهی داده، بدون تعارف آن بخش را مشخص و اصلاح کن.';
-   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,context,transcript);
+   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,context,transcript,function(delta){stageMessage.text=(stageMessage.text||'').replace(/^مرحله [^—]+— در حال[^\n]*\.\.\.$/,'')+delta;renderChat();});
    stageMessage.text=result;stageMessage.error=false;
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    transcript=compactContext(transcript,30000);

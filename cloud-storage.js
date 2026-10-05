@@ -13,13 +13,12 @@ function readConfig(){
     if(x.url&&x.publishableKey){CONFIG.url=String(x.url).trim().replace(/\/$/,'');CONFIG.publishableKey=String(x.publishableKey).trim();}
   }catch(e){}
 }
+const CONFIG_VERSION = 1;
+const MAX_PROJECT_NAME = 200;
 function saveConfig(url,key){
   const cleanUrl=String(url||'').trim().replace(/\/$/,'');
   const cleanKey=String(key||'').trim();
-  if(!/^https:\/\/[^\s/]+(?:\.[^\s/]+)+(?:\/[A-Za-z0-9._~:/?#\\[\\]@!function saveConfig(url,key){
-  CONFIG.url=String(url||'').trim();CONFIG.publishableKey=String(key||'').trim();
-  if(CONFIG.url&&CONFIG.publishableKey)localStorage.setItem(CONFIG_KEY,JSON.stringify({url:CONFIG.url,publishableKey:CONFIG.publishableKey}));
-}'()*+,;=%-]*)?$/.test(cleanUrl))throw new Error('Project URL باید یک HTTPS URL معتبر باشد.');
+  if(!/^https:\/\/[^\s/]+(?:\.[^\s/]+)+(?:\/[^\s]*)?$/.test(cleanUrl))throw new Error('Project URL باید یک HTTPS URL معتبر باشد.');
   if(!cleanKey||cleanKey.length<20)throw new Error('Publishable Key معتبر وارد کن.');
   CONFIG.url=cleanUrl;CONFIG.publishableKey=cleanKey;
   localStorage.setItem(CONFIG_KEY,JSON.stringify({version:CONFIG_VERSION,url:CONFIG.url,publishableKey:CONFIG.publishableKey}));
@@ -27,8 +26,6 @@ function saveConfig(url,key){
 readConfig();
 const SCRIPT_SRC = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const TABLE = 'ai_teams_projects';
-const CONFIG_VERSION = 1;
-const MAX_PROJECT_NAME = 200;
 const LOCAL_KEY = 'ai-teams12-cloud-project-id-v1';
 
 let supabase = null;

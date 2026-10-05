@@ -220,6 +220,32 @@ async function switchProject(id){
   if(!cloudReady||!cloudUser||!/^[A-Za-z0-9_-]{8,120}$/.test(String(id||'')))throw new Error('شناسه پروژه نامعتبر است.');
   localStorage.setItem(LOCAL_KEY,String(id));await syncFromCloud();return id;
 }
+async function renameProject(id,name){
+  if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
+  const clean=String(name||'').trim().slice(0,MAX_PROJECT_NAME);
+  if(!clean)throw new Error('نام پروژه نمی‌تواند خالی باشد.');
+  const r=await supabase.from(TABLE).update({name:clean}).eq('user_id',cloudUser.id).eq('project_id',String(id));
+  if(r.error)throw r.error;
+  return true;
+}
+async function duplicateProject(id,name){
+  if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
+  const source=await supabase.from(TABLE).select('state,name').eq('user_id',cloudUser.id).eq('project_id',String(id)).maybeSingle();
+  if(source.error)throw source.error;
+  if(!source.data)throw new Error('پروژه پیدا نشد.');
+  const newId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();
+  const clean=String(name||((source.data.name||'AI Teams')+' - کپی')).trim().slice(0,MAX_PROJECT_NAME);
+  const r=await supabase.from(TABLE).insert({user_id:cloudUser.id,project_id:newId,name:clean,state:source.data.state,updated_at:new Date().toISOString()});
+  if(r.error)throw r.error;
+  return newId;
+}
+async function deleteProject(id){
+  if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
+  if(String(id)===projectId())throw new Error('پروژه فعال را ابتدا به پروژه دیگری تغییر بده.');
+  const r=await supabase.from(TABLE).delete().eq('user_id',cloudUser.id).eq('project_id',String(id));
+  if(r.error)throw r.error;
+  return true;
+}
 async function newProject(name){
   if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شو.');
   const id=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();localStorage.setItem(LOCAL_KEY,id);

@@ -80,6 +80,7 @@ function addProvider(){
  save();render();openModal();alert('سرویس اضافه شد. حالا آن را از Provider هر Agent انتخاب کن.');
 }
 
+function attachProviderButton(){
  let btn=document.getElementById('providersBtn');
  if(!btn){
   const sidebar=document.querySelector('.sidebar');

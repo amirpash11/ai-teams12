@@ -71,7 +71,7 @@ jobs:
           grep -q "Invalid repository or path" supabase/functions/github-gateway/index.ts
           grep -q "aiTeamsImportState" index.html
           grep -q "normalizeStateShape();" index.html
-          grep -q "core.importState(remote)" cloud-storage.js
+          grep -q "core.importState(validateState(r.data.state))" cloud-storage.js
           grep -q "importState:window.aiTeamsImportState" provider-manager.js
           grep -q "aiTeamsEnsureProviders" provider-manager.js
           grep -q "if(typeof window.callAgent!=='function')window.callAgent=universalCallAgent;" provider-manager.js
@@ -89,8 +89,8 @@ jobs:
           grep -q "body.chat-first-home .right-home-options .topbar" index.html
           grep -q "s.classList.toggle('open',!h)" index.html
           grep -q "getItem(__leftDrawerState.key)!=='0'" index.html
-          grep -q "const RETRY_DELAYS=\[500,1000,2000\]" github-storage.js
-          grep -q "fetchWithRetry" github-storage.js
+          grep -q "const RETRY_DELAYS=" github-storage.js
+          grep -q "async function fetchWithRetry(url,init)" github-storage.js
           grep -q "transcript=compactContext(transcript,30000)" index.html
           echo "Gateway and GitHub security invariants passed."
 

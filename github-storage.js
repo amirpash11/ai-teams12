@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const CONFIG_KEY='ai-teams-supabase-config-v1';
-const CONFIG={supabaseUrl:'https://gqymrljvbkxlgyvoykpv.supabase.co',publishableKey:'sb_publishable_qjQu9JBbYue3gIA7WiRulA_8dSxjQbY'};
+const CONFIG={supabaseUrl:'',publishableKey:''};
 function readConfig(){
   try{
     const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
@@ -10,6 +10,12 @@ function readConfig(){
   }catch(e){}
 }
 readConfig();
+try{
+  if((!CONFIG.supabaseUrl||!CONFIG.publishableKey)&&window.aiTeamsCloud&&typeof window.aiTeamsCloud.getConfig==='function'){
+    const c=window.aiTeamsCloud.getConfig();
+    if(c&&c.url&&c.publishableKey){CONFIG.supabaseUrl=String(c.url).trim();CONFIG.publishableKey=String(c.publishableKey).trim();}
+  }
+}catch(e){}
 const FN='github-gateway';
 let client=null,ready=false;
 const RETRY_DELAYS=[500,1000,2000];

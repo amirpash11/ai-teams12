@@ -34,7 +34,7 @@ Deno.serve(async req=>{
     if(Number.isFinite(contentLength)&&contentLength>2600000)return json({error:"Request is too large"},413);
     if(action==="oauth-start"){
       if(!GITHUB_CLIENT_ID)throw new Error("GITHUB_CLIENT_ID is not configured");
-      const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
+      const {data:ctx,error}=await (await import("npm:@supabase/server@1.9.0")).createSupabaseContext(req,{auth:"user"});
       if(error||!ctx?.userClaims?.id)return json({error:error?.message||"Authentication required"},error?.status||401);
       const userId=ctx.userClaims.id;
       const requestedReturn=u.searchParams.get("return_to")||APP_URL;
@@ -64,7 +64,7 @@ Deno.serve(async req=>{
       const ret=new URL(st.return_to||APP_URL,APP_URL).origin===APP_ORIGIN?(st.return_to||APP_URL):APP_URL;
       return Response.redirect(ret+(ret.includes("?")?"&":"?")+"github=connected",302);
     }
-    const {data:ctx,error}=await (await import("npm:@supabase/server@1")).createSupabaseContext(req,{auth:"user"});
+    const {data:ctx,error}=await (await import("npm:@supabase/server@1.9.0")).createSupabaseContext(req,{auth:"user"});
     if(error||!ctx?.userClaims?.id)return json({error:error?.message||"Authentication required"},error?.status||401);
     const uid=ctx.userClaims.id;
     const admin=ctx.supabaseAdmin;

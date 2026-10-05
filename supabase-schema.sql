@@ -131,6 +131,10 @@ grant execute on function public.consume_ai_gateway_rate_limit(uuid, integer, in
 create index if not exists ai_teams_projects_user_updated_idx
   on public.ai_teams_projects(user_id, updated_at desc);
 
+-- OAuth state cleanup is driven by expiry time, so index the cleanup predicate.
+create index if not exists github_oauth_states_expires_idx
+  on public.github_oauth_states(expires_at);
+
 -- Keep the timestamp fresh whenever a project is updated.
 create or replace function public.touch_ai_teams_project_updated_at()
 returns trigger

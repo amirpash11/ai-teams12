@@ -53,3 +53,8 @@ assert(ghGateway.includes('GITHUB_TOKEN_ENCRYPTION_KEY'),'GitHub token encryptio
 assert(ghGateway.includes('oauth-callback'),'GitHub OAuth callback missing');
 
 console.log('AI Teams smoke test: PASS');
+
+assert(html.includes('function openKnowledgePanel()'),'Knowledge panel missing');
+assert(html.includes('function knowledgeContext(query,limit)'),'Knowledge search missing');
+assert(html.includes('id="knowledgeFile"'),'Knowledge file input missing');
+assert(html.includes('state.knowledge'),'Knowledge state missing');

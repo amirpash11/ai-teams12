@@ -151,6 +151,17 @@ Deno.serve(async (req: Request) => {
       const data = lastData
       const raw = lastRaw
       if (!upstream) throw new Error('Upstream response unavailable')
+      if (input?.stream && ['openai','openrouter','horde'].includes(provider) && upstream.ok && upstream.body) {
+        return new Response(upstream.body, {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': upstream.headers.get('content-type') || 'text/event-stream',
+            'Cache-Control': 'no-cache, no-transform',
+            'Connection': 'keep-alive'
+          }
+        })
+      }
       const upstreamHeaders: Record<string, string> = {}
       for (const name of ['retry-after', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset']) {
         const value = upstream.headers.get(name)

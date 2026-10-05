@@ -230,7 +230,7 @@ body.chat-first-home .right-home-options .topbar{display:block!important}
 <main class="main">
   <div class="topbar">
     <div class="title"><h2 id="teamTitle">تیم هوش مصنوعی من</h2><p>چند عامل می‌توانند هدف مشترک را مرحله‌به‌مرحله اجرا کنند.</p></div>
-    <div class="top-actions"><button class="btn" id="exportBtn">خروجی تنظیمات</button><button class="btn primary" id="runBtn">▶ اجرای زنجیره‌ای</button><button class="btn" id="parallelBtn">⚡ اجرای موازی</button></div>
+    <div class="top-actions"><button class="btn" id="exportBtn">خروجی تنظیمات</button><button class="btn primary" id="runBtn">▶ اجرای زنجیره‌ای</button><button class="btn" id="parallelBtn">⚡ اجرای موازی</button><button class="btn danger" id="stopBtn" disabled>■ توقف</button></div>
   </div>
 
   <div class="grid">
@@ -371,6 +371,8 @@ function sanitizeBrowserSecrets(){
 sanitizeBrowserSecrets();
 let collapsed=new Set(state.agents.map(function(a){return a.id;}));
 let busy=false;
+let cancelRequested=false;
+let activeAbortController=null;
 
 function save(){
  try{
@@ -530,6 +532,7 @@ function compactContext(value,max){
  return s.slice(0,head)+'\\n\\n… بخش میانی برای کنترل حجم Context کوتاه شد …\\n\\n'+s.slice(-tail);
 }
 async function callAgent(a,goal,transcript){
+ if(cancelRequested)throw new Error('اجرای تیم توسط کاربر متوقف شد.');
  if(!a||a.kind==='human')throw new Error('عضو انسانی نمی‌تواند به‌عنوان Provider هوش مصنوعی اجرا شود.');
  const provider=a.provider||'horde';
  const system=a.system||('تو عضو تیم با نقش '+a.role+' هستی.');
@@ -565,7 +568,7 @@ async function callAgent(a,goal,transcript){
  for(let attempt=1;attempt<=3;attempt++){
   const endpointsToTry=attempt===1?endpoints:endpoints.slice().reverse();
   for(const endpoint of endpointsToTry){
-   const controller=new AbortController();
+   const controller=new AbortController();activeAbortController=controller;
    const timer=setTimeout(function(){controller.abort()},90000);
    try{
     const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
@@ -583,7 +586,7 @@ async function callAgent(a,goal,transcript){
     lastError=new Error('پاسخ مدل قابل استخراج نبود.');
    }catch(err){
     lastError=err.name==='AbortError'?new Error('زمان پاسخ تمام شد.'):err;
-   }finally{clearTimeout(timer)}
+   }finally{clearTimeout(timer);if(activeAbortController===controller)activeAbortController=null}
   }
   if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1500)});
  }
@@ -644,6 +647,7 @@ function buildTeamRoster(active){
 }
 
 async function runAdminTurn(){
+ cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
  const input=document.getElementById('adminChatInput');
  const userText=input.value.trim();
@@ -699,11 +703,14 @@ async function runAdminTurn(){
   document.getElementById('dialogueBtn').disabled=false;
   document.getElementById('runBtn').disabled=false;
   document.getElementById('parallelBtn').disabled=false;
+  document.getElementById('stopBtn').disabled=true;
+  cancelRequested=false;
   save();
  }
 }
 
 async function runDialogue(){
+ cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
@@ -811,6 +818,7 @@ async function runDialogue(){
 }
 
 async function runTeamParallel(){
+ cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
@@ -890,6 +898,7 @@ async function runTeamParallel(){
  }
 }
 async function runTeam(){
+ cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
@@ -992,6 +1001,7 @@ document.getElementById('addAgentBtn').onclick=addAgent;
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;
+document.getElementById('stopBtn').onclick=function(){cancelRequested=true;if(activeAbortController)activeAbortController.abort();msg('سیستم','■','درخواست توقف ثبت شد؛ اجرای جاری پس از پایان کنترل مرحله متوقف می‌شود.','agent',false);save();};
 document.getElementById('parallelBtn').onclick=runTeamParallel;
 document.getElementById('dialogueBtn').onclick=runDialogue;
 document.getElementById('adminChatBtn').onclick=runAdminTurn;

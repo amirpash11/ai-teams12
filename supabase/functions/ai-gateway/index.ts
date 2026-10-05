@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
       if (provider === 'horde') headers['Authorization'] = 'Bearer 0000000000'
       else headers['Authorization'] = 'Bearer ' + key
       if (provider === 'openrouter') headers['HTTP-Referer'] = String(input?.referer || 'https://ai-teams.local')
-      body = { model, messages: normalizedMessages, temperature: Math.max(0, Math.min(2, Number(input?.temperature ?? 0.2))) }
+      body = { model, messages: normalizedMessages, temperature: Math.max(0, Math.min(2, Number(input?.temperature ?? 0.2))), ...(input?.stream ? { stream: true } : {}) }
     }
 
     const controller = new AbortController()

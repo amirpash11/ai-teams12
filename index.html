@@ -590,13 +590,36 @@ async function callAgent(a,goal,transcript){
  throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
 }
 
+async function callAgentResilient(a,goal,transcript){
+ let lastError=null;
+ for(let attempt=1;attempt<=3;attempt++){
+  try{return await callAgent(a,goal,transcript);}
+  catch(e){lastError=e;if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1000);});}
+ }
+ if(a.provider!=='horde'){
+  const horde=Object.assign({},a,{provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:(state.hordeModels&&state.hordeModels[0])||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'});
+  try{return await callAgentResilient(horde,goal,transcript);}
+  catch(e){lastError=new Error((lastError&&lastError.message||'Provider اصلی شکست خورد.')+' | Fallback AI Horde: '+e.message);}
+ }
+ throw lastError||new Error('اجرای Agent ناموفق بود.');
+}
+async function reviewTeamOutputs(active,goal,transcript){
+ const reviewers=active.filter(function(a){return a.enabled&&a.kind!=='human'}).slice(0,3);
+ if(!reviewers.length||!transcript)return '';
+ const prompt='هدف تیم:\n'+goal+'\n\nخروجی اعضا:\n'+compactContext(transcript,18000)+'\n\nبه‌عنوان منتقد مستقل، خروجی‌ها را با معیارهای صحت، کامل بودن، تناقض، استدلال و قابلیت اجرا بررسی کن. امتیاز ۰ تا ۱۰ بده و بهترین نتیجه را مشخص کن. اگر اطلاعات کافی نیست صریح بگو.';
+ const reviews=await Promise.all(reviewers.map(async function(a){
+  try{return {name:a.name,text:await callAgentResilient(a,prompt,'')};}
+  catch(e){return {name:a.name,text:'خطای منتقد: '+e.message};}
+ }));
+ return reviews.map(function(x){return '[منتقد '+x.name+']\n'+x.text;}).join('\n\n');
+}
 async function testAgent(id){
  const a=selectedAgent(id);if(!a)return;
  if(!a.endpoint||!a.model)return alert('Endpoint و Model را کامل کن.');
  if(a.provider!=='horde'&&(!window.aiTeamsCloud||!window.aiTeamsCloud.isReady()))return alert('برای تست امن این Provider ابتدا وارد حساب ابری شو و کلید Provider را در Supabase تنظیم کن.');
  try{
   alert('در حال آزمایش اتصال...');
-  const out=await callAgent(a,'فقط یک جمله بنویس که اتصال برقرار شده است.','');
+  const out=await callAgentResilient(a,'فقط یک جمله بنویس که اتصال برقرار شده است.','');
   alert('اتصال موفق است:\\n\\n'+out.slice(0,300));
  }catch(e){alert('اتصال ناموفق بود:\\n\\n'+e.message)}
 }
@@ -640,7 +663,7 @@ async function runAdminTurn(){
      const adminGoal=buildTeamRoster(active)+'\\n\\nهدف فعلی تیم:\\n'+(state.goal||'هدف هنوز مشخص نشده است')+
        '\\n\\nپیام/دستور مستقیم ادمین:\\n'+userText+
        '\\n\\nقواعد: پیام ادمین را در اولویت قرار بده. اگر دستور مستقیماً یک عضو خاص را خطاب قرار داده، از نقش خودت فقط در همان محدوده استفاده کن. اگر دستور خطاب به کل تیم است، با نقش خودت پاسخ بده. پاسخ اعضای قبلی همین نوبت و سابقه گفتگو را بررسی کن، تکرار را کم کن و اگر نیاز به اصلاح داری دقیق و عملی توضیح بده.';
-     result=await callAgent(a,adminGoal,transcript);
+     result=await callAgentResilient(a,adminGoal,transcript);
     }
     placeholder.text=result;
     placeholder.error=false;
@@ -705,7 +728,7 @@ async function runDialogue(){
         '\\n\\nاین دور '+round+' از '+rounds+' است. تو یکی از اعضای یک تیم چندعاملی هستی. دیدگاه و خروجی اعضای قبلی را دقیق بررسی کن. '+
         (round===1?'نظر اولیه و راه‌حل خودت را برای انجام این کار ارائه بده.':'اگر با نظر اعضای قبلی موافق نیستی، دقیقاً بگو کدام بخش را قبول نداری و دلیل فنی/منطقی بیاور؛ سپس راه‌حل خودت را اصلاح یا تکمیل کن.')+
         '\\n\\nقواعد بحث: فقط درباره همین کار صحبت کن؛ به خروجی قبلی‌ها ارجاع بده؛ نکات تکراری را کوتاه کن؛ اختلاف‌نظرها را شفاف کن؛ در پایان پیشنهاد عملی خودت را ارائه بده.';
-      result=await callAgent(a,dialogueGoal,transcript);
+      result=await callAgentResilient(a,dialogueGoal,transcript);
      }
      placeholder.text=result;
      placeholder.error=false;
@@ -734,7 +757,7 @@ async function runDialogue(){
     const finalGoal=buildTeamRoster(active)+'\\n\\nموضوع/هدف تیم:\\n'+goal+
       '\\n\\nتو هماهنگ‌کننده نهایی تیم هستی. کل بحث و خروجی همه اعضا و همه دورها را که در متن ورودی آمده بررسی کن. پاسخ نهایی باید یک تصمیم/راه‌حل قابل اجرا باشد، نه صرفاً تکرار بحث.\\n'+
       '\\nساختار اجباری خروجی:\\n1) نتیجه نهایی و پیشنهاد اصلی\\n2) دلایل و شواهد مهم از بحث\\n3) اختلاف‌نظرها و اینکه کدام دیدگاه پذیرفته شد و چرا\\n4) ریسک‌ها، ابهام‌ها و مواردی که هنوز نیاز به بررسی دارند\\n5) مراحل اجرایی بعدی به ترتیب اولویت\\n\\nفقط بر اساس اطلاعات موجود تصمیم‌گیری کن؛ اگر اطلاعات کافی نیست صریحاً بگو چه چیزی کم است و آن را به‌عنوان واقعیت قطعی نساز.';
-    finalResult=await callAgent(coordinator,finalGoal,transcript);
+    finalResult=await callAgentResilient(coordinator,finalGoal,transcript);
    }
    state.chat[finalIndex].text=finalResult;
    state.chat[finalIndex].error=false;
@@ -802,7 +825,7 @@ async function runTeamParallel(){
    state.chat.push(placeholder);
    renderChat();
    try{
-    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,baseContext,'');
+    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,baseContext,'');
     placeholder.text=result;
     placeholder.error=false;
     return {agent:a,result:result,error:null};
@@ -815,6 +838,8 @@ async function runTeamParallel(){
   }));
   const successful=results.filter(function(x){return x.result});
   const transcript=compactContext(successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n'),30000);
+  let reviewTranscript='';
+  if(state.mode!=='demo'){try{reviewTranscript=await reviewTeamOutputs(active,goal,transcript);}catch(e){reviewTranscript='خطای مرحله نقد: '+e.message;}}
   const coordinator=active[active.length-1];
   msg('جمع‌بندی تیم','🧠','خروجی‌های موازی آماده شد؛ در حال جمع‌بندی و حل اختلاف‌ها...','agent',false);
   const finalIndex=state.chat.length-1;
@@ -824,9 +849,10 @@ async function runTeamParallel(){
     finalResult='اجرای موازی برای هدف «'+goal+'» انجام شد و خروجی اعضا برای جمع‌بندی در اختیار هماهنگ‌کننده قرار گرفت.';
    }else{
     const finalGoal=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+
+     '\n\nنقد مستقل و امتیازدهی:\n'+(reviewTranscript||'نقدی دریافت نشد.')+
      '\n\nوظیفه تو: به‌عنوان هماهنگ‌کننده نهایی، خروجی مستقل اعضا را مقایسه کن، اختلاف‌ها را مشخص کن، ادعاهای ضعیف یا بدون پشتوانه را علامت بزن و یک نتیجه اجرایی تولید کن.\n'+
      '\nساختار اجباری:\n1) نتیجه نهایی\n2) مهم‌ترین دلایل و شواهد\n3) اختلاف‌نظرها و تصمیم درباره آن‌ها\n4) ریسک‌ها و موارد نیازمند بررسی\n5) قدم‌های بعدی\n6) رأی‌گیری تحلیلی: برای هر خروجی موفق یک امتیاز 0 تا 10 از نظر صحت، ارتباط، قابلیت اجرا و پوشش مسئله بده و بر اساس مجموع امتیازها پیشنهاد برتر را انتخاب کن.\n7) نقد نهایی: حداقل دو ایراد یا فرضیه‌ای را که ممکن است نتیجه را ضعیف کند بررسی کن.\n\nفقط بر اساس اطلاعات ارائه‌شده تصمیم بگیر و کمبود اطلاعات را صریح اعلام کن.';
-    finalResult=await callAgent(coordinator,finalGoal,transcript?'خروجی اعضا:\n'+transcript:'هیچ خروجی موفقی دریافت نشد.');
+    finalResult=await callAgentResilient(coordinator,finalGoal,transcript?'خروجی اعضا:\n'+transcript:'هیچ خروجی موفقی دریافت نشد.');
    }
    state.chat[finalIndex].text=finalResult;
    state.chat[finalIndex].error=false;
@@ -876,7 +902,7 @@ async function runTeam(){
     '\\n\\nتو عضو شماره '+(i+1)+' از '+active.length+' هستی و نقش تو «'+(a.role||'عضو تیم')+'» است.'+
     '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+
     '\\nاگر عضو قبلی راه‌حل ناقص یا اشتباهی داده، بدون تعارف آن بخش را مشخص و اصلاح کن.';
-   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgent(a,context,transcript);
+   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,context,transcript);
    stageMessage.text=result;stageMessage.error=false;
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    transcript=compactContext(transcript,30000);
@@ -890,6 +916,8 @@ async function runTeam(){
   }
  }
  const coordinator=active[active.length-1];
+ let reviewTranscript='';
+ if(state.mode!=='demo'){try{reviewTranscript=await reviewTeamOutputs(active,goal,transcript);}catch(e){reviewTranscript='خطای مرحله نقد: '+e.message;}}
  const finalMessage={name:'جمع‌بندی تیم',icon:'🧠',text:'در حال جمع‌بندی خروجی همه اعضا...',kind:'agent',error:false}; state.chat.push(finalMessage); renderChat();
  let finalResult='';
  try{
@@ -898,7 +926,7 @@ async function runTeam(){
   }else{
    const finalGoal=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
     '\\n\\nوظیفه نهایی: خروجی تمام مراحل زیر را بررسی کن و یک جمع‌بندی اجرایی ارائه بده. نتیجه باید شامل: ۱) نتیجه اصلی، ۲) نکات مهم و اختلاف‌نظرها، ۳) مواردی که هنوز نیاز به بررسی دارند، ۴) قدم‌های بعدی مشخص باشد. فقط بر اساس اطلاعات موجود تصمیم‌گیری کن و چیزی را که در خروجی اعضا نیست به‌عنوان واقعیت قطعی اضافه نکن.';
-   finalResult=await callAgent(coordinator,finalGoal,transcript);
+   finalResult=await callAgentResilient(coordinator,finalGoal,transcript);
   }
   finalMessage.text=finalResult;finalMessage.error=false;
   transcript+='\\n\\n[جمع‌بندی نهایی | '+coordinator.name+']\\n'+finalResult;

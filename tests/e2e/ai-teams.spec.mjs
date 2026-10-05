@@ -18,6 +18,11 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#agentBuilderModel').fill('koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix');
     await page.locator('#agentBuilderCreate').click();
     await expect(page.locator('#agentList .agent-card')).toHaveCount(before + 1);
+    await page.locator('#workflowBuilderBtn').click();
+    await expect(page.locator('#workflowBuilderModal')).toBeVisible();
+    await expect(page.locator('#workflowSteps')).toBeVisible();
+    await page.locator('#workflowSave').click();
+    await expect(page.locator('#workflowBuilderModal')).toBeHidden();
 
     await page.locator('#goal').fill('یک آزمایش کامل رابط و اجرای تیم انجام بده.');
     await page.locator('#demoModeBtn').click();

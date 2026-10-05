@@ -5,7 +5,7 @@
 const CONFIG_KEY='ai-teams-supabase-config-v1';
 const LOCAL_KEY='ai-teams12-cloud-project-id-v1';
 const TABLE='ai_teams_projects';
-const SCRIPT_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+const SCRIPT_SRC='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2';
 const MAX_STATE_BYTES=900000;
 const MAX_PROJECT_NAME=200;
 const CONFIG={url:'https://gqymrljvbkxlgyvoykpv.supabase.co',publishableKey:"sb_publishable_qjQu9JBbYue3gIA7WiRulA_8dSxjQbY"};

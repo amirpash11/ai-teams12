@@ -39,6 +39,7 @@ on public.ai_teams_projects for delete
 to authenticated
 using (auth.uid() = user_id);
 
+revoke all on public.ai_teams_projects from anon;
 grant select, insert, update, delete on public.ai_teams_projects to authenticated;
 
 -- GitHub connection for AI Teams. OAuth tokens are encrypted by the Edge Function.

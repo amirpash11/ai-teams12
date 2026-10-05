@@ -49,3 +49,38 @@
 
 ## موارد وابسته به تنظیمات بیرونی
 برای فعال شدن کامل سرویس‌های ابری و Providerهای پولی باید Project URL/Publishable Key پروژه Supabase و Secretهای Gateway در پروژه واقعی تنظیم شوند. این مقادیر را عمداً داخل GitHub یا مرورگر قرار نمی‌دهیم.
+
+
+## تکمیل نهایی و راه‌اندازی سرویس‌های بیرونی
+
+هسته برنامه، GitHub Pages، Supabase Cloud، RLS، AI Gateway، AI Horde رایگان، حافظه پروژه، مدیریت Workspace، همکاری انسانی، GitHub Gateway، Google Drive integration، طراحی chat-first، موبایل و تست‌های CI/E2E در مخزن فعال هستند.
+
+### فقط تنظیمات خارج از دسترس کد
+
+این موارد عمداً داخل GitHub یا مرورگر قرار داده نمی‌شوند:
+
+1. **GitHub OAuth**
+   - `GITHUB_CLIENT_ID`
+   - `GITHUB_CLIENT_SECRET`
+   - `GITHUB_TOKEN_ENCRYPTION_KEY` (۶۴ کاراکتر hex)
+   - Redirect URI:
+     `https://gqymrljvbkxlgyvoykpv.supabase.co/functions/v1/github-gateway?action=oauth-callback`
+
+2. **Providerهای پولی**
+   - `AI_TEAMS_PROVIDER_KEYS` در Secretهای Supabase برای OpenAI / OpenRouter / Anthropic / Gemini.
+   - کلیدها هرگز نباید در `index.html`، `localStorage` یا Agent state قرار بگیرند.
+
+3. **Google Drive**
+   - Google OAuth Client ID را می‌توان از داخل پنجره Google Drive وارد کرد.
+   - دسترسی برنامه فقط به `appDataFolder` محدود شده است.
+
+بعد از تنظیم Secrets بالا، فقط اتصال/تأیید حساب‌ها در اولین اجرا لازم است؛ کد و استقرار از قبل آماده هستند.
+
+## کنترل کیفیت
+
+- تست syntax برای اسکریپت‌های مرورگر
+- smoke test تعیین‌گر برای UI، Provider، Gateway، همکاری آنلاین و Drive
+- Playwright E2E برای دسکتاپ و موبایل
+- اعتبارسنجی Deno Edge Functions
+- بررسی Security/Performance Advisorهای Supabase
+- CI روی هر Push به `main`

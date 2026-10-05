@@ -1026,7 +1026,7 @@ async function runTeam(){
   setLiveAgent(a,'running','');
   try{
    const knowledge=knowledgeContext(goal,5);
-   const context=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+\\
+   const context=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
     '\\n\\nدانش مرتبط پروژه:\\n'+knowledge+
     '\\n\\nتو عضو شماره '+(i+1)+' از '+active.length+' هستی و نقش تو «'+(a.role||'عضو تیم')+'» است.'+
     '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+

@@ -127,6 +127,10 @@ jobs:
           test -f tests/e2e/ai-teams.spec.mjs
           test -f .github/workflows/e2e.yml
           grep -q "@playwright/test@1.63.0" .github/workflows/e2e.yml
+          grep -q "@supabase/supabase-js@2.117.2" cloud-storage.js
+          grep -q "@supabase/supabase-js@2.117.2" github-storage.js
+          grep -q "@supabase/server@1.9.0" supabase/functions/ai-gateway/index.ts
+          grep -q "@supabase/server@1.9.0" supabase/functions/github-gateway/index.ts
           grep -q "desktop core controls and demo execution" tests/e2e/ai-teams.spec.mjs
           grep -q "mobile chat-first layout and drawer behavior" tests/e2e/ai-teams.spec.mjs
           echo "Browser E2E suite is present and pinned."

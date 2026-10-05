@@ -122,3 +122,24 @@ $$;
 
 revoke all on function public.consume_ai_gateway_rate_limit(uuid, integer, integer) from public, anon, authenticated;
 grant execute on function public.consume_ai_gateway_rate_limit(uuid, integer, integer) to service_role;
+
+
+-- Performance indexes for cloud project listing and restore.
+create index if not exists ai_teams_projects_user_updated_idx
+  on public.ai_teams_projects(user_id, updated_at desc);
+
+-- Keep the timestamp fresh whenever a project is updated.
+create or replace function public.touch_ai_teams_project_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists ai_teams_projects_touch_updated_at on public.ai_teams_projects;
+create trigger ai_teams_projects_touch_updated_at
+before update on public.ai_teams_projects
+for each row execute function public.touch_ai_teams_project_updated_at();

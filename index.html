@@ -290,10 +290,10 @@ function defaults(){
   goal:'یک ایده نرم‌افزاری را تحلیل کن، راه‌حل طراحی کن و یک برنامه اجرای مرحله‌ای بده.',
   mode:'real',
   agents:[
-   {id:uid(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو تحلیل‌گر تیم هستی. هدف را دقیق به نیازمندی‌ها، فرضیات، ریسک‌ها و خروجی‌های قابل اجرا تبدیل کن.',enabled:true},
-   {id:uid(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو طراح راه‌حل هستی. با توجه به هدف و تحلیل قبلی، معماری، جریان کار و اجزای لازم را پیشنهاد بده.',enabled:true},
-   {id:uid(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو برنامه‌نویس ارشد تیم هستی. طرح را به مراحل فنی، ساختار فایل‌ها و کد قابل پیاده‌سازی تبدیل کن.',enabled:true},
-   {id:uid(),name:'منتقد',role:'بازبینی و کشف ایراد',icon:'🔎',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو منتقد فنی هستی. خروجی تیم را بررسی کن، خطاها، ریسک‌ها و اصلاحات دقیق را فهرست کن.',enabled:true}
+   {id:uid(),name:'تحلیل‌گر',role:'تحلیل نیازمندی‌ها',icon:'🧠',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو تحلیل‌گر تیم هستی. هدف را دقیق به نیازمندی‌ها، فرضیات، ریسک‌ها و خروجی‌های قابل اجرا تبدیل کن.',enabled:true},
+   {id:uid(),name:'طراح',role:'طراحی راه‌حل',icon:'🎨',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو طراح راه‌حل هستی. با توجه به هدف و تحلیل قبلی، معماری، جریان کار و اجزای لازم را پیشنهاد بده.',enabled:true},
+   {id:uid(),name:'برنامه‌نویس',role:'پیاده‌سازی فنی',icon:'💻',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو برنامه‌نویس ارشد تیم هستی. طرح را به مراحل فنی، ساختار فایل‌ها و کد قابل پیاده‌سازی تبدیل کن.',enabled:true},
+   {id:uid(),name:'منتقد',role:'بازبینی و کشف ایراد',icon:'🔎',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'تو منتقد فنی هستی. خروجی تیم را بررسی کن، خطاها، ریسک‌ها و اصلاحات دقیق را فهرست کن.',enabled:true}
   ],
   chat:[],
   runs:[],
@@ -305,7 +305,7 @@ function load(){
   const v=JSON.parse(localStorage.getItem(KEY));
   if(v&&v.version===2){
    const looksLikeOldApiSetup=v.agents&&v.agents.length&&v.agents.every(function(a){return a.provider==='openai'&&(!a.apiKey)});
-   if(looksLikeOldApiSetup){v.agents.forEach(function(a){a.provider='horde';a.endpoint='https://oai.stablehorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';});v.mode='real';localStorage.setItem(KEY,JSON.stringify(v));}
+   if(looksLikeOldApiSetup){v.agents.forEach(function(a){a.provider='horde';a.endpoint='https://oai.aihorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';});v.mode='real';localStorage.setItem(KEY,JSON.stringify(v));}
    return v;
   }
   const old=JSON.parse(localStorage.getItem(OLD_KEY));
@@ -463,7 +463,7 @@ function updateAgent(e){
  const a=selectedAgent(e.target.dataset.id);if(!a)return;
  const k=e.target.dataset.k;let v=e.target.value;if(k==='enabled')v=v==='true';
  a[k]=v;
- if(k==='provider'&&v==='horde'){a.endpoint='https://oai.stablehorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';delete a.apiKey;}else if(k==='endpoint'&&v&&!/^https:\/\/[^\s]+$/i.test(v)){alert('Endpoint باید یک آدرس HTTPS معتبر باشد.');e.target.value=a.endpoint||'';return;}
+ if(k==='provider'&&v==='horde'){a.endpoint='https://oai.aihorde.net/v1/chat/completions';a.model='koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix';delete a.apiKey;}else if(k==='endpoint'&&v&&!/^https:\/\/[^\s]+$/i.test(v)){alert('Endpoint باید یک آدرس HTTPS معتبر باشد.');e.target.value=a.endpoint||'';return;}
  save();renderSidebarOnly();if((k==='provider'||k==='model')&&e.type==='change')render();
 }
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
@@ -475,7 +475,7 @@ function addAgent(){
   const human={id:uid(),kind:'human',name:'عضو انسانی '+(state.agents.filter(function(a){return a.kind==='human'}).length+1),role:'عضو تیم',icon:'👤',provider:'',endpoint:'',model:'',system:'',enabled:true};
   state.agents.push(human);collapsed.add(human.id);save();render();return;
  }
- const newAgent={id:uid(),kind:'ai',name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true};
+ const newAgent={id:uid(),kind:'ai',name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true};
  state.agents.push(newAgent);collapsed.add(newAgent.id);
  save();render();
  const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
@@ -495,7 +495,7 @@ function mockResponse(a,goal,history){
 
 async function refreshHordeModels(){
   if(state.hordeModelsFetchedAt&&Date.now()-state.hordeModelsFetchedAt<10*60*1000)return state.hordeModels||[];
-  const endpoint='https://oai.stablehorde.net/v1/models';
+  const endpoint='https://oai.aihorde.net/v1/models';
   const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},15000);
   try{
     const res=await fetch(endpoint,{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store',signal:controller.signal});
@@ -512,7 +512,7 @@ async function refreshHordeModels(){
         const preferred=usable.find(function(m){return /llama|qwen|mistral|gemma|deepseek|phi/i.test(m)})||usable[0];
         a.model=preferred;
       }
-      a.endpoint='https://oai.stablehorde.net/v1/chat/completions';
+      a.endpoint='https://oai.aihorde.net/v1/chat/completions';
     });
     save();render();
     return usable;
@@ -522,14 +522,14 @@ async function ensureHordeModel(a){
   if(a.provider!=='horde')return;
   if(Array.isArray(state.hordeModels)&&state.hordeModels.indexOf(a.model)>=0)return;
   try{
-    const res=await fetch('https://oai.stablehorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+    const res=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
     if(!res.ok)return;
     const data=await res.json();
     const models=Array.isArray(data.data)?data.data.map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean):[];
     state.hordeModels=models;
     if(models.length&&models.indexOf(a.model)<0){
       a.model=models.find(function(m){return /llama|qwen|mistral|gemma|deepseek|phi/i.test(m)})||models[0];
-      a.endpoint='https://oai.stablehorde.net/v1/chat/completions';
+      a.endpoint='https://oai.aihorde.net/v1/chat/completions';
       save();
     }
   }catch(e){}
@@ -568,7 +568,7 @@ async function callAgent(a,goal,transcript){
   }
   throw lastError||new Error('Gateway در دسترس نیست.');
  }
- const endpoints=['https://oai.stablehorde.net/v1/chat/completions','https://oai.aihorde.net/v1/chat/completions'];
+ const endpoints=['https://oai.aihorde.net/v1/chat/completions','https://oai.stablehorde.net/v1/chat/completions'];
  if(a.endpoint&&endpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
  await ensureHordeModel(a);
  const model=String(a.model||((state.hordeModels||[])[0])||'').trim();
@@ -622,7 +622,7 @@ async function callAgentResilient(a,goal,transcript,onDelta){
   catch(e){lastError=e;if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1000);});}
  }
  if(a.provider!=='horde'){
-  const horde=Object.assign({},a,{provider:'horde',endpoint:'https://oai.stablehorde.net/v1/chat/completions',model:(state.hordeModels&&state.hordeModels[0])||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'});
+  const horde=Object.assign({},a,{provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:(state.hordeModels&&state.hordeModels[0])||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'});
   try{return await callAgent(horde,goal,transcript);}
   catch(e){lastError=new Error((lastError&&lastError.message||'Provider اصلی شکست خورد.')+' | Fallback AI Horde: '+e.message);}
  }

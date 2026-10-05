@@ -489,18 +489,36 @@ function updateAgent(e){
 }
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
 function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
-function addAgent(){
- const choice=prompt('نوع عضو: 1 = هوش مصنوعی، 2 = عضو انسانی','1');
- if(choice===null)return;
- if(choice==='2'){
-  const human={id:uid(),kind:'human',name:'عضو انسانی '+(state.agents.filter(function(a){return a.kind==='human'}).length+1),role:'عضو تیم',icon:'👤',provider:'',endpoint:'',model:'',system:'',enabled:true};
-  state.agents.push(human);collapsed.add(human.id);save();render();return;
- }
- const newAgent={id:uid(),kind:'ai',name:'عضو '+(state.agents.length+1),role:'نقش جدید',icon:'🤖',provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',system:'در نقش تعیین‌شده عمل کن و خروجی دقیق و قابل استفاده ارائه بده.',enabled:true};
- state.agents.push(newAgent);collapsed.add(newAgent.id);
- save();render();
- const a=state.agents[state.agents.length-1];setTimeout(function(){document.getElementById('agent-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'})},20);
+function agentBuilderModels(providerId){
+ const p=(state.providers||[]).find(function(x){return x.id===providerId});
+ const defaults={horde:['koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'],openai:['gpt-4o-mini','gpt-4o','gpt-5'],openrouter:['openrouter/free','deepseek/deepseek-chat-v3-0324:free','google/gemini-2.0-flash-exp:free'],claude:['claude-sonnet-4-5','claude-3-5-haiku'],gemini:['gemini-2.5-flash','gemini-2.5-pro'],custom:[]};
+ const list=(defaults[providerId]||[]).slice();if(p&&p.model&&list.indexOf(p.model)<0)list.unshift(p.model);return list;
 }
+function agentBuilderRefreshModels(){
+ const provider=document.getElementById('agentBuilderProvider'),input=document.getElementById('agentBuilderModel'),list=document.getElementById('agentBuilderModels');if(!provider||!input||!list)return;
+ const models=agentBuilderModels(provider.value);list.innerHTML=models.map(function(m){return '<option value="'+esc(m)+'"></option>'}).join('');if(!input.value&&models[0])input.value=models[0];
+}
+function openAgentBuilder(){
+ let modal=document.getElementById('agentBuilderModal');
+ if(!modal){
+  modal=document.createElement('div');modal.id='agentBuilderModal';modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:2000;padding:12px;overflow:auto';
+  modal.innerHTML='<div class="card" style="width:min(720px,100%);margin:30px auto;padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h3 style="margin:0">ساخت Agent جدید</h3><div class="tiny">نقش، مدل و رفتار Agent را قبل از افزودن تنظیم کن.</div></div><button class="icon-btn" id="agentBuilderClose">✕</button></div>'+
+  '<div class="two" style="margin-top:14px"><div class="field"><label>نام Agent</label><input id="agentBuilderName" placeholder="مثلاً تحلیل‌گر بازار"></div><div class="field"><label>قالب نقش</label><select id="agentBuilderTemplate"><option value="analyst">تحلیل‌گر</option><option value="researcher">پژوهشگر</option><option value="critic">منتقد</option><option value="writer">نویسنده</option><option value="custom">سفارشی</option></select></div></div>'+
+  '<div class="two"><div class="field"><label>Provider</label><select id="agentBuilderProvider"></select></div><div class="field"><label>مدل اختصاصی این Agent</label><input id="agentBuilderModel" list="agentBuilderModels" placeholder="مدل موردنظر"><datalist id="agentBuilderModels"></datalist></div></div>'+
+  '<div class="field"><label>نقش دقیق</label><input id="agentBuilderRole" placeholder="مثلاً تحلیل‌گر فنی"></div><div class="field"><label>System Prompt</label><textarea id="agentBuilderSystem" style="min-height:150px" placeholder="دستورالعمل دقیق Agent..."></textarea></div>'+
+  '<div class="mode-row"><label class="mode"><input type="checkbox" id="agentBuilderEnabled" checked style="width:auto;margin-left:5px"> فعال</label></div><div class="notice" style="margin-top:10px">مدل انتخابی فقط به همین Agent اختصاص داده می‌شود.</div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" id="agentBuilderCreate" style="width:auto">＋ ساخت Agent</button><button class="btn" id="agentBuilderCancel" style="width:auto">انصراف</button></div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('agentBuilderClose').onclick=function(){modal.style.display='none'};document.getElementById('agentBuilderCancel').onclick=function(){modal.style.display='none'};
+  document.getElementById('agentBuilderProvider').onchange=agentBuilderRefreshModels;
+  document.getElementById('agentBuilderTemplate').onchange=function(){const presets={analyst:['تحلیل‌گر جدید','تحلیل‌گر متخصص','تو یک تحلیل‌گر دقیق هستی. شواهد را بررسی کن، فرضیات را جدا کن و نتیجه روشن بده.'],researcher:['پژوهشگر جدید','پژوهشگر اطلاعات','تو یک پژوهشگر دقیق هستی. اطلاعات را ساختاربندی کن و تناقض‌ها را مشخص کن.'],critic:['منتقد جدید','منتقد و کنترل کیفیت','تو منتقد تیم هستی. خطاها، ریسک‌ها و اصلاحات خروجی قبلی را مشخص کن.'],writer:['نویسنده نهایی','نویسنده','تو نویسنده نهایی تیم هستی. ورودی اعضای قبلی را ترکیب و خروجی دقیق تولید کن.'],custom:['Agent جدید','عامل هوش مصنوعی','تو یک عامل متخصص در تیم AI Teams هستی. نقش خودت را دقیق انجام بده و خروجی قابل استفاده تحویل بده.']};const p=presets[this.value]||presets.custom;document.getElementById('agentBuilderName').value=p[0];document.getElementById('agentBuilderRole').value=p[1];document.getElementById('agentBuilderSystem').value=p[2];};
+  document.getElementById('agentBuilderCreate').onclick=function(){const name=document.getElementById('agentBuilderName').value.trim(),provider=document.getElementById('agentBuilderProvider').value,model=document.getElementById('agentBuilderModel').value.trim();if(!name||!provider||!model)return alert('نام، Provider و مدل را کامل کن.');const p=(state.providers||[]).find(function(x){return x.id===provider});state.agents.push({id:uid(),kind:'ai',name:name.slice(0,120),role:document.getElementById('agentBuilderRole').value.trim().slice(0,180)||'عامل هوش مصنوعی',icon:'🤖',provider:provider,endpoint:(p&&p.endpoint)||'',model:model.slice(0,200),system:document.getElementById('agentBuilderSystem').value.trim().slice(0,12000),enabled:document.getElementById('agentBuilderEnabled').checked});save();render();modal.style.display='none';};
+ }
+ const ps=document.getElementById('agentBuilderProvider');ps.innerHTML=(state.providers||[]).filter(function(p){return p.id!=='custom'||p.endpoint}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>}).join('');
+ const first=(state.providers||[]).find(function(p){return p.id==='horde'})||(state.providers||[])[0];if(first)ps.value=first.id;
+ document.getElementById('agentBuilderName').value='تحلیل‌گر جدید';document.getElementById('agentBuilderRole').value='عامل هوش مصنوعی';document.getElementById('agentBuilderSystem').value='تو یک عامل متخصص در تیم AI Teams هستی. نقش خودت را دقیق انجام بده و خروجی قابل استفاده تحویل بده.';document.getElementById('agentBuilderEnabled').checked=true;document.getElementById('agentBuilderTemplate').value='custom';agentBuilderRefreshModels();document.getElementById('agentBuilderModal').style.display='block';
+}
+function addAgent(){openAgentBuilder()}
 function fillDemo(){ state=defaults();collapsed=new Set(state.agents.map(function(a){return a.id;}));save();render();alert('تنظیمات نمونه برگشت داده شد.'); }
 function setMode(m){state.mode=m;save();render()}
 function msg(name,icon,text,type,error){state.chat.push({name:name,icon:icon,text:text,type:type||'agent',error:!!error});renderChat();save()}

@@ -382,7 +382,18 @@ function save(){
   localStorage.setItem(KEY,JSON.stringify(state));
  }catch(e){try{console.warn('AI Teams local save failed:',e&&e.message||e)}catch(_){} }
 }
-function memoryContext(limit){return (state.memory||[]).slice(0,limit||10).map(function(x){return '['+(x.createdAt||'')+'] '+(x.goal||'')+'\nخلاصه: '+(x.summary||'')}).join('\n\n')||'حافظه دائمی تیم هنوز خالی است.'}
+function memoryContext(limit,query){
+ const items=state.memory||[];
+ const q=String(query||'').toLowerCase().split(/\s+/).filter(function(x){return x.length>2}).slice(0,20);
+ const scored=items.map(function(x){
+  const text=String((x.goal||'')+' '+(x.summary||'')).toLowerCase();
+  let score=0;q.forEach(function(k){if(text.indexOf(k)>=0)score++;});
+  return {x:x,score:score};
+ }).sort(function(a,b){return b.score-a.score||String(b.x.createdAt||'').localeCompare(String(a.x.createdAt||''));});
+ return scored.slice(0,limit||10).map(function(v){const x=v.x;return '['+(x.createdAt||'')+'] '+(x.goal||'')+'\nخلاصه: '+(x.summary||'')}).join('\n\n')||'حافظه دائمی تیم هنوز خالی است.';
+}
+function searchProjectMemory(query,limit){return memoryContext(limit||20,query);}
+
 function rememberRun(goal,summary,members){if(!summary)return;state.memory=state.memory||[];state.memory.unshift({id:uid(),createdAt:new Date().toISOString(),goal:String(goal||'').slice(0,1000),summary:String(summary||'').slice(0,5000),members:Array.isArray(members)?members.slice(0,30):[]});state.memory=state.memory.slice(0,30)}
 function openMemoryPanel(){
  let el=document.getElementById('teamMemoryPanel');
@@ -838,7 +849,7 @@ async function runTeamParallel(){
  try{
   msg('شما','👤','هدف: '+goal,'user',false);
   msg('سیستم','⚡','اجرای موازی شروع شد؛ همه اعضای فعال مستقل روی یک زمینه مشترک کار می‌کنند.','agent',false);
-  const baseContext=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nحافظه دائمی پروژه:\n'+memoryContext(8)+'\n\nقانون اجرای موازی: خروجی سایر اعضا هنوز در دسترس نیست؛ مستقل تحلیل کن و نتیجه تخصصی خودت را ارائه بده.';
+  const baseContext=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+'\n\nحافظه مرتبط پروژه:\n'+memoryContext(8,goal)+'\n\nقانون اجرای موازی: خروجی سایر اعضا هنوز در دسترس نیست؛ مستقل تحلیل کن و نتیجه تخصصی خودت را ارائه بده.';
   const results=await Promise.all(active.map(async function(a){
    const placeholder={name:a.name,icon:a.icon,text:'در حال اجرای موازی...',type:'agent',error:false};
    state.chat.push(placeholder);
@@ -906,6 +917,7 @@ async function runTeam(){
  if(!goal)return alert('اول هدف تیم را وارد کن.');
  const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
  const previousMemory=(state.chat||[]).slice(-12).map(function(m){return '['+(m.name||'عضو')+'] '+String(m.text||'').slice(0,1200)}).join('\\n');
+ const relevantMemory=memoryContext(8,goal);
  if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
  busy=true;document.getElementById('runBtn').disabled=true;document.getElementById('parallelBtn').disabled=true;document.getElementById('dialogueBtn').disabled=true;document.getElementById('adminChatBtn').disabled=true;
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());

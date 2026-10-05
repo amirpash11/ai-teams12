@@ -147,10 +147,6 @@ async function universalCallAgent(a,goal,transcript){
    }catch(e){lastError=e}
   }
   throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
-  const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-  if(typeof out==='string'&&out)return out;
-  if(data.choices&&data.choices[0]&&typeof data.choices[0].text==='string')return data.choices[0].text;
-  throw new Error('پاسخ مدل پیدا نشد.');
  }catch(e){if(e.name==='AbortError')throw new Error('زمان پاسخ تمام شد.');throw e}finally{clearTimeout(timer)}
 }
 function secureProviderStatus(){

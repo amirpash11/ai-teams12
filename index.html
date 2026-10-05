@@ -824,6 +824,9 @@ async function runDialogue(){
   document.getElementById('parallelBtn').disabled=false;
   document.getElementById('dialogueBtn').disabled=false;
   document.getElementById('adminChatBtn').disabled=false;
+  document.getElementById('stopBtn').disabled=true;
+  cancelRequested=false;
+  activeAbortController=null;
   save();
  }
 }
@@ -905,6 +908,9 @@ async function runTeamParallel(){
   document.getElementById('parallelBtn').disabled=false;
   document.getElementById('dialogueBtn').disabled=false;
   document.getElementById('adminChatBtn').disabled=false;
+  document.getElementById('stopBtn').disabled=true;
+  cancelRequested=false;
+  activeAbortController=null;
   save();
  }
 }
@@ -983,6 +989,9 @@ async function runTeam(){
   document.getElementById('parallelBtn').disabled=false;
   document.getElementById('dialogueBtn').disabled=false;
   document.getElementById('adminChatBtn').disabled=false;
+  document.getElementById('stopBtn').disabled=true;
+  cancelRequested=false;
+  activeAbortController=null;
   save();
  }
 }

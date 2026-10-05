@@ -131,12 +131,13 @@ async function universalCallAgent(a,goal,transcript){
  let endpoint=hordeEndpoints[0];
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const body={model:a.model||p.model,messages:messages,temperature:0.2};
- const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
  try{
   let lastError=null;
-  for(const candidate of hordeEndpoints){
-   endpoint=candidate;
-   try{
+  for(let attempt=1;attempt<=3;attempt++){
+   for(const candidate of hordeEndpoints){
+    endpoint=candidate;
+    const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
+    try{
     const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
     const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
     if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));continue}
@@ -144,10 +145,13 @@ async function universalCallAgent(a,goal,transcript){
     if(typeof out==='string'&&out.trim())return out;
     if(data.choices&&data.choices[0]&&typeof data.choices[0].text==='string'&&data.choices[0].text.trim())return data.choices[0].text;
     lastError=new Error('پاسخ مدل پیدا نشد.');
-   }catch(e){lastError=e}
+    }catch(e){lastError=e;}
+    finally{clearTimeout(timer)}
+   }
+   if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1500)});
   }
   throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
- }catch(e){if(e.name==='AbortError')throw new Error('زمان پاسخ تمام شد.');throw e}finally{clearTimeout(timer)}
+ }catch(e){if(e.name==='AbortError')throw new Error('زمان پاسخ تمام شد.');throw e}
 }
 function secureProviderStatus(){
  const el=document.getElementById('providerSecureStatus');

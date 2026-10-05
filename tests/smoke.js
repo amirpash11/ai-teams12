@@ -58,3 +58,6 @@ assert(html.includes('function openKnowledgePanel()'),'Knowledge panel missing')
 assert(html.includes('function knowledgeContext(query,limit)'),'Knowledge search missing');
 assert(html.includes('id="knowledgeFile"'),'Knowledge file input missing');
 assert(html.includes('state.knowledge'),'Knowledge state missing');
+
+assert(html.includes('async function refreshHordeModels()'),'dynamic free Horde model refresh missing');
+assert(html.includes("provider.value==='horde'"),'Agent Builder should use refreshed Horde models');

@@ -84,3 +84,8 @@
 - اعتبارسنجی Deno Edge Functions
 - بررسی Security/Performance Advisorهای Supabase
 - CI روی هر Push به `main`
+
+
+## وابستگی‌های مرورگر و Gateway
+
+برای جلوگیری از تغییر ناخواسته نسخه‌های runtime، Supabase JS در مرورگر روی `2.117.2` و `@supabase/server` در Edge Functions روی `1.9.0` پین شده‌اند. تست E2E نیز روی Playwright `1.63.0` پین است.

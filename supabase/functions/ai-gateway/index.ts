@@ -1,4 +1,4 @@
-import { createSupabaseContext } from 'npm:@supabase/server@1'
+import { createSupabaseContext } from 'npm:@supabase/server@1.9.0'
 
 const APP_ORIGIN = (Deno.env.get('AI_TEAMS_APP_ORIGIN') || 'https://amirpash11.github.io').replace(/\/$/, '')
 const RATE_LIMIT = 30

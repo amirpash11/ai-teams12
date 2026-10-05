@@ -376,7 +376,6 @@ const activeAbortControllers=new Set();
 function trackAbortController(){const c=new AbortController();activeAbortControllers.add(c);return c;}
 function releaseAbortController(c){activeAbortControllers.delete(c);}
 function abortAllActiveRequests(){activeAbortControllers.forEach(function(c){try{c.abort();}catch(e){}});}
-let activeAbortController=null;
 
 function save(){
  try{
@@ -873,6 +872,7 @@ async function runTeamParallel(){
     return {agent:a,result:'',error:e.message};
    }finally{renderChat();save();}
   }));
+  if(cancelRequested)throw new Error('اجرای تیم توسط کاربر متوقف شد.');
   const successful=results.filter(function(x){return x.result});
   const transcript=compactContext(successful.map(function(x){return '[عضو '+x.agent.name+']\n'+x.result}).join('\n\n'),30000);
   let reviewTranscript='';
@@ -994,7 +994,6 @@ async function runTeam(){
   document.getElementById('adminChatBtn').disabled=false;
   document.getElementById('stopBtn').disabled=true;
   cancelRequested=false;
-  activeAbortController=null;
   save();
  }
 }

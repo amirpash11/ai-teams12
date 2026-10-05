@@ -33,10 +33,13 @@ to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
--- Intentionally NO DELETE policy:
--- the web app cannot delete cloud projects.
+drop policy if exists "ai teams delete own projects" on public.ai_teams_projects;
+create policy "ai teams delete own projects"
+on public.ai_teams_projects for delete
+to authenticated
+using (auth.uid() = user_id);
 
-grant select, insert, update on public.ai_teams_projects to authenticated;
+grant select, insert, update, delete on public.ai_teams_projects to authenticated;
 
 -- GitHub connection for AI Teams. OAuth tokens are encrypted by the Edge Function.
 create table if not exists public.github_connections (

@@ -126,7 +126,7 @@ async function universalCallAgent(a,goal,transcript){
   });
   return data.output;
  }
- const hordeEndpoints=['https://oai.aihorde.net/v1/chat/completions','https://oai.aihorde.net/v1/chat/completions'];
+ const hordeEndpoints=['https://oai.aihorde.net/v1/chat/completions'];
  if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
  let endpoint=hordeEndpoints[0];
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};

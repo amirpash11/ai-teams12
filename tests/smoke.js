@@ -16,7 +16,7 @@ assert(html.includes('id="workflowBuilderBtn"'),'Workflow Builder trigger missin
 assert(html.includes('id="workflowBuilderModal"'),'Workflow Builder modal missing');
 assert(html.includes('function openWorkflowBuilder()'),'Workflow Builder opener missing');
 assert(html.includes('function renderWorkflowSteps()'),'Workflow step renderer missing');
-assert(html.includes('workflowSteps().map'),'Workflow execution integration missing');
+assert(html.includes('const configured=workflowSteps()'),'Workflow execution integration missing');
 
 const forbidden=['oai.stablehorde.net','YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLISHABLE_KEY'];
 for(const value of forbidden) assert(!html.includes(value),'forbidden/stale marker in index.html: '+value);

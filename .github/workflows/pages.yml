@@ -24,6 +24,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate JavaScript syntax
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const files = ['provider-manager.js','cloud-storage.js','github-storage.js','multiplayer.js','workspace-manager.js','google-drive-storage.js'];
+          for (const file of files) {
+            new Function(fs.readFileSync(file, 'utf8'));
+            console.log('PASS', file);
+          }
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)]
+            .map(m => m[1]).filter(s => s.trim());
+          scripts.forEach((source, i) => { new Function(source); console.log('PASS index.html inline script', i + 1); });
+          if (!html.includes('https://oai.stablehorde.net')) throw new Error('Horde CSP origin missing');
+          NODE
+
+      - name: Validate gateway security markers
+        run: |
+          grep -q "createSupabaseContext(req, { auth: 'user' })" supabase/functions/ai-gateway/index.ts
+          grep -q "Deno.env.get" supabase/functions/ai-gateway/index.ts
+          grep -q "Access-Control-Allow-Origin" supabase/functions/ai-gateway/index.ts
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

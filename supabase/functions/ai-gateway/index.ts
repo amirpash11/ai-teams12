@@ -138,6 +138,7 @@ Deno.serve(async (req: Request) => {
       for (const candidate of hordeEndpoints) {
         try {
           lastUpstream = await fetch(candidate, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal })
+          if (input?.stream && lastUpstream.ok && lastUpstream.body && ['openai','openrouter','horde','custom'].includes(provider)) break
           lastRaw = (await lastUpstream.text()).slice(0, 2000000)
           lastData = {}
           try { lastData = JSON.parse(lastRaw) } catch {}

@@ -47,7 +47,7 @@ function endpointFor(provider: Provider, model: string) {
   if (provider === 'openrouter') return 'https://openrouter.ai/api/v1/chat/completions'
   if (provider === 'claude') return 'https://api.anthropic.com/v1/messages'
   if (provider === 'gemini') return 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent'
-  if (provider === 'horde') return 'https://oai.stablehorde.net/v1/chat/completions'
+  if (provider === 'horde') return 'https://oai.aihorde.net/v1/chat/completions'
   return customEndpointMap()[provider] || ''
 }
 
@@ -129,28 +129,15 @@ Deno.serve(async (req: Request) => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 90000)
     try {
-      const hordeEndpoints = provider === 'horde'
-        ? ['https://oai.stablehorde.net/v1/chat/completions', 'https://oai.aihorde.net/v1/chat/completions']
-        : [endpoint]
-      let lastUpstream: Response | null = null
+      const upstream = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal })
       let lastData: any = {}
       let lastRaw = ''
-      for (const candidate of hordeEndpoints) {
-        try {
-          lastUpstream = await fetch(candidate, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal })
-          if (input?.stream && lastUpstream.ok && lastUpstream.body && ['openai','openrouter','horde','custom'].includes(provider)) break
-          lastRaw = (await lastUpstream.text()).slice(0, 2000000)
-          lastData = {}
-          try { lastData = JSON.parse(lastRaw) } catch {}
-          if (lastUpstream.ok) break
-        } catch (err) {
-          if (candidate === hordeEndpoints[hordeEndpoints.length - 1]) throw err
-        }
+      if (!(input?.stream && upstream.ok && upstream.body && ['openai','openrouter','horde','custom'].includes(provider))) {
+        lastRaw = (await upstream.text()).slice(0, 2000000)
+        try { lastData = JSON.parse(lastRaw) } catch {}
       }
-      const upstream = lastUpstream
       const data = lastData
       const raw = lastRaw
-      if (!upstream) throw new Error('Upstream response unavailable')
       if (input?.stream && ['openai','openrouter','horde'].includes(provider) && upstream.ok && upstream.body) {
         return new Response(upstream.body, {
           status: 200,

@@ -1015,25 +1015,31 @@ async function runTeam(){
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
  state.chat=[];
+ resetLiveRun(active);
  let teamHadError=false;
  msg('شما','👤','هدف: '+goal,'user',false);
  let transcript=buildTeamRoster(active)+'\\n\\nحافظه اخیر تیم:\\n'+(previousMemory||'موردی وجود ندارد.')+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
  try{ for(let i=0;i<active.length;i++){
   const a=active[i];
   const stageMessage={name:a.name,icon:a.icon,text:(i===0?'مرحله ۱ — در حال تحلیل اولیه...':'مرحله '+(i+1)+' — در حال بررسی خروجی اعضای قبلی...'),kind:'agent',error:false}; state.chat.push(stageMessage); renderChat();
+  setLiveAgent(a,'running','');
   try{
-   const context=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
+   const knowledge=knowledgeContext(goal,5);
+   const context=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+\\
+    '\\n\\nدانش مرتبط پروژه:\\n'+knowledge+
     '\\n\\nتو عضو شماره '+(i+1)+' از '+active.length+' هستی و نقش تو «'+(a.role||'عضو تیم')+'» است.'+
     '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+
     '\\nاگر عضو قبلی راه‌حل ناقص یا اشتباهی داده، بدون تعارف آن بخش را مشخص و اصلاح کن.';
-   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,context,transcript,function(delta){stageMessage.text=(stageMessage.text||'').replace(/^مرحله [^—]+— در حال[^\n]*\.\.\.$/,'')+delta;renderChat();});
-   stageMessage.text=result;stageMessage.error=false;
+   setLiveAgent(a,'thinking','');
+   const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,context,transcript,function(delta){stageMessage.text=(stageMessage.text||'').replace(/^مرحله [^—]+— در حال[^\n]*\.\.\.$/,'')+delta;liveDelta(a,delta);renderChat();});
+   stageMessage.text=result;stageMessage.error=false;setLiveAgent(a,'completed',result);
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    transcript=compactContext(transcript,30000);
    renderChat();save();
   }catch(e){
    teamHadError=true;
-   stageMessage.text='خطا: '+e.message;stageMessage.error=true;
+   setLiveAgent(a,(cancelRequested||e.name==='AbortError')?'cancelled':'error',undefined,e.message);
+   stageMessage.text=(cancelRequested||e.name==='AbortError')?'⏹️ لغو شد: '+e.message:'خطا: '+e.message;stageMessage.error=true;
    renderChat();save();
    transcript+='\\n\\n[مرحله '+(i+1)+' | '+a.name+' - خطا]\\n'+e.message;
    transcript=compactContext(transcript,30000);
@@ -1080,6 +1086,15 @@ async function runTeam(){
   save();
  }
 }
+function ensureLiveRun(){if(!window.__aiTeamsLive)window.__aiTeamsLive={active:false,currentAgentId:null,statuses:{},outputs:{},errors:{},throttles:{}};return window.__aiTeamsLive;}
+function liveStatusLabel(s){return ({waiting:'در انتظار',running:'در حال اجرا',thinking:'در حال فکر کردن',streaming:'در حال تولید',completed:'تکمیل شد',error:'خطا',cancelled:'لغو شد'})[s]||s;}
+function liveStatusIcon(s){return ({waiting:'⏳',running:'⚙️',thinking:'🧠',streaming:'✍️',completed:'✅',error:'❌',cancelled:'⏹️'})[s]||'•';}
+function setLiveAgent(a,status,output,error){const l=ensureLiveRun();if(!a)return;l.statuses[a.id]=status;l.currentAgentId=(status==='running'||status==='thinking'||status==='streaming')?a.id:l.currentAgentId;if(output!==undefined)l.outputs[a.id]=String(output||'').slice(-6000);if(error)l.errors[a.id]=String(error).slice(0,1000);renderLivePanel();}
+function resetLiveRun(agents){const l=ensureLiveRun();l.active=true;l.currentAgentId=null;l.statuses={};l.outputs={};l.errors={};l.throttles={};(agents||[]).forEach(function(a){l.statuses[a.id]='waiting';l.outputs[a.id]='';});renderLivePanel();}
+function finishLiveRun(){const l=ensureLiveRun();l.active=false;l.currentAgentId=null;renderLivePanel();}
+function liveDelta(a,delta){const l=ensureLiveRun(),now=Date.now();l.outputs[a.id]=(l.outputs[a.id]||'')+String(delta||'');l.outputs[a.id]=l.outputs[a.id].slice(-6000);l.statuses[a.id]='streaming';l.currentAgentId=a.id;if(!l.throttles[a.id]||now-l.throttles[a.id]>120){l.throttles[a.id]=now;renderLivePanel();}}
+function renderLivePanel(){let el=document.getElementById('liveAgentPanel');if(!el){el=document.createElement('div');el.id='liveAgentPanel';el.className='card wide';el.style.marginTop='12px';const host=document.querySelector('.main .grid');if(host)host.appendChild(el);else return;}const l=ensureLiveRun();el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">📡 وضعیت زنده تیم</h3><span class="pill">'+(l.active?'● در حال اجرا':'آماده')+'</span></div><div class="tiny" style="margin:6px 0 10px">وضعیت لحظه‌ای Agentها و بخشی از خروجی زنده نمایش داده می‌شود.</div>'+(state.agents||[]).filter(function(a){return a.kind!=='human'}).map(function(a){const st=l.statuses[a.id]||'waiting',out=String(l.outputs[a.id]||'');return '<div style="padding:9px 0;border-top:1px solid rgba(255,255,255,.08)"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(a.icon||'🤖')+' '+esc(a.name)+'</b><span class="role-pill">'+liveStatusIcon(st)+' '+liveStatusLabel(st)+'</span></div>'+(out?'<div class="tiny" style="margin-top:5px;white-space:pre-wrap;max-height:120px;overflow:auto">'+esc(out.slice(-1800))+'</div>':'')+(l.errors[a.id]?'<div class="tiny">⚠️ '+esc(l.errors[a.id])+'</div>':'')+'</div>';}).join('');}
+
 function clearChat(){state.chat=[];save();renderChat()}
 function exportConfig(){
  const safe=JSON.parse(JSON.stringify(state));safe.agents=safe.agents.map(function(a){return stripBrowserSecrets(a)});safe.providers=(safe.providers||[]).map(function(p){return stripBrowserSecrets(p)});

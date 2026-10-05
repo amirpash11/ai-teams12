@@ -120,7 +120,6 @@ jobs:
           NODE
           grep -q "openrouter/free" index.html
           grep -q "await ensureHordeModel(a)" index.html
-          grep -q "await ensureHordeModel(a)" index.html
           echo "Public provider endpoints and free-provider contracts passed."
 
       - name: Validate browser E2E suite

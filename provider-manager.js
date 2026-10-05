@@ -2,7 +2,7 @@
 'use strict';
 
 const builtIns = [
- {id:'horde',name:'AI Horde — رایگان بدون کلید',protocol:'openai',endpoint:'https://oai.aihorde.net/v1/chat/completions',auth:'bearer-public',header:'Authorization',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',template:'',responsePath:'choices.0.message.content',builtIn:true},
+ {id:'horde',name:'AI Horde — رایگان بدون کلید',protocol:'openai',endpoint:'https://oai.stablehorde.net/v1/chat/completions',auth:'bearer-public',header:'Authorization',model:'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix',template:'',responsePath:'choices.0.message.content',builtIn:true},
  {id:'openai',name:'OpenAI',protocol:'openai',endpoint:'https://api.openai.com/v1/chat/completions',auth:'bearer',header:'Authorization',model:'gpt-4o-mini',template:'',responsePath:'choices.0.message.content',builtIn:true},
  {id:'openrouter',name:'OpenRouter',protocol:'openai',endpoint:'https://openrouter.ai/api/v1/chat/completions',auth:'bearer',header:'Authorization',model:'openrouter/free',template:'',responsePath:'choices.0.message.content',builtIn:true},
  {id:'custom',name:'Custom',protocol:'generic',endpoint:'',auth:'bearer',header:'Authorization',model:'',template:'{"model":"{{model}}","messages":[{"role":"system","content":"{{system}}"},{"role":"user","content":"{{prompt}}"}]}',responsePath:'choices.0.message.content',builtIn:true},
@@ -125,7 +125,7 @@ async function universalCallAgent(a,goal,transcript){
   });
   return data.output;
  }
- const hordeEndpoint='https://oai.aihorde.net/v1/chat/completions';
+ const hordeEndpoint='https://oai.stablehorde.net/v1/chat/completions';
  if((a.endpoint||p.endpoint||'')!==hordeEndpoint)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
  let endpoint=hordeEndpoint;
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};

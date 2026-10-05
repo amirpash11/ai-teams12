@@ -213,7 +213,25 @@ body.chat-first-home .right-home-options .topbar{display:block!important}
     if(localStorage.getItem('ai-teams-drawer-hidden-v1')==='1') d.classList.add('boot-right-hidden');
   }catch(e){}
 })();
-</script></head>
+</script><style>
+/* Mobile hardening */
+html{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{min-height:100dvh;overscroll-behavior-y:contain}
+button,.btn,.mode,.icon-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+input,textarea,select{font-size:16px}
+@supports(padding:max(0px)){
+  .main{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+  .sidebar,.left-sidebar{padding-bottom:max(18px,env(safe-area-inset-bottom))}
+}
+@media(max-width:520px){
+  .main{width:100%;overflow-x:hidden}
+  .chat{overscroll-behavior:contain}
+  .msg .bubble{overflow-wrap:anywhere;word-break:break-word}
+  .admin-chat-input{max-height:34vh}
+  .drawer-toggle,.left-drawer-toggle{width:44px;height:44px}
+  .btn{min-height:44px}
+}
+</style></head>
 <body class="chat-first-home">
 <div class="app">
 <button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست">◀</button><aside class="sidebar">

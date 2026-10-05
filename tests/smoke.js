@@ -23,6 +23,8 @@ assert(cloud.includes('streamAIGateway(payload,onDelta,signal)'),'stream abort s
 const multi=fs.readFileSync('multiplayer.js','utf8');
 assert(multi.includes('MAX_HUMANS=8'),'collaboration capacity guard missing');
 assert(multi.includes('MAX_MESSAGE_LENGTH=4000'),'collaboration message limit missing');
+assert(multi.includes('roster.size>=MAX_HUMANS-1'),'room capacity must include the host in the human limit');
+assert(multi.includes("people:[{id:'host-'+roomCode"),'guest roster must include the host');
 
 const drive=fs.readFileSync('google-drive-storage.js','utf8');
 assert(drive.includes('appDataFolder'),'Drive scope/storage isolation missing');

@@ -44,7 +44,7 @@ Deno.serve(async req=>{
       await admin.from(STATE_TABLE).delete().lt("expires_at",new Date().toISOString());
       await admin.from(STATE_TABLE).insert({state,user_id:userId,return_to:ret,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
       const cb=APP_ORIGIN+new URL(req.url).pathname+"?action=oauth-callback";
-      const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email offline_access")+"&state="+encodeURIComponent(state);
+      const auth="https://github.com/login/oauth/authorize?client_id="+encodeURIComponent(GITHUB_CLIENT_ID)+"&redirect_uri="+encodeURIComponent(cb)+"&scope="+encodeURIComponent("repo read:user user:email")+"&state="+encodeURIComponent(state);
       return json({url:auth});
     }
     if(action==="oauth-callback"){

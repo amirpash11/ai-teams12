@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const CONFIG_KEY='ai-teams-supabase-config-v1';
-const CONFIG={supabaseUrl:'YOUR_SUPABASE_PROJECT_URL',publishableKey:'YOUR_SUPABASE_PUBLISHABLE_KEY'};
+const CONFIG={supabaseUrl:'https://gqymrljvbkxlgyvoykpv.supabase.co',publishableKey:'sb_publishable_qjQu9JBbYue3gIA7WiRulA_8dSxjQbY'};
 function readConfig(){
   try{
     const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');

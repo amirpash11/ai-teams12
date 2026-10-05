@@ -175,6 +175,35 @@ function wrapSave(){
   core.save=function(){original();if(cloudReady&&cloudUser&&!applyingRemote){clearTimeout(core.__cloudTimer);core.__cloudTimer=setTimeout(function(){syncNow(false);},700);}};
   core.__cloudSaveWrapped=true;
 }
+async function streamAIGateway(payload,onDelta){
+  if(!cloudReady||!cloudUser)throw new Error('برای اتصال امن مدل، ابتدا وارد حساب ابری شو.');
+  const sessionResult=await supabase.auth.getSession();
+  const session=sessionResult.data&&sessionResult.data.session;
+  if(!session||!session.access_token)throw new Error('نشست ورود معتبر نیست.');
+  const response=await fetch(CONFIG.url+'/functions/v1/ai-gateway',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':CONFIG.publishableKey,'Authorization':'Bearer '+session.access_token},
+    body:JSON.stringify(Object.assign({},payload,{stream:true}))
+  });
+  if(!response.ok){
+    const raw=await response.text();let data={};try{data=JSON.parse(raw)}catch(e){}
+    throw new Error(data.error||raw.slice(0,600)||('HTTP '+response.status));
+  }
+  if(!response.body)throw new Error('پاسخ Streaming در مرورگر در دسترس نیست.');
+  const reader=response.body.getReader(),decoder=new TextDecoder(),parts=[],bufferState={text:''};
+  while(true){
+    const chunk=await reader.read();if(chunk.done)break;
+    bufferState.text+=decoder.decode(chunk.value,{stream:true});
+    const lines=bufferState.text.split(/\\r?\\n/);bufferState.text=lines.pop()||'';
+    for(const line of lines){
+      const value=line.replace(/^data:\s?/,'').trim();if(!value||value==='[DONE]')continue;
+      let json=null;try{json=JSON.parse(value)}catch(e){continue}
+      const delta=json.choices&&json.choices[0]&&json.choices[0].delta&&json.choices[0].delta.content;
+      if(typeof delta==='string'&&delta){parts.push(delta);if(onDelta)onDelta(delta);}
+    }
+  }
+  return parts.join('');
+}
 async function invokeAIGateway(payload){
   if(!cloudReady||!cloudUser)throw new Error('برای اتصال امن مدل، ابتدا وارد حساب ابری شو.');
   const r=await supabase.functions.invoke('ai-gateway',{body:payload});
@@ -203,5 +232,5 @@ function boot(){
 }
 readConfig();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},invokeAI:invokeAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser};}};
+window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},invokeAI:invokeAIGateway,streamAI:streamAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser};}};
 })();

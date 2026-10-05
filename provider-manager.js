@@ -126,16 +126,27 @@ async function universalCallAgent(a,goal,transcript){
   });
   return data.output;
  }
- const hordeEndpoint='https://oai.stablehorde.net/v1/chat/completions';
- if((a.endpoint||p.endpoint||'')!==hordeEndpoint)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
- let endpoint=hordeEndpoint;
+ const hordeEndpoints=['https://oai.stablehorde.net/v1/chat/completions','https://oai.aihorde.net/v1/chat/completions'];
+ if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
+ let endpoint=hordeEndpoints[0];
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const body={model:a.model||p.model,messages:messages,temperature:0.2};
  const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
  try{
-  const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
-  const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
-  if(!res.ok)throw new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));
+  let lastError=null;
+  for(const candidate of hordeEndpoints){
+   endpoint=candidate;
+   try{
+    const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
+    const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
+    if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));continue}
+    const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+    if(typeof out==='string'&&out.trim())return out;
+    if(data.choices&&data.choices[0]&&typeof data.choices[0].text==='string'&&data.choices[0].text.trim())return data.choices[0].text;
+    lastError=new Error('پاسخ مدل پیدا نشد.');
+   }catch(e){lastError=e}
+  }
+  throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
   const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
   if(typeof out==='string'&&out)return out;
   if(data.choices&&data.choices[0]&&typeof data.choices[0].text==='string')return data.choices[0].text;

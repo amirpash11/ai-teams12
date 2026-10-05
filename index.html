@@ -418,7 +418,8 @@ function searchProjectMemory(query,limit){return memoryContext(limit||20,query);
 function rememberRun(goal,summary,members){if(!summary)return;state.memory=state.memory||[];state.memory.unshift({id:uid(),createdAt:new Date().toISOString(),goal:String(goal||'').slice(0,1000),summary:String(summary||'').slice(0,5000),members:Array.isArray(members)?members.slice(0,30):[]});state.memory=state.memory.slice(0,30)}
 function openMemoryPanel(){
  let el=document.getElementById('teamMemoryPanel');
- if(!el){el=document.createElement('div');el.id='teamMemoryPanel';el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:3200;padding:14px;overflow:auto;display:none';el.innerHTML='<div class="card" style="max-width:760px;margin:25px auto;background:#121a2d"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">🧠 حافظه دائمی تیم</h3><button class="icon-btn" id="memoryClose">✕</button></div><div class="notice" style="margin:10px 0">خلاصه اجرای تیم‌ها در این پروژه نگهداری می‌شود و در اجرای بعدی به‌عنوان زمینه تصمیم‌گیری در اختیار اعضا قرار می‌گیرد.</div><div class="field" style="margin-top:10px"><input id="memorySearch" placeholder="جستجو در هدف و خلاصه حافظه..."></div><div id="memoryList"></div><div style="display:flex;gap:7px;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button></div></div>';document.body.appendChild(el);document.getElementById('memoryClose').onclick=function(){el.style.display='none'};document.getElementById('memoryClear').onclick=function(){if(confirm('تمام حافظه دائمی این پروژه پاک شود؟')){state.memory=[];save();renderMemory();}};document.getElementById('memoryRefresh').onclick=renderMemory;document.getElementById('memorySearch').oninput=renderMemory;}
+ if(!el){el=document.createElement('div');el.id='teamMemoryPanel';el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:3200;padding:14px;overflow:auto;display:none';el.innerHTML='<div class="card" style="max-width:760px;margin:25px auto;background:#121a2d"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">🧠 حافظه دائمی تیم</h3><button class="icon-btn" id="memoryClose">✕</button></div><div class="notice" style="margin:10px 0">خلاصه اجرای تیم‌ها در این پروژه نگهداری می‌شود و در اجرای بعدی به‌عنوان زمینه تصمیم‌گیری در اختیار اعضا قرار می‌گیرد.</div><div class="field" style="margin-top:10px"><input id="memorySearch" placeholder="جستجو در هدف و خلاصه حافظه..."></div><div id="memoryList"></div><div style="display:flex;gap:7px;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button></div></div>';document.body.appendChild(el);document.getElementById('memoryClose').onclick=function(){el.style.display='none'};document.getElementById('memoryClear').onclick=function(){if(confirm('تمام حافظه دائمی این پروژه پاک شود؟')){state.memory=[],
+state.workflowOrder=[];save();renderMemory();}};document.getElementById('memoryRefresh').onclick=renderMemory;document.getElementById('memorySearch').oninput=renderMemory;}
  renderMemory();el.style.display='block';
 }
 function renderMemory(){const box=document.getElementById('memoryList');if(!box)return;const q=(document.getElementById('memorySearch')?.value||'').trim().toLowerCase();const items=(state.memory||[]).filter(function(x){return !q||String(x.goal||'').toLowerCase().includes(q)||String(x.summary||'').toLowerCase().includes(q)});box.innerHTML=items.length?items.map(function(x){return '<div class="agent-row" style="margin-top:8px"><div class="agent-head"><strong>'+esc(x.goal||'اجرای تیم')+'</strong><span class="pill">'+esc(x.createdAt||'')+'</span></div><div class="tiny">'+esc(x.summary||'') .replace(/\\n/g,'<br>')+'</div></div>'}).join(''):'<div class="empty" style="min-height:120px">موردی در حافظه پیدا نشد.</div>';}
@@ -898,6 +899,20 @@ async function runDialogue(){
  }
 }
 
+function getWorkflowAgents(){
+ const order=Array.isArray(state.workflowOrder)?state.workflowOrder:[],byId={};state.agents.forEach(function(a){byId[a.id]=a});
+ return order.map(function(id){return byId[id]}).filter(Boolean).concat(state.agents.filter(function(a){return order.indexOf(a.id)<0}));
+}
+function applyWorkflowOrder(){state.workflowOrder=getWorkflowAgents().map(function(a){return a.id});save();render();}
+function moveWorkflowAgent(id,delta){const list=getWorkflowAgents(),i=list.findIndex(function(a){return a.id===id}),j=i+delta;if(i<0||j<0||j>=list.length)return;[list[i],list[j]]=[list[j],list[i]];state.workflowOrder=list.map(function(a){return a.id});save();}
+function openWorkflowBuilder(){
+ let modal=document.getElementById('workflowBuilderModal');
+ if(!modal){modal=document.createElement('div');modal.id='workflowBuilderModal';modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:2100;padding:12px;overflow:auto';modal.innerHTML='<div class="card" style="width:min(760px,100%);margin:30px auto;padding:18px"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0">Workflow Builder</h3><div class="tiny">ترتیب اجرای Agentها را تعیین کن.</div></div><button class="icon-btn" id="workflowClose">✕</button></div><div id="workflowList" style="margin-top:14px"></div><div class="notice" style="margin-top:12px">Agentهای غیرفعال یا انسانی در اجرای AI نادیده گرفته می‌شوند.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" id="workflowSave" style="width:auto">ذخیره Workflow</button><button class="btn" id="workflowReset" style="width:auto">بازنشانی</button></div></div>';document.body.appendChild(modal);
+  document.getElementById('workflowClose').onclick=function(){modal.style.display='none'};document.getElementById('workflowSave').onclick=function(){applyWorkflowOrder();modal.style.display='none'};document.getElementById('workflowReset').onclick=function(){state.workflowOrder=state.agents.map(function(a){return a.id});save();renderWorkflowBuilder()};
+ }
+ function renderWorkflowBuilder(){const list=document.getElementById('workflowList'),agents=getWorkflowAgents();list.innerHTML=agents.length?agents.map(function(a,i){return '<div class="card" style="display:flex;align-items:center;gap:10px;margin:7px 0;padding:10px"><b>'+String(i+1)+'</b><div style="flex:1"><b>'+esc(a.name)+'</b><div class="tiny">'+esc(a.role||'عامل')+' · '+esc(a.model||'مدل پیش‌فرض')+'</div></div><button class="btn workflow-up" data-id="'+esc(a.id)+'" style="width:auto" '+(i?'':'disabled')+'>↑</button><button class="btn workflow-down" data-id="'+esc(a.id)+'" style="width:auto" '+(i===agents.length-1?'disabled':'')+'>↓</button></div>'}).join(''):'<div class="notice">هنوز Agentی ساخته نشده است.</div>';list.querySelectorAll('.workflow-up').forEach(function(b){b.onclick=function(){moveWorkflowAgent(b.dataset.id,-1);renderWorkflowBuilder()}});list.querySelectorAll('.workflow-down').forEach(function(b){b.onclick=function(){moveWorkflowAgent(b.dataset.id,1);renderWorkflowBuilder()}});}
+ renderWorkflowBuilder();modal.style.display='block';
+}
 async function runTeamParallel(){
  cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
@@ -990,7 +1005,7 @@ async function runTeam(){
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=goal;
  if(!goal)return alert('اول هدف تیم را وارد کن.');
- const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ const active=getWorkflowAgents().filter(function(a){return a.enabled&&a.kind!=='human'});
  const previousMemory=(state.chat||[]).slice(-12).map(function(m){return '['+(m.name||'عضو')+'] '+String(m.text||'').slice(0,1200)}).join('\\n');
  const relevantMemory=memoryContext(8,goal);
  if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
@@ -1086,7 +1101,8 @@ function toggleRightMembers(){
 }
 document.getElementById('rightTeamMembersToggle').addEventListener('click',toggleRightMembers);
 applyRightMembers();
-document.getElementById('addAgentBtn').onclick=addAgent;\ndocument.getElementById('workflowBuilderBtn').onclick=openWorkflowBuilder;
+document.getElementById('addAgentBtn').onclick=addAgent;
+const workflowBuilderBtn=document.getElementById('workflowBuilderBtn');if(workflowBuilderBtn)workflowBuilderBtn.onclick=openWorkflowBuilder;\ndocument.getElementById('workflowBuilderBtn').onclick=openWorkflowBuilder;
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;

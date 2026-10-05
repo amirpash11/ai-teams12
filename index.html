@@ -541,9 +541,18 @@ async function callAgent(a,goal,transcript){
  ];
  if(provider!=='horde'){
   if(!window.aiTeamsCloud||!window.aiTeamsCloud.isReady())throw new Error('برای Providerهای غیررایگان، ابتدا وارد حساب ابری شو و Gateway امن را فعال کن.');
-  const data=await window.aiTeamsCloud.invokeAI({provider:provider,model:a.model,messages:messages,system:system,endpoint:provider==='custom'?(a.endpoint||''):undefined,temperature:0.2,referer:location.origin});
-  if(!data||typeof data.output!=='string'||!data.output.trim())throw new Error('Gateway پاسخ متنی معتبری برنگرداند.');
-  return data.output;
+  let lastError=null;
+  for(let attempt=1;attempt<=3;attempt++){
+   try{
+    const data=await window.aiTeamsCloud.invokeAI({provider:provider,model:a.model,messages:messages,system:system,endpoint:provider==='custom'?(a.endpoint||''):undefined,temperature:0.2,referer:location.origin});
+    if(!data||typeof data.output!=='string'||!data.output.trim())throw new Error('Gateway پاسخ متنی معتبری برنگرداند.');
+    return data.output;
+   }catch(e){
+    lastError=e;
+    if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1200)});
+   }
+  }
+  throw lastError||new Error('Gateway در دسترس نیست.');
  }
  const endpoints=['https://oai.stablehorde.net/v1/chat/completions','https://oai.aihorde.net/v1/chat/completions'];
  if(a.endpoint&&endpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
@@ -816,7 +825,7 @@ async function runTeamParallel(){
    }else{
     const finalGoal=buildTeamRoster(active)+'\n\nهدف تیم:\n'+goal+
      '\n\nوظیفه تو: به‌عنوان هماهنگ‌کننده نهایی، خروجی مستقل اعضا را مقایسه کن، اختلاف‌ها را مشخص کن، ادعاهای ضعیف یا بدون پشتوانه را علامت بزن و یک نتیجه اجرایی تولید کن.\n'+
-     '\nساختار اجباری:\n1) نتیجه نهایی\n2) مهم‌ترین دلایل و شواهد\n3) اختلاف‌نظرها و تصمیم درباره آن‌ها\n4) ریسک‌ها و موارد نیازمند بررسی\n5) قدم‌های بعدی\n\nفقط بر اساس اطلاعات ارائه‌شده تصمیم بگیر و کمبود اطلاعات را صریح اعلام کن.';
+     '\nساختار اجباری:\n1) نتیجه نهایی\n2) مهم‌ترین دلایل و شواهد\n3) اختلاف‌نظرها و تصمیم درباره آن‌ها\n4) ریسک‌ها و موارد نیازمند بررسی\n5) قدم‌های بعدی\n6) رأی‌گیری تحلیلی: برای هر خروجی موفق یک امتیاز 0 تا 10 از نظر صحت، ارتباط، قابلیت اجرا و پوشش مسئله بده و بر اساس مجموع امتیازها پیشنهاد برتر را انتخاب کن.\n7) نقد نهایی: حداقل دو ایراد یا فرضیه‌ای را که ممکن است نتیجه را ضعیف کند بررسی کن.\n\nفقط بر اساس اطلاعات ارائه‌شده تصمیم بگیر و کمبود اطلاعات را صریح اعلام کن.';
     finalResult=await callAgent(coordinator,finalGoal,transcript?'خروجی اعضا:\n'+transcript:'هیچ خروجی موفقی دریافت نشد.');
    }
    state.chat[finalIndex].text=finalResult;

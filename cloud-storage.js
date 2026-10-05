@@ -204,7 +204,7 @@ function wrapSave(){
   core.save=function(){original();if(cloudReady&&cloudUser&&!applyingRemote){clearTimeout(core.__cloudTimer);core.__cloudTimer=setTimeout(function(){syncNow(false);},700);}};
   core.__cloudSaveWrapped=true;
 }
-async function streamAIGateway(payload,onDelta){
+async function streamAIGateway(payload,onDelta,signal){
   if(!cloudReady||!cloudUser)throw new Error('برای اتصال امن مدل، ابتدا وارد حساب ابری شو.');
   const sessionResult=await supabase.auth.getSession();
   const session=sessionResult.data&&sessionResult.data.session;
@@ -212,7 +212,8 @@ async function streamAIGateway(payload,onDelta){
   const response=await fetch(CONFIG.url+'/functions/v1/ai-gateway',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':CONFIG.publishableKey,'Authorization':'Bearer '+session.access_token},
-    body:JSON.stringify(Object.assign({},payload,{stream:true}))
+    body:JSON.stringify(Object.assign({},payload,{stream:true})),
+    signal:signal
   });
   if(!response.ok){
     const raw=await response.text();let data={};try{data=JSON.parse(raw)}catch(e){}

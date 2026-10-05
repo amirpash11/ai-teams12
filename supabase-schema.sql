@@ -131,6 +131,10 @@ grant execute on function public.consume_ai_gateway_rate_limit(uuid, integer, in
 create index if not exists ai_teams_projects_user_updated_idx
   on public.ai_teams_projects(user_id, updated_at desc);
 
+-- Index both the foreign-key ownership lookup and expiry cleanup predicate.
+create index if not exists github_oauth_states_user_id_idx
+  on public.github_oauth_states(user_id);
+
 -- OAuth state cleanup is driven by expiry time, so index the cleanup predicate.
 create index if not exists github_oauth_states_expires_idx
   on public.github_oauth_states(expires_at);

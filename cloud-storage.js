@@ -42,7 +42,7 @@ function validateState(s){
   if(JSON.stringify(copy).length>MAX_STATE_BYTES)throw new Error('حجم پروژه برای ذخیره ابری بیش از حد مجاز است.');
   return copy;
 }
-let supabase=null,cloudReady=false,cloudUser=null,saving=false,applyingRemote=false;
+let supabase=null,cloudReady=false,cloudUser=null,saving=false,saveQueued=false,applyingRemote=false;
 
 function loadScript(){
   return new Promise(function(resolve,reject){
@@ -169,15 +169,22 @@ function payload(){
 }
 async function syncNow(manual){
   if(!cloudReady||!cloudUser||applyingRemote)return;
+  if(saving){saveQueued=true;return;}
   const row=payload();if(!row)return;
-  if(saving)return;saving=true;
+  saving=true;
   try{
     const r=await supabase.from(TABLE).upsert(row,{onConflict:'user_id,project_id'}).select('project_id,updated_at').single();
     if(r.error)throw r.error;
     status('آخرین ذخیره ابری: '+new Date().toLocaleTimeString('fa-IR'),true);
     if(manual)alert('پروژه با موفقیت در فضای ابری ذخیره شد.');
   }catch(e){status('ذخیره ابری ناموفق بود: '+e.message,false);if(manual)alert('ذخیره ابری ناموفق بود: '+e.message);}
-  finally{saving=false;}
+  finally{
+    saving=false;
+    if(saveQueued){
+      saveQueued=false;
+      if(cloudReady&&cloudUser&&!applyingRemote)setTimeout(function(){syncNow(false);},0);
+    }
+  }
 }
 async function syncFromCloud(){
   if(!cloudReady||!cloudUser)return;

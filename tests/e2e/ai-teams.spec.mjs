@@ -23,6 +23,16 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#workflowSteps')).toBeVisible();
     await page.locator('#workflowSave').click();
     await expect(page.locator('#workflowBuilderModal')).toBeHidden();
+    await page.locator('#memoryBtn').click();
+    await expect(page.locator('#teamMemoryPanel')).toBeVisible();
+    await page.locator('#knowledgeOpen').click();
+    await expect(page.locator('#knowledgePanel')).toBeVisible();
+    await page.locator('#knowledgeName').fill('سند تستی');
+    await page.locator('#knowledgeText').fill('این یک سند تستی برای Knowledge پروژه است.');
+    await page.locator('#knowledgeAdd').click();
+    await expect(page.locator('#knowledgeList')).toContainText('سند تستی');
+    await page.locator('#knowledgeClose').click();
+    await page.locator('#memoryClose').click();
 
     await page.locator('#goal').fill('یک آزمایش کامل رابط و اجرای تیم انجام بده.');
     await page.locator('#demoModeBtn').click();

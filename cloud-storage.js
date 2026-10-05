@@ -10,16 +10,25 @@ const CONFIG = {
 function readConfig(){
   try{
     const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
-    if(x.url&&x.publishableKey){CONFIG.url=String(x.url).trim();CONFIG.publishableKey=String(x.publishableKey).trim();}
+    if(x.url&&x.publishableKey){CONFIG.url=String(x.url).trim().replace(/\/$/,'');CONFIG.publishableKey=String(x.publishableKey).trim();}
   }catch(e){}
 }
 function saveConfig(url,key){
+  const cleanUrl=String(url||'').trim().replace(/\/$/,'');
+  const cleanKey=String(key||'').trim();
+  if(!/^https:\/\/[^\s/]+(?:\.[^\s/]+)+(?:\/[A-Za-z0-9._~:/?#\\[\\]@!function saveConfig(url,key){
   CONFIG.url=String(url||'').trim();CONFIG.publishableKey=String(key||'').trim();
   if(CONFIG.url&&CONFIG.publishableKey)localStorage.setItem(CONFIG_KEY,JSON.stringify({url:CONFIG.url,publishableKey:CONFIG.publishableKey}));
+}'()*+,;=%-]*)?$/.test(cleanUrl))throw new Error('Project URL باید یک HTTPS URL معتبر باشد.');
+  if(!cleanKey||cleanKey.length<20)throw new Error('Publishable Key معتبر وارد کن.');
+  CONFIG.url=cleanUrl;CONFIG.publishableKey=cleanKey;
+  localStorage.setItem(CONFIG_KEY,JSON.stringify({version:CONFIG_VERSION,url:CONFIG.url,publishableKey:CONFIG.publishableKey}));
 }
 readConfig();
 const SCRIPT_SRC = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const TABLE = 'ai_teams_projects';
+const CONFIG_VERSION = 1;
+const MAX_PROJECT_NAME = 200;
 const LOCAL_KEY = 'ai-teams12-cloud-project-id-v1';
 
 let supabase = null;
@@ -86,9 +95,7 @@ function panel(){
   document.getElementById('cloudSignOut').onclick=signOut;
   document.getElementById('cloudSaveConfig').onclick=async function(){
     const u=document.getElementById('cloudProjectUrl').value.trim(),k=document.getElementById('cloudPublishableKey').value.trim();
-    if(!/^https:\/\/[^\s]+$/.test(u)||!k)return alert('Project URL و Publishable Key معتبر وارد کن.');
-    saveConfig(u,k);
-    location.reload();
+    try{saveConfig(u,k);location.reload();}catch(e){alert(e.message);}
   };
   document.getElementById('cloudSync').onclick=function(){syncNow(true)};
 }
@@ -111,7 +118,7 @@ async function init(){
     btn.onclick=openPanel;
   }
   if(!configured()){
-    status('ذخیره‌سازی ابری هنوز فعال نشده است. ابتدا URL و Publishable Key پروژه Supabase را در cloud-storage.js قرار بده.',false);
+    status('ذخیره‌سازی ابری آماده نصب است؛ Project URL و Publishable Key را از همین پنجره وارد کن.',false);
     return;
   }
   try{
@@ -147,26 +154,32 @@ async function signUp(){
   if(!cloudReady)return;
   const email=document.getElementById('cloudEmail').value.trim(),password=document.getElementById('cloudPassword').value;
   if(!email||password.length<8)return alert('ایمیل و رمز عبور حداقل ۸ کاراکتری وارد کن.');
-  const r=await supabase.auth.signUp({email:email,password:password});
-  if(r.error)return alert('ساخت حساب ناموفق بود: '+r.error.message);
-  cloudUser=r.data.user||null;refreshAuthUI();
-  alert('حساب ساخته شد. اگر تأیید ایمیل فعال باشد، ایمیل تأیید را باز کن و سپس وارد شو.');
+  try{
+    const r=await supabase.auth.signUp({email:email,password:password});
+    if(r.error)return alert('ساخت حساب ناموفق بود: '+r.error.message);
+    cloudUser=r.data.session?.user||r.data.user||null;refreshAuthUI();
+    alert(cloudUser?'حساب ساخته و وارد شدی.':'حساب ساخته شد؛ اگر تأیید ایمیل فعال باشد، ایمیل تأیید را باز کن و سپس وارد شو.');
+  }catch(e){alert('ساخت حساب ناموفق بود: '+e.message)}
 }
 async function signIn(){
   if(!cloudReady)return;
   const email=document.getElementById('cloudEmail').value.trim(),password=document.getElementById('cloudPassword').value;
-  const r=await supabase.auth.signInWithPassword({email:email,password:password});
-  if(r.error)return alert('ورود ناموفق بود: '+r.error.message);
-  cloudUser=r.data.user||null;refreshAuthUI();await syncFromCloud();
+  try{
+    const r=await supabase.auth.signInWithPassword({email:email,password:password});
+    if(r.error)return alert('ورود ناموفق بود: '+r.error.message);
+    cloudUser=r.data.user||null;refreshAuthUI();await syncFromCloud();
+  }catch(e){alert('ورود ناموفق بود: '+e.message)}
 }
 async function signOut(){
   if(!cloudReady)return;
-  await supabase.auth.signOut();cloudUser=null;refreshAuthUI();
+  const r=await supabase.auth.signOut();
+  if(r.error)return alert('خروج ناموفق بود: '+r.error.message);
+  cloudUser=null;refreshAuthUI();
 }
 function payload(){
   const core=window.aiTeamsCore;
   if(!core)return null;
-  return {user_id:cloudUser.id,project_id:projectId(),name:(core.getState().teamName||'AI Teams'),state:core.getState(),updated_at:new Date().toISOString()};
+  return {user_id:cloudUser.id,project_id:projectId(),name:String(core.getState().teamName||'AI Teams').slice(0,MAX_PROJECT_NAME),state:core.getState(),updated_at:new Date().toISOString()};
 }
 async function syncNow(manual){
   if(!cloudReady||!cloudUser||applyingRemote)return;

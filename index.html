@@ -372,6 +372,10 @@ sanitizeBrowserSecrets();
 let collapsed=new Set(state.agents.map(function(a){return a.id;}));
 let busy=false;
 let cancelRequested=false;
+const activeAbortControllers=new Set();
+function trackAbortController(){const c=new AbortController();activeAbortControllers.add(c);return c;}
+function releaseAbortController(c){activeAbortControllers.delete(c);}
+function abortAllActiveRequests(){activeAbortControllers.forEach(function(c){try{c.abort();}catch(e){}});}
 let activeAbortController=null;
 
 function save(){
@@ -579,7 +583,7 @@ async function callAgent(a,goal,transcript){
  for(let attempt=1;attempt<=3;attempt++){
   const endpointsToTry=attempt===1?endpoints:endpoints.slice().reverse();
   for(const endpoint of endpointsToTry){
-   const controller=new AbortController();activeAbortController=controller;
+   const controller=trackAbortController();
    const timer=setTimeout(function(){controller.abort()},90000);
    try{
     const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
@@ -597,7 +601,7 @@ async function callAgent(a,goal,transcript){
     lastError=new Error('پاسخ مدل قابل استخراج نبود.');
    }catch(err){
     lastError=err.name==='AbortError'?new Error('زمان پاسخ تمام شد.'):err;
-   }finally{clearTimeout(timer);if(activeAbortController===controller)activeAbortController=null}
+   }finally{clearTimeout(timer);releaseAbortController(controller)}
   }
   if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1500)});
  }
@@ -619,7 +623,7 @@ async function callAgentResilient(a,goal,transcript,onDelta){
  let lastError=null;
  for(let attempt=1;attempt<=3;attempt++){
   try{return await callAgentStreaming(a,goal,transcript,onDelta);}
-  catch(e){lastError=e;if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1000);});}
+  catch(e){lastError=e;if(cancelRequested||e.name==='AbortError')throw e;if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1000);});}
  }
  if(a.provider!=='horde'){
   const horde=Object.assign({},a,{provider:'horde',endpoint:'https://oai.aihorde.net/v1/chat/completions',model:(state.hordeModels&&state.hordeModels[0])||'koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix'});
@@ -709,6 +713,7 @@ async function runAdminTurn(){
  }catch(e){
   msg('سیستم','⚠️','اجرای دستور متوقف شد: '+e.message,'agent',true);
  }finally{
+  activeAbortControllers.clear();
   busy=false;
   document.getElementById('adminChatBtn').disabled=false;
   document.getElementById('dialogueBtn').disabled=false;
@@ -826,7 +831,6 @@ async function runDialogue(){
   document.getElementById('adminChatBtn').disabled=false;
   document.getElementById('stopBtn').disabled=true;
   cancelRequested=false;
-  activeAbortController=null;
   save();
  }
 }
@@ -910,7 +914,6 @@ async function runTeamParallel(){
   document.getElementById('adminChatBtn').disabled=false;
   document.getElementById('stopBtn').disabled=true;
   cancelRequested=false;
-  activeAbortController=null;
   save();
  }
 }
@@ -1022,7 +1025,7 @@ document.getElementById('addAgentBtn').onclick=addAgent;
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;
-document.getElementById('stopBtn').onclick=function(){cancelRequested=true;if(activeAbortController)activeAbortController.abort();msg('سیستم','■','درخواست توقف ثبت شد؛ اجرای جاری پس از پایان کنترل مرحله متوقف می‌شود.','agent',false);save();};
+document.getElementById('stopBtn').onclick=function(){if(!busy)return;cancelRequested=true;abortAllActiveRequests();msg('سیستم','■','درخواست توقف ثبت شد؛ درخواست‌های جاری لغو می‌شوند و Retry جدید شروع نخواهد شد.','agent',false);save();};
 document.getElementById('parallelBtn').onclick=runTeamParallel;
 document.getElementById('dialogueBtn').onclick=runDialogue;
 document.getElementById('adminChatBtn').onclick=runAdminTurn;

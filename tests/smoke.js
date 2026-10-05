@@ -4,6 +4,13 @@ const assert=require('assert');
 const html=fs.readFileSync('index.html','utf8');
 const requiredIds=['chat','adminChatInput','adminChatBtn','teamName','goal','onlineTeamBtn'];
 for(const id of requiredIds) assert(html.includes('id="'+id+'"')||html.includes("id='"+id+"'"),'missing UI id: '+id);
+assert(html.includes('id="addAgentBtn"')||html.includes("id='addAgentBtn'"),'Agent Builder trigger missing');
+
+assert(html.includes('id=\"agentBuilderModal\"'),'Agent Builder modal missing');
+assert(html.includes('id=\"agentBuilderProvider\"'),'Agent Builder provider selector missing');
+assert(html.includes('id=\"agentBuilderModel\"'),'per-agent model selector missing');
+assert(html.includes('function agentBuilderModels(providerId)'),'Agent model catalog missing');
+assert(html.includes('function openAgentBuilder()'),'Agent Builder opener missing');
 
 const forbidden=['oai.stablehorde.net','YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLISHABLE_KEY'];
 for(const value of forbidden) assert(!html.includes(value),'forbidden/stale marker in index.html: '+value);

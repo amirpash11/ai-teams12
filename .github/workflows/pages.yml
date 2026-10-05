@@ -37,7 +37,7 @@ jobs:
           const scripts = [...html.matchAll(/<script[^>]*>([\\s\\S]*?)<\/script>/gi)]
             .map(m => m[1]).filter(s => s.trim());
           scripts.forEach((source, i) => { new Function(source); console.log('PASS index.html inline script', i + 1); });
-          if (!html.includes('https://oai.stablehorde.net')) throw new Error('Horde CSP origin missing');
+          if (!html.includes('https://oai.aihorde.net')) throw new Error('Horde CSP origin missing');
           NODE
 
       - name: Validate gateway security markers

@@ -258,5 +258,5 @@ function boot(){
 }
 readConfig();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},invokeAI:invokeAIGateway,streamAI:streamAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser};}};
+window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},invokeAI:invokeAIGateway,streamAI:streamAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,renameProject:renameProject,deleteProject:deleteProject,duplicateProject:duplicateProject,getConfig:function(){return {url:CONFIG.url,configured:configured(),user:cloudUser};}};
 })();

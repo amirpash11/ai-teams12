@@ -89,3 +89,7 @@
 ## وابستگی‌های مرورگر و Gateway
 
 برای جلوگیری از تغییر ناخواسته نسخه‌های runtime، Supabase JS در مرورگر روی `2.117.2` و `@supabase/server` در Edge Functions روی `1.9.0` پین شده‌اند. تست E2E نیز روی Playwright `1.63.0` پین است.
+
+## Completion validation (v3)
+The repository includes the v3 orchestration layer with sequential team control, timeline events, pause/resume/retry/skip/stop controls, structured evidence, executable local tools, per-agent memory, security audit checks, and JSON run reports.
+Free AI connectivity uses the official AI Horde OpenAI-compatible endpoint. Paid Providers remain server-side Gateway integrations and require their provider credentials to be configured in Supabase.

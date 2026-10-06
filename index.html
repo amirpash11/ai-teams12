@@ -234,9 +234,9 @@ input,textarea,select{font-size:16px}
 </style></head>
 <body class="chat-first-home">
 <div class="app">
-<button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست">◀</button><aside class="sidebar">
+<button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست" onclick="(function(e){var a=document.querySelector('.app'),k='ai-teams-drawer-hidden-v1',h=localStorage.getItem(k)==='1';localStorage.setItem(k,h?'0':'1');a.classList.toggle('drawer-hidden',!h);e.preventDefault();e.stopImmediatePropagation();})(event)">◀</button><aside class="sidebar">
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
-  <button type="button" id="rightTeamMembersToggle" class="section-title team-members-toggle" style="width:100%;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;border:1px solid var(--line);background:#18223a;color:var(--text);padding:10px 12px;border-radius:10px;margin:8px 0"> <span>اعضای تیم</span><span id="rightTeamMembersBtn" aria-hidden="true" style="font-size:20px;line-height:1">＋</span></button>
+  <button type="button" id="rightTeamMembersToggle" onclick="(function(e){var b=document.getElementById('rightTeamMembersBody'),k='ai-teams-right-members-collapsed-v1',h=localStorage.getItem(k)!=='0';localStorage.setItem(k,h?'0':'1');if(b)b.style.setProperty('display',h?'block':'none','important');var x=document.getElementById('rightTeamMembersBtn');if(x)x.textContent=h?'−':'＋';e.preventDefault();e.stopImmediatePropagation();})(event)" class="section-title team-members-toggle" style="width:100%;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;border:1px solid var(--line);background:#18223a;color:var(--text);padding:10px 12px;border-radius:10px;margin:8px 0"> <span>اعضای تیم</span><span id="rightTeamMembersBtn" aria-hidden="true" style="font-size:20px;line-height:1">＋</span></button>
   <div id="rightTeamMembersBody" style="display:none">
     <div id="agentList" class="agent-list"></div>
     <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button><button class="btn" id="workflowBuilderBtn">⚙ Workflow</button>

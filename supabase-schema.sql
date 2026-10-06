@@ -57,6 +57,8 @@ alter table public.github_connections enable row level security;
 -- GitHub OAuth tokens are written/read only by the Edge Function with its server key.
 -- The browser must never have direct table access to encrypted tokens.
 drop policy if exists "github own connection select" on public.github_connections;
+drop policy if exists "deny authenticated github connections rows" on public.github_connections;
+create policy "deny authenticated github connections rows" on public.github_connections for all to authenticated using (false) with check (false);
 drop policy if exists "github own connection insert" on public.github_connections;
 drop policy if exists "github own connection update" on public.github_connections;
 revoke all on public.github_connections from anon, authenticated;
@@ -69,6 +71,8 @@ create table if not exists public.github_oauth_states (
 );
 alter table public.github_oauth_states enable row level security;
 -- OAuth state is created/consumed only by the Edge Function using its server key.
+drop policy if exists "deny authenticated github oauth state rows" on public.github_oauth_states;
+create policy "deny authenticated github oauth state rows" on public.github_oauth_states for all to authenticated using (false) with check (false);
 revoke all on public.github_oauth_states from anon, authenticated;
 
 
@@ -81,6 +85,8 @@ create table if not exists public.ai_gateway_rate_limits (
   constraint ai_gateway_rate_limits_count_nonnegative check (request_count >= 0)
 );
 alter table public.ai_gateway_rate_limits enable row level security;
+drop policy if exists "deny authenticated rate limit rows" on public.ai_gateway_rate_limits;
+create policy "deny authenticated rate limit rows" on public.ai_gateway_rate_limits for all to authenticated using (false) with check (false);
 revoke all on public.ai_gateway_rate_limits from anon, authenticated;
 
 create or replace function public.consume_ai_gateway_rate_limit(

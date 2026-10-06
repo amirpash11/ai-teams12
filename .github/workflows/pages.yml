@@ -28,7 +28,7 @@ jobs:
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const files = ['provider-manager.js','cloud-storage.js','github-storage.js','multiplayer.js','workspace-manager.js','google-drive-storage.js'];
+          const files = ['provider-manager.js','cloud-storage.js','github-storage.js','multiplayer.js','workspace-manager.js','google-drive-storage.js','ai-teams-v3.js'];
           for (const file of files) {
             new Function(fs.readFileSync(file, 'utf8'));
             console.log('PASS', file);

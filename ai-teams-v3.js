@@ -296,7 +296,7 @@ function bindCoreUiFallback(){
      localStorage.setItem(key,collapsed?'0':'1');
      if(b)b.style.setProperty('display',collapsed?'block':'none','important');
      const icon=document.getElementById('rightTeamMembersBtn');if(icon)icon.textContent=collapsed?'−':'＋';
-     ev.preventDefault();
+     ev.preventDefault();ev.stopImmediatePropagation();
    }
  },true);
  document.addEventListener('click',function(ev){
@@ -308,7 +308,7 @@ function bindCoreUiFallback(){
      localStorage.setItem(key,hidden?'0':'1');
      app.classList.toggle('drawer-hidden',!hidden);
      t.textContent=hidden?'◀':'▶';
-     ev.preventDefault();
+     ev.preventDefault();ev.stopImmediatePropagation();
    }
  },true);
 }

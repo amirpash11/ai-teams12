@@ -92,6 +92,8 @@ jobs:
           grep -q "const RETRY_DELAYS=" github-storage.js
           grep -q "async function fetchWithRetry(url,init)" github-storage.js
           grep -q "transcript=compactContext(transcript,30000)" index.html
+          test -f ai-teams-v3.js
+          node -e "new Function(require('fs').readFileSync('ai-teams-v3.js','utf8')); console.log('AI Teams v3 syntax PASS')"
           echo "Gateway and GitHub security invariants passed."
 
       - name: Validate Supabase Edge Functions

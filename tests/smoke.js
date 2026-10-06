@@ -21,7 +21,7 @@ assert(html.includes('const configured=workflowSteps()'),'Workflow execution int
 const forbidden=['oai.stablehorde.net','YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLISHABLE_KEY'];
 for(const value of forbidden) assert(!html.includes(value),'forbidden/stale marker in index.html: '+value);
 
-const scripts=['provider-manager.js','cloud-storage.js','github-storage.js','google-drive-storage.js','multiplayer.js','workspace-manager.js'];
+const scripts=['provider-manager.js','cloud-storage.js','github-storage.js','google-drive-storage.js','multiplayer.js','workspace-manager.js','ai-teams-v3.js'];
 for(const file of scripts){const source=fs.readFileSync(file,'utf8');new Function(source);}
 
 const provider=fs.readFileSync('provider-manager.js','utf8');
@@ -61,3 +61,8 @@ assert(html.includes('state.knowledge'),'Knowledge state missing');
 
 assert(html.includes('async function refreshHordeModels()'),'dynamic free Horde model refresh missing');
 assert(html.includes("provider.value==='horde'"),'Agent Builder should use refreshed Horde models');
+
+assert(fs.existsSync('ai-teams-v3.js'),'v3 orchestration layer missing');
+const v3=fs.readFileSync('ai-teams-v3.js','utf8');
+for(const needle of ['runSequentialV3','pauseRun','resumeRun','retryCurrent','skipCurrent','stopRun','safeCalc','aiTeamsV3Audit','v3TimelineList','agentMemory']) assert(v3.includes(needle),'v3 invariant missing: '+needle);
+console.log('AI Teams v3 smoke invariants: PASS');

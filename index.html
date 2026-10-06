@@ -1335,7 +1335,9 @@ function filter(){
 }
 function findDisplayedIndex(list,i){const x=list[i];return allModels.indexOf(x);}
 function add(x){
- const core=window.aiTeamsCore;
+ const core=window.openAgentBuilder=openAgentBuilder;
+window.openWorkflowBuilder=openWorkflowBuilder;
+window.aiTeamsCore;
  if(!core){alert('هسته برنامه آماده نشده است. یک‌بار Ctrl+F5 بزن.');return;}
  const st=core.getState();
  const p=(st.providers||[]).find(function(v){return v.id===x.provider})||(st.providers||[]).find(function(v){return v.id==='horde'});

@@ -77,6 +77,42 @@ function ensurePanel(){
 function closePanel(){const x=document.getElementById('v3Panel');if(x)x.style.display='none'}
 function openPanel(){ensurePanel(); const x=document.getElementById('v3Panel');x.style.display='block';refreshPanel();}
 
+function toolKnowledge(query){
+ const s=ensureState(); const q=String(query||'').toLowerCase().trim();
+ const docs=(s.knowledge||[]).map(x=>({name:String(x.name||'سند'),text:String(x.text||'')}));
+ const hits=q?docs.filter(x=>(x.name+' '+x.text).toLowerCase().includes(q)).slice(0,5):docs.slice(0,5);
+ return hits.length?hits.map(x=>'[سند: '+x.name+']\\n'+x.text.slice(0,5000)).join('\\n\\n'):'هیچ سند مرتبطی پیدا نشد.';
+}
+function toolProjectSummary(){
+ const s=ensureState();
+ return JSON.stringify({teamName:s.teamName,goal:s.goal,agents:(s.agents||[]).filter(a=>a.kind!=='human').map(a=>({name:a.name,role:a.role,provider:a.provider,model:a.model,enabled:a.enabled})),memoryCount:(s.memory||[]).length,knowledgeCount:(s.knowledge||[]).length,runsCount:(s.runs||[]).length},null,2);
+}
+function toolTime(){return new Date().toISOString()}
+function executeTool(name,input){
+ const n=String(name||'').trim().toLowerCase();
+ if(n==='calculator'||n==='calc')return safeCalc(input);
+ if(n==='knowledge_search'||n==='knowledge'||n==='search_knowledge')return {ok:true,value:toolKnowledge(input)};
+ if(n==='project_summary'||n==='summary')return {ok:true,value:toolProjectSummary()};
+ if(n==='time'||n==='current_time')return {ok:true,value:toolTime()};
+ return {ok:false,error:'ابزار ناشناخته است.'};
+}
+function extractToolCalls(text){
+ const src=String(text||''),out=[],re=/\\[\\[tool:([a-zA-Z0-9_]+):([\\s\\S]*?)\\]\\]/g;let m;
+ while((m=re.exec(src))&&out.length<4)out.push({name:m[1],input:m[2].trim()});
+ return out;
+}
+async function resolveAgentTools(a,goal,transcript,result){
+ const calls=extractToolCalls(result); if(!calls.length)return {result,used:[]};
+ const used=[];
+ for(const call of calls){
+   const r=executeTool(call.name,call.input);
+   used.push({name:call.name,input:call.input,ok:r.ok,value:r.ok?r.value:undefined,error:r.ok?undefined:r.error});
+ }
+ const toolText=used.map(x=>'[Tool '+x.name+']\\n'+(x.ok?String(x.value):'خطا: '+x.error)).join('\\n\\n');
+ const followGoal=compact(goal,8000)+'\\n\\nابزارهایی که خودت درخواست کردی اجرا شدند. نتیجه ابزارها را در پاسخ نهایی لحاظ کن و دیگر Tool Marker تولید نکن.\\n\\n'+toolText;
+ const final=await callOneRaw(a,followGoal,compact(transcript+'\\n\\nنتیجه ابزارها:\\n'+toolText,28000));
+ return {result:final,used};
+}
 function safeCalc(expr){
  const s=String(expr||'').trim();
  if(!s||s.length>120)return {ok:false,error:'عبارت نامعتبر است.'};
@@ -201,6 +237,13 @@ async function runSequentialV3(){
  }
 }
 async function callOne(a,goal,transcript){
+ const first=await callOneRaw(a,goal,transcript);
+ const calls=extractToolCalls(first);
+ if(!calls.length)return first;
+ const resolved=await resolveAgentTools(a,goal,transcript,first);
+ return resolved.result;
+}
+async function callOneRaw(a,goal,transcript){
  const safeGoal=compact(goal,8000),safeTranscript=compact(transcript,28000);
  if(a.provider==='horde'){
    let model=String(a.model||'').trim();
@@ -349,4 +392,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 window.aiTeamsV3Open=openPanel;
 window.aiTeamsV3Audit=audit;
 window.aiTeamsV3SafeCalc=safeCalc;
+window.aiTeamsTools={calculator:function(x){return executeTool('calculator',x)},knowledgeSearch:function(x){return executeTool('knowledge_search',x)},projectSummary:function(){return executeTool('project_summary','')},time:function(){return executeTool('time','')},run:executeTool};
 })();

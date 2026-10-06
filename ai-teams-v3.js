@@ -245,48 +245,8 @@ async function callOne(a,goal,transcript){
 }
 async function callOneRaw(a,goal,transcript){
  const safeGoal=compact(goal,8000),safeTranscript=compact(transcript,28000);
- if(a.provider==='horde'){
-   let model=String(a.model||'').trim();
-   const s=ensureState();
-   if((!Array.isArray(s.hordeModels)||!s.hordeModels.length)||!model||s.hordeModels.indexOf(model)<0){
-     try{
-       const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
-       if(mr.ok){
-         const mj=await mr.json(); const models=Array.isArray(mj.data)?mj.data.map(x=>x&&x.id?String(x.id):'').filter(Boolean):[];
-         if(models.length){
-           s.hordeModels=models;
-           model=models.indexOf(model)>=0?model:(models.find(x=>/llama|qwen|mistral|gemma|deepseek|phi/i.test(x))||models[0]);
-           a.model=model;a.endpoint='https://oai.aihorde.net/v1/chat/completions';save();
-         }
-       }
-     }catch(e){}
-   }
-   if(!model)throw new Error('هیچ مدل فعال AI Horde پیدا نشد.');
-   const messages=[
-     {role:'system',content:compact(a.system||('تو عضو تیم با نقش '+a.role+' هستی.'),9000)},
-     {role:'user',content:'هدف تیم:\n'+safeGoal+'\n\nخروجی اعضای قبلی:\n'+(safeTranscript||'هنوز خروجی قبلی وجود ندارد.')+'\n\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.'}
-   ];
-   let last=null;
-   for(let attempt=1;attempt<=3;attempt++){
-     if(!V.active)throw abortErr();
-     const controller=new AbortController();V.controller=controller;
-     const timer=setTimeout(()=>controller.abort(),90000);
-     try{
-       const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},body:JSON.stringify({model,messages,temperature:.2,max_tokens:128}),signal:controller.signal});
-       const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
-       if(!res.ok)throw new Error((data.error&&data.error.message)||data.message||raw.slice(0,700)||('HTTP '+res.status));
-       const out=data.choices?.[0]?.message?.content||data.choices?.[0]?.text;
-       if(typeof out==='string'&&out.trim())return out;
-       throw new Error('پاسخ مدل قابل استخراج نبود.');
-     }catch(e){
-       last=e;
-       if(!V.active)throw abortErr();
-       if(e.name==='AbortError'&&V.retryNow){V.retryNow=false;continue}
-       if(attempt<3)await sleep(attempt*1200);
-     }finally{clearTimeout(timer);if(V.controller===controller)V.controller=null}
-   }
-   throw last||new Error('اتصال به AI Horde ناموفق بود.');
- }
+ if(a.provider==='horde'&&typeof window.aiTeamsUniversalCallAgent==='function')return await window.aiTeamsUniversalCallAgent(a,safeGoal,safeTranscript);
+
  if(typeof window.aiTeamsUniversalCallAgent==='function')return await window.aiTeamsUniversalCallAgent(a,safeGoal,safeTranscript);
  throw new Error('هسته اجرای Provider در دسترس نیست.');
 }

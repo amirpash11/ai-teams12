@@ -1370,5 +1370,17 @@ document.addEventListener('click',function(ev){
 <script src="cloud-storage.js?v=2"></script>
 <script src="workspace-manager.js?v=1"></script>\n<script src="github-storage.js?v=1"></script>
 <script src="google-drive-storage.js?v=1"></script>\n<script src="ai-teams-v3.js?v=1"></script>
+<script id="restoreMemoryControlV1">
+(function(){
+ function ensureMemoryButton(){
+  if(document.getElementById('memoryBtn')||typeof openMemoryPanel!=='function')return;
+  var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;
+  var s=document.querySelector('.sidebar'),anchor=document.getElementById('workspaceBtn');
+  if(s){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureMemoryButton);else ensureMemoryButton();
+ setTimeout(ensureMemoryButton,500);
+})();
+</script>
 </body>
 </html>

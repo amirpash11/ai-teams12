@@ -97,7 +97,7 @@ function executeTool(name,input){
  return {ok:false,error:'ابزار ناشناخته است.'};
 }
 function extractToolCalls(text){
- const src=String(text||''),out=[],re=/\\[\\[tool:([a-zA-Z0-9_]+):([\\s\\S]*?)\\]\\]/g;let m;
+ 
  while((m=re.exec(src))&&out.length<4)out.push({name:m[1],input:m[2].trim()});
  return out;
 }

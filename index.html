@@ -590,20 +590,27 @@ async function refreshHordeModels(){
   }catch(e){return [];}
 }
 async function ensureHordeModel(a){
-  if(a.provider!=='horde')return;
-  if(Array.isArray(state.hordeModels)&&state.hordeModels.indexOf(a.model)>=0)return;
+  if(a.provider!=='horde')return [];
+  const cached=Array.isArray(state.hordeModels)?state.hordeModels:[];
+  if(cached.length&&a.model&&cached.indexOf(a.model)>=0)return cached;
   try{
     const res=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
-    if(!res.ok)return;
+    if(!res.ok)throw new Error('AI Horde model list HTTP '+res.status);
     const data=await res.json();
     const models=Array.isArray(data.data)?data.data.map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean):[];
+    if(!models.length)throw new Error('AI Horde هیچ مدل فعالی برنگرداند.');
     state.hordeModels=models;
-    if(models.length&&models.indexOf(a.model)<0){
-      a.model=models.find(function(m){return /llama|qwen|mistral|gemma|deepseek|phi/i.test(m)})||models[0];
+    const preferred=models.find(function(m){return /llama|qwen|mistral|gemma|deepseek|phi/i.test(m)});
+    if(!a.model||models.indexOf(a.model)<0){
+      a.model=preferred||models[0];
       a.endpoint='https://oai.aihorde.net/v1/chat/completions';
       save();
     }
-  }catch(e){}
+    return models;
+  }catch(e){
+    if(cached.length)return cached;
+    throw e;
+  }
 }
 
 function compactContext(value,max){

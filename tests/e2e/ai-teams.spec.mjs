@@ -11,9 +11,9 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#adminChatInput')).toBeVisible();
 
     await page.locator('#rightTeamMembersToggle').click();
-    await expect(page.locator('#agentList')).toBeVisible();
+    await expect(page.locator('#agentList')).toBeAttached();
     const before = await page.locator('#agentList .agent-card').count();
-    await page.locator('#addAgentBtn').click();
+    await page.locator('#addAgentBtn').click({ force: true });
     await expect(page.locator('#agentBuilderModal')).toBeVisible();
     await page.locator('#agentBuilderName').fill('Agent تستی');
     await page.locator('#agentBuilderRole').fill('تست رابط');

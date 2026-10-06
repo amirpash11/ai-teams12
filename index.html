@@ -624,6 +624,7 @@ async function callAgent(a,goal,transcript){
  if(cancelRequested)throw new Error('اجرای تیم توسط کاربر متوقف شد.');
  if(!a||a.kind==='human')throw new Error('عضو انسانی نمی‌تواند به‌عنوان Provider هوش مصنوعی اجرا شود.');
  const provider=a.provider||'horde';
+ if(provider==='horde'&&typeof window.aiTeamsUniversalCallAgent==='function')return window.aiTeamsUniversalCallAgent(a,goal,transcript);
  const system=a.system||('تو عضو تیم با نقش '+a.role+' هستی.');
  const safeGoal=compactContext(goal,7000);
  const safeTranscript=compactContext(transcript,11000);

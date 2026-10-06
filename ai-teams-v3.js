@@ -65,8 +65,8 @@ function ensurePanel(){
  document.getElementById('v3Close').onclick=()=>wrap.style.display='none';
  document.getElementById('v3CalcBtn').onclick=()=>{const x=document.getElementById('v3Calc').value; const r=safeCalc(x); document.getElementById('v3ToolOut').textContent=r.ok?String(r.value):r.error; timelineEvent('tool',null,{message:r.ok?'Calculator اجرا شد':'Calculator خطا داشت'});};
  document.getElementById('v3Run').onclick=runSequentialV3;
- document.getElementById('v3Parallel').onclick=()=>{closePanel(); if(typeof window.runTeamParallel==='function')window.runTeamParallel()};
- document.getElementById('v3Dialogue').onclick=()=>{closePanel(); if(typeof window.runDialogue==='function')window.runDialogue()};
+ document.getElementById('v3Parallel').onclick=()=>{closePanel();document.getElementById('parallelBtn')?.click()};
+ document.getElementById('v3Dialogue').onclick=()=>{closePanel();document.getElementById('dialogueBtn')?.click()};
  document.getElementById('v3Pause').onclick=pauseRun;
  document.getElementById('v3Resume').onclick=resumeRun;
  document.getElementById('v3Retry').onclick=retryCurrent;

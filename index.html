@@ -239,10 +239,11 @@ input,textarea,select{font-size:16px}
 <button class="drawer-toggle" id="drawerToggle" title="مخفی/نمایش کشوی سمت راست" onclick="(function(e){var a=document.querySelector('.app'),k='ai-teams-drawer-hidden-v1',h=localStorage.getItem(k)==='1';localStorage.setItem(k,h?'0':'1');a.classList.toggle('drawer-hidden',!h);e.preventDefault();e.stopImmediatePropagation();})(event)">◀</button><aside class="sidebar">
   <div class="brand"><div class="logo">AI</div><div><h1>AI Teams</h1><span>Multi-Agent Workspace</span></div></div>
   <button type="button" id="rightTeamMembersToggle" onclick="(function(){var b=document.getElementById('rightTeamMembersBody'),x=document.getElementById('rightTeamMembersBtn');if(b)b.style.setProperty('display','block','important');if(x)x.textContent='−';})()" class="section-title team-members-toggle" style="width:100%;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;border:1px solid var(--line);background:#18223a;color:var(--text);padding:10px 12px;border-radius:10px;margin:8px 0"> <span>اعضای تیم</span><span id="rightTeamMembersBtn" aria-hidden="true" style="font-size:20px;line-height:1">＋</span></button>
-  <div id="rightTeamMembersBody" style="display:none">
+  <div id="rightTeamMembersBody" style="display:block">
     <div id="agentList" class="agent-list"></div>
-    <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button><button class="btn" id="workflowBuilderBtn">⚙ Workflow</button>
   </div>
+  <button class="btn primary" id="addAgentBtn">＋ افزودن عضو</button>
+  <button class="btn" id="workflowBuilderBtn">⚙ Workflow</button>
   <button class="btn" id="providersBtn">⚙ مدیریت و افزودن سرویس</button>
   <button class="btn" id="aiCatalogBtn">🔎 جستجوی هوش مصنوعی</button>
 </aside>

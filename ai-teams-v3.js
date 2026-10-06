@@ -126,12 +126,13 @@ async function runSequentialV3(){
  const s=ensureState(); if(!s||V.active)return;
  const goal=String(document.getElementById('goal')?.value||s.goal||'').trim();
  if(!goal){alert('اول هدف تیم را وارد کن.');return}
- const agents=(window.workflowSteps?window.workflowSteps():[]).map(st=>(s.agents||[]).find(a=>a.id===st.agentId)).filter(Boolean).filter(a=>a.enabled&&a.kind!=='human');
+ const workflow=Array.isArray(s.workflow?.steps)&&s.workflow.steps.length?s.workflow.steps:(s.agents||[]).filter(a=>a.enabled&&a.kind!=='human').map(a=>({agentId:a.id}));
+ const agents=workflow.map(st=>(s.agents||[]).find(a=>a.id===st.agentId)).filter(Boolean).filter(a=>a.enabled&&a.kind!=='human');
  if(!agents.length){alert('Agent فعال وجود ندارد.');return}
  V.active=true;V.paused=false;V.skipIds=new Set();V.retryIds=new Set();V.retryNow=false;V.skipNow=false;V.currentId=null;V.startedAt=Date.now();V.finishedAt=null;V.events=[];V.runId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());V.mode='sequential';
  document.getElementById('v3RunState').textContent='▶ اجرای تیم شروع شد';
  timelineEvent('run_start',null,{message:'اجرای زنجیره‌ای شروع شد'});
- message('سیستم','🚀','اجرای v3 شروع شد؛ کنترل مکث/ادامه/Retry/Skip فعال است.');
+ message('سیستم','🚀','اجرای زنجیره‌ای v3 شروع شد؛ کنترل مکث/ادامه/Retry/Skip فعال است.');
  let transcript='هدف تیم:\n'+goal;
  const startedIndex=s.chat.length;
  let completed=0,errors=0;
@@ -190,18 +191,61 @@ async function runSequentialV3(){
    s.lastRunId=V.runId;
    rememberRunFinal(goal,finalResult,run);
    message('جمع‌بندی نهایی','🏁',finalResult||'نتیجه نهایی تولید نشد.');
+   message('سیستم','✅','اجرای زنجیره‌ای تیم تمام شد.','agent',errors>0);
    timelineEvent('run_finish',null,{message:'اجرای تیم پایان یافت',durationMs:Date.now()-V.startedAt});
  }catch(e){
    timelineEvent('run_stop',null,{message:e.message||'اجرا متوقف شد'});
    if(!isAbort(e))message('سیستم','❌','اجرای v3 با خطا متوقف شد: '+(e.message||e), 'agent',true);
  }finally{
-   V.active=false;V.paused=false;V.currentId=null;V.finishedAt=Date.now();save();render();refreshPanel();
+   V.active=false;V.paused=false;V.currentId=null;if(V.controller){try{V.controller.abort()}catch(e){}V.controller=null}V.finishedAt=Date.now();save();render();refreshPanel();
  }
 }
 async function callOne(a,goal,transcript){
- if(typeof window.callAgentResilient==='function')return await window.callAgentResilient(a,compact(goal,8000),compact(transcript,28000));
- if(typeof window.aiTeamsUniversalCallAgent==='function')return await window.aiTeamsUniversalCallAgent(a,goal,transcript);
- throw new Error('هسته اجرای Agent در دسترس نیست.');
+ const safeGoal=compact(goal,8000),safeTranscript=compact(transcript,28000);
+ if(a.provider==='horde'){
+   let model=String(a.model||'').trim();
+   const s=ensureState();
+   if((!Array.isArray(s.hordeModels)||!s.hordeModels.length)||!model||s.hordeModels.indexOf(model)<0){
+     try{
+       const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+       if(mr.ok){
+         const mj=await mr.json(); const models=Array.isArray(mj.data)?mj.data.map(x=>x&&x.id?String(x.id):'').filter(Boolean):[];
+         if(models.length){
+           s.hordeModels=models;
+           model=models.indexOf(model)>=0?model:(models.find(x=>/llama|qwen|mistral|gemma|deepseek|phi/i.test(x))||models[0]);
+           a.model=model;a.endpoint='https://oai.aihorde.net/v1/chat/completions';save();
+         }
+       }
+     }catch(e){}
+   }
+   if(!model)throw new Error('هیچ مدل فعال AI Horde پیدا نشد.');
+   const messages=[
+     {role:'system',content:compact(a.system||('تو عضو تیم با نقش '+a.role+' هستی.'),9000)},
+     {role:'user',content:'هدف تیم:\n'+safeGoal+'\n\nخروجی اعضای قبلی:\n'+(safeTranscript||'هنوز خروجی قبلی وجود ندارد.')+'\n\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.'}
+   ];
+   let last=null;
+   for(let attempt=1;attempt<=3;attempt++){
+     if(!V.active)throw abortErr();
+     const controller=new AbortController();V.controller=controller;
+     const timer=setTimeout(()=>controller.abort(),90000);
+     try{
+       const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},body:JSON.stringify({model,messages,temperature:.2}),signal:controller.signal});
+       const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
+       if(!res.ok)throw new Error((data.error&&data.error.message)||data.message||raw.slice(0,700)||('HTTP '+res.status));
+       const out=data.choices?.[0]?.message?.content||data.choices?.[0]?.text;
+       if(typeof out==='string'&&out.trim())return out;
+       throw new Error('پاسخ مدل قابل استخراج نبود.');
+     }catch(e){
+       last=e;
+       if(!V.active)throw abortErr();
+       if(e.name==='AbortError'&&V.retryNow){V.retryNow=false;continue}
+       if(attempt<3)await sleep(attempt*1200);
+     }finally{clearTimeout(timer);if(V.controller===controller)V.controller=null}
+   }
+   throw last||new Error('اتصال به AI Horde ناموفق بود.');
+ }
+ if(typeof window.aiTeamsUniversalCallAgent==='function')return await window.aiTeamsUniversalCallAgent(a,safeGoal,safeTranscript);
+ throw new Error('هسته اجرای Provider در دسترس نیست.');
 }
 function demoResult(a,goal,transcript){return 'حالت Demo — '+a.role+' برای هدف «'+goal.slice(0,180)+'» تحلیل خود را انجام داد و خروجی برای Agent بعدی آماده شد.'}
 function compact(v,max){const s=String(v||'');if(s.length<=max)return s;const h=Math.floor(max*.4);return s.slice(0,h)+'\n… Context کوتاه شد …\n'+s.slice(-(max-h));}
@@ -211,9 +255,9 @@ function isAbort(e){return e&&e.code==='ABORTED'}
 
 function pauseRun(){if(!V.active)return;V.paused=true;timelineEvent('run_pause',null,{message:'اجرا مکث شد'});refreshPanel()}
 function resumeRun(){if(!V.active)return;V.paused=false;timelineEvent('run_resume',null,{message:'اجرا ادامه یافت'});refreshPanel()}
-function retryCurrent(){if(!V.active||!V.currentId)return;V.retryNow=true;V.paused=false;if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('retry',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Retry دستی ثبت شد'});refreshPanel()}
+function retryCurrent(){if(!V.active||!V.currentId)return;V.retryNow=true;V.paused=false;if(V.controller){try{V.controller.abort()}catch(e){}}timelineEvent('retry',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Retry دستی ثبت شد'});refreshPanel()}
 function skipCurrent(){if(!V.active||!V.currentId)return;V.skipNow=true;V.skipIds.add(V.currentId);if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('skip',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Skip ثبت شد'});V.paused=false;refreshPanel()}
-function stopRun(){if(!V.active)return;V.retryNow=false;V.skipNow=false;V.active=false;V.paused=false;if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();refreshPanel()}
+function stopRun(){if(!V.active)return;V.retryNow=false;V.skipNow=false;V.active=false;V.paused=false;if(V.controller){try{V.controller.abort()}catch(e){}}refreshPanel()}
 function rememberAgent(a,goal,result){
  const s=ensureState(); if(!s)return;
  if(!s.agentMemory[a.id])s.agentMemory[a.id]=[];

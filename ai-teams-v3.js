@@ -406,9 +406,9 @@ function injectUI(){
  const globalStop=document.getElementById('stopBtn');if(globalStop&&!globalStop.dataset.v3StopBound){globalStop.addEventListener('click',function(){if(V.active)stopRun();},true);globalStop.dataset.v3StopBound='1';}
 }
 function boot(){
- const s=ensureState(); if(!s)return;
  bindCoreUiFallback();
  injectUI();
+ const s=ensureState(); if(!s)return;
  try{
    localStorage.setItem('ai-teams-v3-version','300');
  }catch(e){}

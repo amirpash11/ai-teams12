@@ -272,7 +272,7 @@ async function callOneRaw(a,goal,transcript){
      const controller=new AbortController();V.controller=controller;
      const timer=setTimeout(()=>controller.abort(),90000);
      try{
-       const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},body:JSON.stringify({model,messages,temperature:.2}),signal:controller.signal});
+       const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},body:JSON.stringify({model,messages,temperature:.2,max_tokens:128}),signal:controller.signal});
        const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
        if(!res.ok)throw new Error((data.error&&data.error.message)||data.message||raw.slice(0,700)||('HTTP '+res.status));
        const out=data.choices?.[0]?.message?.content||data.choices?.[0]?.text;

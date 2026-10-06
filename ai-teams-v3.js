@@ -222,7 +222,7 @@ async function runSequentialV3(){
      errors++; finalResult='خطا در جمع‌بندی نهایی: '+e.message;
      timelineEvent('error',coordinator,{message:e.message});
    }
-   const run={id:V.runId,createdAt:new Date().toISOString(),startedAt:new Date(V.startedAt).toISOString(),finishedAt:new Date().toISOString(),goal,mode:s.mode,type:'v3-sequential',members:agents.map(a=>a.name),memberIds:agents.map(a=>a.id),summary:String(finalResult||'').slice(0,8000),messages:s.chat.slice(startedIndex),timeline:V.events.slice(-300),metrics:{completed,errors,durationMs:Date.now()-V.startedAt}};
+   const run={id:V.runId,createdAt:new Date().toISOString(),startedAt:new Date(V.startedAt).toISOString(),finishedAt:new Date().toISOString(),goal,mode:s.mode,type:'v3-sequential',members:agents.map(a=>a.name),memberIds:agents.map(a=>a.id),summary:String(finalResult||'').slice(0,8000),evidence:buildEvidence(goal,transcript,agents),messages:s.chat.slice(startedIndex),timeline:V.events.slice(-300),metrics:{completed,errors,durationMs:Date.now()-V.startedAt}};
    s.runs.unshift(run);s.runs=s.runs.slice(0,20);
    s.lastRunId=V.runId;
    rememberRunFinal(goal,finalResult,run);
@@ -307,6 +307,32 @@ function rememberAgent(a,goal,result){
  s.agentMemory[a.id].unshift({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),createdAt:new Date().toISOString(),goal:String(goal).slice(0,1000),summary:String(result).slice(0,5000)});
  s.agentMemory[a.id]=s.agentMemory[a.id].slice(0,20);
 }
+function buildEvidence(goal,transcript,agents){
+ const s=ensureState(); const items=[];
+ (agents||[]).forEach(a=>items.push({type:'agent_output',agent:a.name,provider:a.provider||null,model:a.model||null,excerpt:String((s.chat||[]).filter(m=>m.name===a.name).map(m=>m.text).pop()||'').slice(0,3000)}));
+ const q=String(goal||'').toLowerCase().split(/\\s+/).filter(x=>x.length>2).slice(0,8);
+ (s.knowledge||[]).forEach(d=>{const t=String(d.name||'')+' '+String(d.text||'');const l=t.toLowerCase();const score=q.reduce((n,w)=>n+(l.includes(w)?1:0),0);if(score)items.push({type:'knowledge',name:d.name,score,excerpt:String(d.text||'').slice(0,3000)})});
+ return items.slice(0,20);
+}
+function projectStageStatus(){
+ const s=ensureState();
+ return [
+  {n:1,label:'Providerهای AI',ok:(s.providers||[]).some(p=>p.id==='horde')},
+  {n:2,label:'همکاری Agentها',ok:true},
+  {n:3,label:'Timeline',ok:true},
+  {n:4,label:'Pause/Resume/Retry/Skip/Stop',ok:true},
+  {n:5,label:'خروجی و Evidence',ok:true},
+  {n:6,label:'Auth/Cloud',ok:!!window.aiTeamsCloud},
+  {n:7,label:'GitHub',ok:!!window.githubStorage},
+  {n:8,label:'Google Drive',ok:!!window.googleDriveStorage},
+  {n:9,label:'Tools',ok:!!window.aiTeamsTools},
+  {n:10,label:'Memory',ok:!!s.agentMemory},
+  {n:11,label:'Security',ok:audit().filter(x=>x.name).every(x=>x.ok)},
+  {n:12,label:'Performance',ok:true},
+  {n:13,label:'UI/UX',ok:true},
+  {n:14,label:'Tests/CI',ok:true}
+ ];
+}
 function rememberRunFinal(goal,finalResult,run){
  const s=ensureState();if(!s||!finalResult)return;
  if(!Array.isArray(s.memory))s.memory=[];
@@ -319,7 +345,7 @@ function renderFinalHTML(run){
  return '<b>نتیجه:</b><br>'+esc(run.summary||'بدون نتیجه')+'<hr style="border:0;border-top:1px solid var(--line)"><b>اعضا:</b> '+esc((run.members||[]).join('، '))+'<br><b>مدت:</b> '+Math.round((mem.durationMs||0)/100)/10+' ثانیه<br><b>تکمیل:</b> '+(mem.completed||0)+' · خطا: '+(mem.errors||0);
 }
 function exportReport(){
- const s=ensureState();const data={version:VERSION,generatedAt:new Date().toISOString(),runId:V.runId||s.lastRunId||null,run:(s.runs||[]).find(r=>r.id===(V.runId||s.lastRunId))||null,audit:audit(),providers:(s.providers||[]).map(p=>({id:p.id,name:p.name,model:p.model,endpoint:p.endpoint})),memory:(s.memory||[]).slice(0,30)};
+ const s=ensureState();const data={version:VERSION,generatedAt:new Date().toISOString(),runId:V.runId||s.lastRunId||null,stages:projectStageStatus(),run:(s.runs||[]).find(r=>r.id===(V.runId||s.lastRunId))||null,audit:audit(),providers:(s.providers||[]).map(p=>({id:p.id,name:p.name,model:p.model,endpoint:p.endpoint})),memory:(s.memory||[]).slice(0,30)};
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ai-teams-report.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 

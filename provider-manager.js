@@ -141,6 +141,7 @@ async function universalCallAgent(a,goal,transcript){
  models.forEach(function(m){if(candidates.indexOf(m)<0&&/llama|qwen|mistral|gemma|deepseek|phi|hermes/i.test(m))candidates.push(m)});
  models.forEach(function(m){if(candidates.indexOf(m)<0)candidates.push(m)});
  let lastError=null;
+ const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const hordePrompt=messages.map(function(m){return String(m.role||'user').toUpperCase()+': '+String(m.content||'');}).join('\n\n');
  async function directHorde(model){
    const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);

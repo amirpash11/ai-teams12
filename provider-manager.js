@@ -146,7 +146,7 @@ async function universalCallAgent(a,goal,transcript){
    const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
    let id='';
    try{
-     const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:prompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:controller.signal});
+     const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:hordePrompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:controller.signal});
      const raw=await submit.text();let data={};try{data=JSON.parse(raw)}catch(e){}
      if(!submit.ok)throw new Error((data.message||data.error||raw.slice(0,600)||('HTTP '+submit.status)));
      id=String(data.id||'');if(!id)throw new Error('AI Horde شناسه درخواست برنگرداند.');

@@ -1157,7 +1157,7 @@ function toggleRightMembers(){
  localStorage.setItem(__rightMembersState.key,collapsed?'0':'1');
  applyRightMembers();
 }
-document.getElementById('rightTeamMembersToggle').addEventListener('click',toggleRightMembers);
+document.getElementById('rightTeamMembersToggle').onclick=toggleRightMembers;
 applyRightMembers();
 document.getElementById('addAgentBtn').onclick=addAgent;
 const workflowBuilderBtn=document.getElementById('workflowBuilderBtn');if(workflowBuilderBtn)workflowBuilderBtn.onclick=openWorkflowBuilder;

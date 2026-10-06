@@ -286,6 +286,32 @@ function openKnowledgeTool(){
  return (s.knowledge||[]).slice(0,5).map(x=>x.name+': '+String(x.text||'').slice(0,1000)).join('\n\n');
 }
 
+function bindCoreUiFallback(){
+ document.addEventListener('click',function(ev){
+   const t=ev.target.closest&&ev.target.closest('#rightTeamMembersToggle');
+   if(t){
+     const b=document.getElementById('rightTeamMembersBody');
+     const key='ai-teams-right-members-collapsed-v1';
+     const collapsed=localStorage.getItem(key)!=='0';
+     localStorage.setItem(key,collapsed?'0':'1');
+     if(b)b.style.setProperty('display',collapsed?'block':'none','important');
+     const icon=document.getElementById('rightTeamMembersBtn');if(icon)icon.textContent=collapsed?'−':'＋';
+     ev.preventDefault();
+   }
+ },true);
+ document.addEventListener('click',function(ev){
+   const t=ev.target.closest&&ev.target.closest('#drawerToggle');
+   if(t){
+     const app=document.querySelector('.app'); if(!app)return;
+     const key='ai-teams-drawer-hidden-v1';
+     const hidden=localStorage.getItem(key)==='1';
+     localStorage.setItem(key,hidden?'0':'1');
+     app.classList.toggle('drawer-hidden',!hidden);
+     t.textContent=hidden?'◀':'▶';
+     ev.preventDefault();
+   }
+ },true);
+}
 function injectUI(){
  ensurePanel();
  if(document.getElementById('v3Css'))return;
@@ -312,6 +338,7 @@ function injectUI(){
 }
 function boot(){
  const s=ensureState(); if(!s)return;
+ bindCoreUiFallback();
  injectUI();
  try{
    localStorage.setItem('ai-teams-v3-version','300');

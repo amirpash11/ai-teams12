@@ -26,9 +26,13 @@ jobs:
             .map(m => m[1])
             .filter(x => x.trim());
           if (!scripts.length) throw new Error('No inline scripts found');
+          const { writeFileSync } = require('fs');
+          const { execFileSync } = require('child_process');
           scripts.forEach((code, i) => {
-            try { new Function(code); }
-            catch (err) { throw new Error('Inline script ' + i + ' syntax error: ' + err.message); }
+            const file = '/tmp/ai-teams-inline-' + i + '.js';
+            writeFileSync(file, code, 'utf8');
+            try { execFileSync(process.execPath, ['--check', file], { stdio: 'inherit' }); }
+            catch (err) { throw new Error('Inline script ' + i + ' syntax check failed'); }
           });
           const required = [
             ['Drawer without history mutation', "r.onclick=openRight;l.onclick=openLeft;sync();"],

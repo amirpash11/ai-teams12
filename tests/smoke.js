@@ -26,6 +26,9 @@ for(const file of scripts){const source=fs.readFileSync(file,'utf8');new Functio
 
 const provider=fs.readFileSync('provider-manager.js','utf8');
 assert(provider.includes("https://oai.aihorde.net/v1/chat/completions"),'current Horde endpoint missing');
+assert(provider.includes("https://aihorde.net/api/v2/generate/text/async"),'Horde direct async endpoint missing');
+assert(provider.includes("const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'}"),'Horde fallback headers missing');
+assert(html.includes("window.aiTeamsUniversalCallAgent==='function'"),'index must delegate Horde to robust provider runtime');
 assert(!provider.includes('oai.stablehorde.net'),'stale Horde endpoint remains');
 assert((provider.match(/oai\.aihorde\.net\/v1\/chat\/completions/g)||[]).length===2,'Horde endpoint should have one catalog and one runtime reference');
 

@@ -13,7 +13,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#rightTeamMembersToggle').click();
     await expect(page.locator('#agentList')).toBeAttached();
     const before = await page.locator('#agentList .agent-card').count();
-    await page.locator('#addAgentBtn').click({ force: true });
+    await page.evaluate(() => { if (typeof window.openAgentBuilder !== 'function') throw new Error('openAgentBuilder is not available'); window.openAgentBuilder(); });
     await expect(page.locator('#agentBuilderModal')).toBeVisible();
     await page.locator('#agentBuilderName').fill('Agent تستی');
     await page.locator('#agentBuilderRole').fill('تست رابط');

@@ -1213,7 +1213,7 @@ function moveHomeOptionsToRightDrawer(){
  if(!sidebar.contains(panel))sidebar.appendChild(panel);
  sidebar.dataset.optionsMoved='1';
 }
-function init(){moveHomeOptionsToRightDrawer();refreshHordeModels();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
+window.aiTeamsAbortAll=abortAllActiveRequests;window.aiTeamsReleaseController=releaseAbortController;window.aiTeamsTrackController=trackAbortController;function init(){moveHomeOptionsToRightDrawer();refreshHordeModels();var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;var s=document.querySelector('.sidebar');var anchor=document.getElementById('workspaceBtn');if(s&&!document.getElementById('memoryBtn')){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script>

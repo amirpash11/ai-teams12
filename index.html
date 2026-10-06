@@ -973,7 +973,7 @@ async function runTeamParallel(){
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=goal;
  if(!goal)return alert('اول هدف تیم را وارد کن.');
- const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ const active=getWorkflowAgents().filter(function(a){return a.enabled&&a.kind!=='human'});
  if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
  busy=true;
  document.getElementById('runBtn').disabled=true;

@@ -357,18 +357,6 @@ function openKnowledgeTool(){
 
 function bindCoreUiFallback(){
  document.addEventListener('click',function(ev){
-   const t=ev.target.closest&&ev.target.closest('#rightTeamMembersToggle');
-   if(t){
-     const b=document.getElementById('rightTeamMembersBody');
-     const key='ai-teams-right-members-collapsed-v1';
-     const collapsed=localStorage.getItem(key)!=='0';
-     localStorage.setItem(key,collapsed?'0':'1');
-     if(b)b.style.setProperty('display',collapsed?'block':'none','important');
-     const icon=document.getElementById('rightTeamMembersBtn');if(icon)icon.textContent=collapsed?'−':'＋';
-     ev.preventDefault();ev.stopImmediatePropagation();
-   }
- },true);
- document.addEventListener('click',function(ev){
    const t=ev.target.closest&&ev.target.closest('#drawerToggle');
    if(t){
      const app=document.querySelector('.app'); if(!app)return;

@@ -751,9 +751,7 @@ async function runAdminTurn(){
  const input=document.getElementById('adminChatInput');
  const userText=input.value.trim();
  if(!userText)return;
- let active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
- const configured=workflowSteps().map(function(s){return state.agents.find(function(a){return a.id===s.agentId&&a.enabled&&a.kind!=='human'})}).filter(Boolean);
- if(configured.length)active=configured.filter(function(a,i,arr){return arr.indexOf(a)===i});
+ let active=getWorkflowAgents().filter(function(a){return a.enabled&&a.kind!=='human'});
  if(!active.length)return alert('حداقل یک عضو فعال لازم است.');
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=document.getElementById('goal').value.trim();

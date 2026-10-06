@@ -34,6 +34,14 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#knowledgeClose').click();
     await page.locator('#memoryClose').click();
 
+    await page.locator('#v3ControlBtn').click();
+    await expect(page.locator('#v3Panel')).toBeVisible();
+    await page.locator('#v3Calc').fill('(25*4)+10/2');
+    await page.locator('#v3CalcBtn').click();
+    await expect(page.locator('#v3ToolOut')).toHaveText('105');
+    await expect(page.locator('#v3Audit')).toContainText('Horde endpoint رسمی');
+    await page.locator('#v3Close').click();
+
     await page.locator('#goal').fill('یک آزمایش کامل رابط و اجرای تیم انجام بده.');
     await page.locator('#demoModeBtn').click();
     await page.locator('#runBtn').click();
@@ -64,4 +72,14 @@ test.describe('AI Teams end-to-end smoke', () => {
     expect(inputBox?.width).toBeGreaterThan(250);
     expect(buttonBox?.width).toBeGreaterThan(150);
   });
+});
+
+
+test('free AI Horde endpoint smoke', async ({ request }) => {
+  const res = await request.get('https://oai.aihorde.net/v1/models', { timeout: 20000 });
+  expect(res.ok()).toBeTruthy();
+  const data = await res.json();
+  expect(Array.isArray(data?.data)).toBeTruthy();
+  expect(data.data.length).toBeGreaterThan(0);
+  expect(typeof data.data[0]?.id).toBe('string');
 });

@@ -152,7 +152,6 @@ async function universalCallAgent(a,goal,transcript){
      id=String(data.id||'');if(!id)throw new Error('AI Horde شناسه درخواست برنگرداند.');
      const deadline=Date.now()+85000;
      while(Date.now()<deadline){
-       if(signal&&signal.aborted)throw new DOMException('Aborted','AbortError');
        await new Promise(function(resolve){setTimeout(resolve,2500)});
        const st=await fetch(hordeStatus+encodeURIComponent(id),{headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},cache:'no-store'});
        const sr=await st.text();let sd={};try{sd=JSON.parse(sr)}catch(e){}

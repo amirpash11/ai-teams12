@@ -1131,18 +1131,12 @@ function exportConfig(){
 
 const __rightMembersState={key:'ai-teams-right-members-collapsed-v1'};
 function applyRightMembers(){
- const b=document.getElementById('rightTeamMembersBody'),t=document.getElementById('rightTeamMembersBtn'),list=document.getElementById('agentList');
+ const b=document.getElementById('rightTeamMembersBody'),t=document.getElementById('rightTeamMembersBtn');
  if(!b||!t)return;
- const collapsed=localStorage.getItem(__rightMembersState.key)!=='0';
- b.style.setProperty('display',collapsed?'none':'block','important');
- t.textContent=collapsed?'＋':'−';
- t.title=collapsed?'باز کردن اعضای تیم':'جمع کردن اعضای تیم';
+ b.style.setProperty('display','block','important');
+ t.textContent='−';t.title='اعضای تیم';
 }
-function toggleRightMembers(){
- const collapsed=localStorage.getItem(__rightMembersState.key)!=='0';
- localStorage.setItem(__rightMembersState.key,collapsed?'0':'1');
- applyRightMembers();
-}
+function toggleRightMembers(){applyRightMembers()}
 document.getElementById('rightTeamMembersToggle').onclick=toggleRightMembers;
 applyRightMembers();
 document.getElementById('addAgentBtn').onclick=addAgent;

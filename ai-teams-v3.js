@@ -128,7 +128,7 @@ async function runSequentialV3(){
  if(!goal){alert('اول هدف تیم را وارد کن.');return}
  const agents=(window.workflowSteps?window.workflowSteps():[]).map(st=>(s.agents||[]).find(a=>a.id===st.agentId)).filter(Boolean).filter(a=>a.enabled&&a.kind!=='human');
  if(!agents.length){alert('Agent فعال وجود ندارد.');return}
- V.active=true;V.paused=false;V.skipIds=new Set();V.retryIds=new Set();V.currentId=null;V.startedAt=Date.now();V.finishedAt=null;V.events=[];V.runId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());V.mode='sequential';
+ V.active=true;V.paused=false;V.skipIds=new Set();V.retryIds=new Set();V.retryNow=false;V.skipNow=false;V.currentId=null;V.startedAt=Date.now();V.finishedAt=null;V.events=[];V.runId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());V.mode='sequential';
  document.getElementById('v3RunState').textContent='▶ اجرای تیم شروع شد';
  timelineEvent('run_start',null,{message:'اجرای زنجیره‌ای شروع شد'});
  message('سیستم','🚀','اجرای v3 شروع شد؛ کنترل مکث/ادامه/Retry/Skip فعال است.');
@@ -156,10 +156,14 @@ async function runSequentialV3(){
          if(!result)throw new Error('خروجی خالی دریافت شد.');
          break;
        }catch(e){
+         if(V.retryNow&&V.currentId===a.id){V.retryNow=false;V.skipNow=false;attempts--;timelineEvent('retry',a,{message:'Retry دستی'});continue;}
+         if(V.skipNow&&V.currentId===a.id){V.skipNow=false;result='';timelineEvent('skip',a,{message:'Agent پس از درخواست Skip کنار گذاشته شد'});break;}
+         if(!V.active)throw abortErr();
          if(attempts>=3)throw e;
        }
      }
      const durationMs=Date.now()-t0;
+     if(!result){continue;}
      transcript+='\n\n['+a.name+' | '+a.role+']\n'+result;
      transcript=compact(transcript,32000);
      completed++;
@@ -207,9 +211,9 @@ function isAbort(e){return e&&e.code==='ABORTED'}
 
 function pauseRun(){if(!V.active)return;V.paused=true;timelineEvent('run_pause',null,{message:'اجرا مکث شد'});refreshPanel()}
 function resumeRun(){if(!V.active)return;V.paused=false;timelineEvent('run_resume',null,{message:'اجرا ادامه یافت'});refreshPanel()}
-function retryCurrent(){if(!V.active||!V.currentId)return;V.retryIds.add(V.currentId);V.paused=false;V.events.push({ts:new Date().toISOString(),type:'retry_manual',agentId:V.currentId})}
-function skipCurrent(){if(!V.active||!V.currentId)return;V.skipIds.add(V.currentId);timelineEvent('skip',getState()?.agents?.find(a=>a.id===V.currentId),{message:'Agent فعلی برای ادامه رد شد'});V.paused=false}
-function stopRun(){if(!V.active)return;V.active=false;V.paused=false}
+function retryCurrent(){if(!V.active||!V.currentId)return;V.retryNow=true;V.paused=false;if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('retry',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Retry دستی ثبت شد'});refreshPanel()}
+function skipCurrent(){if(!V.active||!V.currentId)return;V.skipNow=true;V.skipIds.add(V.currentId);if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('skip',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Skip ثبت شد'});V.paused=false;refreshPanel()}
+function stopRun(){if(!V.active)return;V.retryNow=false;V.skipNow=false;V.active=false;V.paused=false;if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();refreshPanel()}
 function rememberAgent(a,goal,result){
  const s=ensureState(); if(!s)return;
  if(!s.agentMemory[a.id])s.agentMemory[a.id]=[];
@@ -259,6 +263,8 @@ function injectUI(){
  }
  const stop=document.getElementById('stopBtn');
  if(stop)stop.dataset.v3Enhanced='1';
+ const mainRun=document.getElementById('runBtn');if(mainRun&&!mainRun.dataset.v3Bound){mainRun.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();runSequentialV3();},true);mainRun.dataset.v3Bound='1';}
+ const globalStop=document.getElementById('stopBtn');if(globalStop&&!globalStop.dataset.v3StopBound){globalStop.addEventListener('click',function(){if(V.active)stopRun();},true);globalStop.dataset.v3StopBound='1';}
 }
 function boot(){
  const s=ensureState(); if(!s)return;

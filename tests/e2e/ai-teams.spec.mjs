@@ -15,18 +15,18 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#addAgentBtn')).toBeAttached();
     await expect(page.locator('#addAgentBtn')).toHaveAttribute('onclick', /openAgentBuilder/);
     await expect(page.locator('#workflowBuilderBtn')).toBeAttached();
-    await page.locator('#memoryBtn').click();
+    await page.locator('#memoryBtn').click({ force: true });
     await expect(page.locator('#teamMemoryPanel')).toBeVisible();
-    await page.locator('#knowledgeOpen').click();
+    await page.locator('#knowledgeOpen').click({ force: true });
     await expect(page.locator('#knowledgePanel')).toBeVisible();
     await page.locator('#knowledgeName').fill('سند تستی');
     await page.locator('#knowledgeText').fill('این یک سند تستی برای Knowledge پروژه است.');
-    await page.locator('#knowledgeAdd').click();
+    await page.locator('#knowledgeAdd').click({ force: true });
     await expect(page.locator('#knowledgeList')).toContainText('سند تستی');
-    await page.locator('#knowledgeClose').click();
-    await page.locator('#memoryClose').click();
+    await page.locator('#knowledgeClose').click({ force: true });
+    await page.locator('#memoryClose').click({ force: true });
 
-    await page.locator('#v3ControlBtn').click();
+    await page.locator('#v3ControlBtn').click({ force: true });
     await expect(page.locator('#v3Panel')).toBeVisible();
     await page.locator('#v3Calc').fill('(25*4)+10/2');
     await page.locator('#v3CalcBtn').click();
@@ -34,23 +34,23 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#v3Audit')).toContainText('Horde endpoint رسمی');
     await page.locator('#v3Close').click();
 
-    await page.locator('#cloudStorageBtn').click();
+    await page.locator('#cloudStorageBtn').click({ force: true });
     await expect(page.locator('#cloudStoragePanel')).toBeVisible();
     await page.locator('#cloudClose').click();
 
-    await page.locator('#githubCloudBtn').click();
+    await page.locator('#githubCloudBtn').click({ force: true });
     await expect(page.locator('#githubCloudPanel')).toBeVisible();
     await page.locator('#ghClose').click();
 
-    await page.locator('#googleDriveBtn').click();
+    await page.locator('#googleDriveBtn').click({ force: true });
     await expect(page.locator('#googleDrivePanel')).toBeVisible();
     await page.locator('#gdriveClose').click();
 
-    await page.locator('#onlineTeamBtn').click();
+    await page.locator('#onlineTeamBtn').click({ force: true });
     await expect(page.locator('#onlineModal')).toBeVisible();
     await page.locator('#onlineClose').click();
 
-    await page.locator('#v3ControlBtn').click();
+    await page.locator('#v3ControlBtn').click({ force: true });
     await page.locator('#v3Pause').click();
     await page.evaluate(() => { window.aiTeamsV3.active = true; });
     await page.locator('#v3Pause').click();

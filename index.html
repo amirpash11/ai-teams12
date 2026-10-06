@@ -1130,10 +1130,11 @@ function exportConfig(){
 
 const __rightMembersState={key:'ai-teams-right-members-collapsed-v1'};
 function applyRightMembers(){
- const b=document.getElementById('rightTeamMembersBody'),t=document.getElementById('rightTeamMembersBtn');
+ const b=document.getElementById('rightTeamMembersBody'),t=document.getElementById('rightTeamMembersBtn'),list=document.getElementById('agentList');
  if(!b||!t)return;
  const collapsed=localStorage.getItem(__rightMembersState.key)!=='0';
  b.style.setProperty('display',collapsed?'none':'block','important');
+ if(list)list.style.setProperty('display',collapsed?'none':'grid','important');
  t.textContent=collapsed?'＋':'−';
  t.title=collapsed?'باز کردن اعضای تیم':'جمع کردن اعضای تیم';
 }

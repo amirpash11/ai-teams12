@@ -848,6 +848,34 @@ async function runDialogue(){
   }
 
   const coordinator=active[active.length-1];
+  let dialogueVotes=[];
+  msg('داور تیم','🗳️','مرحله رأی‌گیری: هر عضو بهترین پیشنهاد را انتخاب می‌کند...','agent',false);
+  for(const voter of active){
+    try{
+      let voteText;
+      if(state.mode==='demo'){
+        voteText=JSON.stringify({vote_for:coordinator.name,reason:'در حالت نمایشی، رأی برای تست جریان به هماهنگ‌کننده داده شد.'});
+      }else{
+        const voteGoal=buildTeamRoster(active)+'\\n\\nهدف تیم:\\n'+goal+
+          '\\n\\nمتن کامل بحث و خروجی اعضا:\\n'+compactContext(transcript,26000)+
+          '\\n\\nتو داور مستقل هستی. فقط بهترین پیشنهاد را از بین اعضا انتخاب کن. پاسخ را دقیقاً در یک JSON با دو کلید بده: vote_for (نام دقیق یکی از اعضا) و reason (دلیل کوتاه). نامی خارج از roster انتخاب نکن.';
+        voteText=await callAgentResilient(voter,voteGoal,transcript);
+      }
+      let parsed=null;
+      try{parsed=JSON.parse(String(voteText).replace(/\`/g,'').trim())}catch(e){
+        const name=(active.find(a=>String(voteText).includes(a.name))||coordinator).name;
+        parsed={vote_for:name,reason:String(voteText).slice(0,500)};
+      }
+      const target=active.find(a=>a.name===parsed.vote_for)||coordinator;
+      dialogueVotes.push({voter:voter.name,vote_for:target.name,reason:String(parsed.reason||'').slice(0,800)});
+    }catch(e){
+      dialogueHadError=true;
+      dialogueVotes.push({voter:voter.name,vote_for:null,reason:'رأی‌گیری این عضو ناموفق بود: '+e.message});
+    }
+  }
+  const voteCounts={};
+  dialogueVotes.forEach(v=>{if(v.vote_for)voteCounts[v.vote_for]=(voteCounts[v.vote_for]||0)+1});
+  const voteLeader=Object.entries(voteCounts).sort((a,b)=>b[1]-a[1])[0]||null;
   msg('جمع‌بندی نهایی تیم','🧠','در حال تحلیل همه دورها و تولید تصمیم نهایی...','agent',false);
   const finalIndex=state.chat.length-1;
   let finalResult='';
@@ -856,7 +884,7 @@ async function runDialogue(){
     finalResult='جمع‌بندی نهایی برای «'+goal+'» آماده شد. دیدگاه اعضا در '+rounds+' دور بررسی شد و اختلاف‌ها برای تصمیم اجرایی نهایی در نظر گرفته شدند.';
    }else{
     const finalGoal=buildTeamRoster(active)+'\\n\\nموضوع/هدف تیم:\\n'+goal+
-      '\\n\\nتو هماهنگ‌کننده نهایی تیم هستی. کل بحث و خروجی همه اعضا و همه دورها را که در متن ورودی آمده بررسی کن. پاسخ نهایی باید یک تصمیم/راه‌حل قابل اجرا باشد، نه صرفاً تکرار بحث.\\n'+
+      '\\n\\nآرای مستقل اعضا:\\n'+JSON.stringify(dialogueVotes)+'\\n\\nنتیجه شمارش آرا:\\n'+JSON.stringify(voteCounts)+'\\n\\nبرنده اولیه رأی‌گیری: '+(voteLeader?voteLeader[0]+' ('+voteLeader[1]+' رأی)':'بدون برنده')+'\\n\\nتو هماهنگ‌کننده نهایی تیم هستی. کل بحث و خروجی همه اعضا و همه دورها را که در متن ورودی آمده بررسی کن. پاسخ نهایی باید یک تصمیم/راه‌حل قابل اجرا باشد، نه صرفاً تکرار بحث.\\n'+
       '\\nساختار اجباری خروجی:\\n1) نتیجه نهایی و پیشنهاد اصلی\\n2) دلایل و شواهد مهم از بحث\\n3) اختلاف‌نظرها و اینکه کدام دیدگاه پذیرفته شد و چرا\\n4) ریسک‌ها، ابهام‌ها و مواردی که هنوز نیاز به بررسی دارند\\n5) مراحل اجرایی بعدی به ترتیب اولویت\\n\\nفقط بر اساس اطلاعات موجود تصمیم‌گیری کن؛ اگر اطلاعات کافی نیست صریحاً بگو چه چیزی کم است و آن را به‌عنوان واقعیت قطعی نساز.';
     finalResult=await callAgentResilient(coordinator,finalGoal,transcript);
    }
@@ -883,6 +911,8 @@ async function runDialogue(){
    rounds:rounds,
    members:active.map(function(a){return a.name}),
    summary:dialogueSummary,
+   votes:dialogueVotes,
+   voteCounts:voteCounts,
    messages:state.chat.slice()
   });
   state.runs=state.runs.slice(0,20);

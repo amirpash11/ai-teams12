@@ -4,6 +4,8 @@ test.describe('AI Teams end-to-end smoke', () => {
   test('desktop core controls and demo execution', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: 'domcontentloaded' });
 
     await expect(page.locator('#chat')).toBeVisible();
     await expect(page.locator('#adminChatInput')).toBeVisible();

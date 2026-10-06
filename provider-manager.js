@@ -128,30 +128,31 @@ async function universalCallAgent(a,goal,transcript){
  }
  const hordeEndpoints=['https://oai.aihorde.net/v1/chat/completions'];
  if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
- let endpoint=hordeEndpoints[0];
- const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
- const body={model:a.model||p.model,messages:messages,temperature:0.2};
+ let models=Array.isArray(state.hordeModels)?state.hordeModels.filter(Boolean):[];
  try{
-  let lastError=null;
-  for(let attempt=1;attempt<=3;attempt++){
-   for(const candidate of hordeEndpoints){
-    endpoint=candidate;
-    const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
-    try{
-    const res=await fetch(endpoint,{method:'POST',headers:headers,body:JSON.stringify(body),signal:controller.signal});
-    const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
-    if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));continue}
-    const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-    if(typeof out==='string'&&out.trim())return out;
-    if(data.choices&&data.choices[0]&&typeof data.choices[0].text==='string'&&data.choices[0].text.trim())return data.choices[0].text;
-    lastError=new Error('پاسخ مدل پیدا نشد.');
-    }catch(e){lastError=e;}
-    finally{clearTimeout(timer)}
-   }
-   if(attempt<3)await new Promise(function(resolve){setTimeout(resolve,attempt*1500)});
-  }
-  throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
- }catch(e){if(e.name==='AbortError')throw new Error('زمان پاسخ تمام شد.');throw e}
+  const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+  if(mr.ok){const mj=await mr.json();const live=Array.isArray(mj.data)?mj.data.map(x=>x&&x.id?String(x.id):'').filter(Boolean):[];if(live.length){models=live.slice(0,200);state.hordeModels=models;state.hordeModelsFetchedAt=Date.now();}}
+ }catch(e){}
+ if(!models.length&&a.model)models=[a.model];
+ if(!models.length&&p.model)models=[p.model];
+ const candidates=[];
+ if(a.model&&models.indexOf(a.model)>=0)candidates.push(a.model);
+ models.forEach(function(m){if(candidates.indexOf(m)<0&&/llama|qwen|mistral|gemma|deepseek|phi|hermes/i.test(m))candidates.push(m)});
+ models.forEach(function(m){if(candidates.indexOf(m)<0)candidates.push(m)});
+ let lastError=null;
+ for(let attempt=1;attempt<=Math.min(3,candidates.length||1);attempt++){
+  const model=String(candidates[attempt-1]||'').trim();if(!model)continue;a.model=model;a.endpoint=hordeEndpoints[0];
+  const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
+  try{
+   const res=await fetch(hordeEndpoints[0],{method:'POST',headers:headers,body:JSON.stringify({model:model,messages:messages,temperature:0.2}),signal:controller.signal});
+   const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
+   if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));}
+   else{const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;const textOut=data.choices&&data.choices[0]&&data.choices[0].text;if(typeof out==='string'&&out.trim()){save();return out;}if(typeof textOut==='string'&&textOut.trim()){save();return textOut;}lastError=new Error('پاسخ مدل پیدا نشد.');}
+  }catch(err){lastError=err.name==='AbortError'?new Error('زمان پاسخ تمام شد.'):err;if(err.name==='AbortError')throw lastError}
+  finally{clearTimeout(timer)}
+  if(attempt<Math.min(3,candidates.length||1))await new Promise(function(resolve){setTimeout(resolve,attempt*1200)});
+ }
+ throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
 }
 function secureProviderStatus(){
  const el=document.getElementById('providerSecureStatus');

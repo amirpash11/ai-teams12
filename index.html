@@ -1130,7 +1130,8 @@ function toggleRightMembers(){
 document.getElementById('rightTeamMembersToggle').addEventListener('click',toggleRightMembers);
 applyRightMembers();
 document.getElementById('addAgentBtn').onclick=addAgent;
-const workflowBuilderBtn=document.getElementById('workflowBuilderBtn');if(workflowBuilderBtn)workflowBuilderBtn.onclick=openWorkflowBuilder;\ndocument.getElementById('workflowBuilderBtn').onclick=openWorkflowBuilder;
+const workflowBuilderBtn=document.getElementById('workflowBuilderBtn');if(workflowBuilderBtn)workflowBuilderBtn.onclick=openWorkflowBuilder;
+document.getElementById('workflowBuilderBtn').onclick=openWorkflowBuilder;
 document.getElementById('demoModeBtn').onclick=function(){setMode('demo')};
 document.getElementById('realModeBtn').onclick=function(){setMode('real')};
 document.getElementById('runBtn').onclick=runTeam;

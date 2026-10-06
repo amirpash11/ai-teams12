@@ -717,9 +717,9 @@ async function callAgentResilient(a,goal,transcript,onDelta){
  throw lastError||new Error('اجرای Agent ناموفق بود.');
 }
 async function reviewTeamOutputs(active,goal,transcript){
- const reviewers=active.filter(function(a){return a.enabled&&a.kind!=='human'}).slice(0,3);
+ const reviewers=active.filter(function(a){return a.enabled&&a.kind!=='human'}).slice(0,Math.min(3,active.length));
  if(!reviewers.length||!transcript)return '';
- const prompt='هدف تیم:\n'+goal+'\n\nخروجی اعضا:\n'+compactContext(transcript,18000)+'\n\nبه‌عنوان منتقد مستقل، خروجی‌ها را با معیارهای صحت، کامل بودن، تناقض، استدلال و قابلیت اجرا بررسی کن. امتیاز ۰ تا ۱۰ بده و بهترین نتیجه را مشخص کن. اگر اطلاعات کافی نیست صریح بگو.';
+ const prompt='هدف تیم:\n'+goal+'\n\nخروجی اعضا:\n'+compactContext(transcript,18000)+'\n\nنکته مهم: تو فقط منتقد هستی و نباید صرفاً از پاسخ خودت دفاع کنی. همه خروجی‌ها را با یک معیار یکسان مقایسه کن. برای هر خروجی، صحت، ارتباط با هدف، کامل بودن، استدلال، قابلیت اجرا و نقاط ضعف را بررسی کن؛ امتیاز ۰ تا ۱۰ بده؛ سپس بهترین گزینه را مشخص کن. اگر اطلاعات کافی نیست صریح بگو و از ساختن واقعیت جدید خودداری کن.';
  const reviews=await Promise.all(reviewers.map(async function(a){
   try{return {name:a.name,text:await callAgentResilient(a,prompt,'')};}
   catch(e){return {name:a.name,text:'خطای منتقد: '+e.message};}
@@ -819,7 +819,7 @@ async function runDialogue(){
  state.teamName=document.getElementById('teamName').value.trim()||'تیم هوش مصنوعی من';
  state.goal=goal;
  if(!goal)return alert('اول کار یا موضوع مشخصی را که اعضا باید درباره انجام آن بحث کنند وارد کن.');
- const active=state.agents.filter(function(a){return a.enabled&&a.kind!=='human'});
+ const active=getWorkflowAgents().filter(function(a){return a.enabled&&a.kind!=='human'});
  if(!active.length)return alert('حداقل یک عضو هوش مصنوعی فعال لازم است.');
  const rounds=Math.max(1,Math.min(3,Number(document.getElementById('dialogueRounds').value)||2));
  busy=true;

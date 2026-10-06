@@ -42,6 +42,32 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#v3Audit')).toContainText('Horde endpoint رسمی');
     await page.locator('#v3Close').click();
 
+    await page.locator('#cloudStorageBtn').click();
+    await expect(page.locator('#cloudStoragePanel')).toBeVisible();
+    await page.locator('#cloudClose').click();
+
+    await page.locator('#githubCloudBtn').click();
+    await expect(page.locator('#githubCloudPanel')).toBeVisible();
+    await page.locator('#ghClose').click();
+
+    await page.locator('#googleDriveBtn').click();
+    await expect(page.locator('#googleDrivePanel')).toBeVisible();
+    await page.locator('#gdriveClose').click();
+
+    await page.locator('#onlineTeamBtn').click();
+    await expect(page.locator('#onlineModal')).toBeVisible();
+    await page.locator('#onlineClose').click();
+
+    await page.locator('#v3ControlBtn').click();
+    await page.locator('#v3Pause').click();
+    await page.evaluate(() => { window.aiTeamsV3.active = true; });
+    await page.locator('#v3Pause').click();
+    await expect(page.locator('#v3RunState')).toContainText('مکث');
+    await page.locator('#v3Resume').click();
+    await expect(page.locator('#v3RunState')).toContainText('در حال اجرا');
+    await page.locator('#v3Stop').click();
+    await page.locator('#v3Close').click();
+
     await page.locator('#goal').fill('یک آزمایش کامل رابط و اجرای تیم انجام بده.');
     await page.locator('#demoModeBtn').click();
     await page.locator('#runBtn').click();

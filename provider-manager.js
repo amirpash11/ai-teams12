@@ -127,7 +127,9 @@ async function universalCallAgent(a,goal,transcript){
   return data.output;
  }
  const hordeEndpoints=['https://oai.aihorde.net/v1/chat/completions'];
- if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
+ const hordeDirect='https://aihorde.net/api/v2/generate/text/async';
+ const hordeStatus='https://aihorde.net/api/v2/generate/text/status/';
+ if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0&&a.endpoint!=='https://aihorde.net/api/v2/generate/text/async')throw new Error('برای AI Horde فقط Endpointهای رسمی مجاز هستند.');
  let models=Array.isArray(state.hordeModels)?state.hordeModels.filter(Boolean):[];
  try{
   const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
@@ -135,12 +137,42 @@ async function universalCallAgent(a,goal,transcript){
  }catch(e){}
  if(!models.length&&a.model)models=[a.model];
  if(!models.length&&p.model)models=[p.model];
- const candidates=[];
- if(a.model&&models.indexOf(a.model)>=0)candidates.push(a.model);
+ const candidates=[];if(a.model&&models.indexOf(a.model)>=0)candidates.push(a.model);
  models.forEach(function(m){if(candidates.indexOf(m)<0&&/llama|qwen|mistral|gemma|deepseek|phi|hermes/i.test(m))candidates.push(m)});
  models.forEach(function(m){if(candidates.indexOf(m)<0)candidates.push(m)});
  let lastError=null;
+ const prompt=messages.map(function(m){return String(m.role||'user').toUpperCase()+': '+String(m.content||'');}).join('\n\n');
+ async function directHorde(model){
+   const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
+   let id='';
+   try{
+     const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:prompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:controller.signal});
+     const raw=await submit.text();let data={};try{data=JSON.parse(raw)}catch(e){}
+     if(!submit.ok)throw new Error((data.message||data.error||raw.slice(0,600)||('HTTP '+submit.status)));
+     id=String(data.id||'');if(!id)throw new Error('AI Horde شناسه درخواست برنگرداند.');
+     const deadline=Date.now()+85000;
+     while(Date.now()<deadline){
+       if(signal&&signal.aborted)throw new DOMException('Aborted','AbortError');
+       await new Promise(function(resolve){setTimeout(resolve,2500)});
+       const st=await fetch(hordeStatus+encodeURIComponent(id),{headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},cache:'no-store'});
+       const sr=await st.text();let sd={};try{sd=JSON.parse(sr)}catch(e){}
+       if(!st.ok)continue;
+       if(sd.done){
+         const out=sd.generations&&sd.generations[0]&&sd.generations[0].text;
+         if(typeof out==='string'&&out.trim())return out;
+         throw new Error('AI Horde درخواست را تکمیل کرد اما متن برنگرداند.');
+       }
+       if(sd.faulted)throw new Error('AI Horde اجرای درخواست را ناموفق اعلام کرد.');
+     }
+     throw new Error('زمان انتظار AI Horde تمام شد.');
+   }finally{clearTimeout(timer);if(id){fetch('https://aihorde.net/api/v2/generate/text/status/'+encodeURIComponent(id),{method:'DELETE',headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},keepalive:true}).catch(function(){})}}
+ }
  for(let attempt=1;attempt<=Math.min(3,candidates.length||1);attempt++){
+  const model=String(candidates[attempt-1]||'').trim();if(!model)continue;a.model=model;a.endpoint=hordeDirect;
+  try{const out=await directHorde(model);save();return out;}catch(err){lastError=err;if(err.name==='AbortError')throw err;}
+ }
+ // Last-resort OpenAI-compatible proxy; it is useful when the direct queue is unavailable.
+ for(let attempt=1;attempt<=Math.min(2,candidates.length||1);attempt++){
   const model=String(candidates[attempt-1]||'').trim();if(!model)continue;a.model=model;a.endpoint=hordeEndpoints[0];
   const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
   try{
@@ -148,9 +180,8 @@ async function universalCallAgent(a,goal,transcript){
    const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
    if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));}
    else{const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;const textOut=data.choices&&data.choices[0]&&data.choices[0].text;if(typeof out==='string'&&out.trim()){save();return out;}if(typeof textOut==='string'&&textOut.trim()){save();return textOut;}lastError=new Error('پاسخ مدل پیدا نشد.');}
-  }catch(err){lastError=err.name==='AbortError'?new Error('زمان پاسخ تمام شد.'):err;if(err.name==='AbortError')throw lastError}
+  }catch(err){lastError=err.name==='AbortError'?new Error('زمان پاسخ تمام شد.'):err;}
   finally{clearTimeout(timer)}
-  if(attempt<Math.min(3,candidates.length||1))await new Promise(function(resolve){setTimeout(resolve,attempt*1200)});
  }
  throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
 }

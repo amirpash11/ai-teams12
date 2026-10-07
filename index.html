@@ -1423,5 +1423,26 @@ document.addEventListener('click',function(ev){
   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button><button class="btn primary" id="knowledgeOpen" style="width:auto">📚 مدیریت Knowledge</button></div>
  </div>
 </div>
+<script>
+(function(){
+ function forceOpenMemory(){
+  var el=document.getElementById('teamMemoryPanel');
+  if(!el){
+   if(typeof openMemoryPanel==='function'){try{openMemoryPanel();}catch(e){}}
+   el=document.getElementById('teamMemoryPanel');
+  }
+  if(el){
+   el.style.setProperty('display','block','important');
+   if(typeof renderMemory==='function')renderMemory();
+  }
+ }
+ window.aiTeamsOpenMemoryPanel=forceOpenMemory;
+ var b=document.getElementById('memoryBtn');
+ if(b&&!b.dataset.forceMemoryBound){
+  b.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();forceOpenMemory();},true);
+  b.dataset.forceMemoryBound='1';
+ }
+})();
+</script>
 </body>
 </html>

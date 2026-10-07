@@ -66,7 +66,7 @@ function panel(){
   '<div class="actions"><button class="btn" style="width:auto" id="cloudSaveConfig">ذخیره تنظیمات Supabase</button></div>'+
   '<div class="field"><label>ایمیل</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="ایمیل حساب"></div>'+
   '<div class="field"><label>رمز عبور</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="حداقل ۸ کاراکتر"></div>'+
-  '<div class="actions"><button class="btn primary" style="width:auto" id="cloudSignIn">ورود</button><button class="btn" style="width:auto" id="cloudSignUp">ساخت حساب</button></div><div class="actions" style="margin-top:6px"><button class="btn" style="width:auto" id="cloudResend">ارسال مجدد تأیید ایمیل</button><button class="btn" style="width:auto" id="cloudReset">بازیابی رمز</button></div></div>'+
+  '<div class="actions"><button class="btn primary" style="width:auto" id="cloudSignIn">ورود</button><button class="btn" style="width:auto" id="cloudGoogleSignIn">🔵 ورود با Google</button><button class="btn" style="width:auto" id="cloudSignUp">ساخت حساب</button></div><div class="actions" style="margin-top:6px"><button class="btn" style="width:auto" id="cloudResend">ارسال مجدد تأیید ایمیل</button><button class="btn" style="width:auto" id="cloudReset">بازیابی رمز</button></div></div>'+
   '<div id="cloudUserBox" style="display:none;margin-top:12px"><div class="tiny" id="cloudUserText"></div>'+
   '<div class="actions"><button class="btn primary" style="width:auto" id="cloudSync">☁ همگام‌سازی الآن</button><button class="btn" style="width:auto" id="cloudSignOut">خروج</button></div></div>'+
   '<div class="notice" style="margin-top:12px">هر حساب فقط به پروژه‌های خودش دسترسی دارد. پروژه‌های ابری حذف خودکار نمی‌شوند.</div>'+
@@ -75,6 +75,7 @@ function panel(){
   document.getElementById('cloudClose').onclick=closePanel;
   document.getElementById('cloudClose2').onclick=closePanel;
   document.getElementById('cloudSignIn').onclick=signIn;
+  document.getElementById('cloudGoogleSignIn').onclick=signInWithGoogle;
   document.getElementById('cloudSignUp').onclick=signUp;
   document.getElementById('cloudResend').onclick=resendConfirmation;
   document.getElementById('cloudReset').onclick=resetPassword;
@@ -147,6 +148,11 @@ async function resetPassword(){
     if(r.error)throw r.error;
     alert('اگر این ایمیل در سیستم ثبت شده باشد، لینک بازیابی رمز ارسال می‌شود.');
   }catch(e){alert('درخواست بازیابی رمز ناموفق بود: '+e.message);}
+}
+async function signInWithGoogle(){
+  if(!cloudReady)return;
+  try{const r=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(r.error)throw r.error;}
+  catch(e){alert('ورود با Google ناموفق بود: '+e.message+'\nاگر Google در Supabase فعال نشده باشد، ابتدا آن را فعال کن.');}
 }
 async function signIn(){
   if(!cloudReady)return;

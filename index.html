@@ -1380,5 +1380,22 @@ document.addEventListener('click',function(ev){
   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button><button class="btn primary" id="knowledgeOpen" style="width:auto" onclick="if(typeof openKnowledgePanel==='function')openKnowledgePanel()">📚 مدیریت Knowledge</button></div>
  </div>
 </div>
-</body>
+<script>
+(function(){
+ if(typeof window.openKnowledgePanel==='function')return;
+ window.openKnowledgePanel=function(){
+  var el=document.getElementById('knowledgePanel');
+  if(!el){
+   el=document.createElement('div');el.id='knowledgePanel';
+   el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:3400;padding:14px;overflow:auto;display:block';
+   el.innerHTML='<div class="card" style="max-width:800px;margin:25px auto;background:#121a2d"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">📚 Knowledge پروژه</h3><button class="icon-btn" id="knowledgeClose" type="button">✕</button></div><div class="notice" style="margin:10px 0">TXT، MD، JSON و CSV تا سقف 300KB قابل افزودن هستند.</div><input id="knowledgeFile" type="file" accept=".txt,.md,.json,.csv,text/plain,text/markdown,application/json,text/csv" style="width:100%;margin:10px 0"><div class="field"><input id="knowledgeName" placeholder="نام سند (اختیاری)"></div><textarea id="knowledgeText" placeholder="یا متن را مستقیم وارد کن..." style="min-height:140px;width:100%"></textarea><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" id="knowledgeAdd" type="button" style="width:auto">＋ افزودن</button><button class="btn" id="knowledgeClear" type="button" style="width:auto">پاک کردن همه</button></div><div id="knowledgeList" style="margin-top:14px"></div></div>';
+   document.body.appendChild(el);
+  }
+  var close=document.getElementById('knowledgeClose');if(close)close.onclick=function(){el.style.display='none';};
+  var add=document.getElementById('knowledgeAdd');if(add&&!add.dataset.bound){add.dataset.bound='1';add.onclick=function(){var tv=document.getElementById('knowledgeText').value.trim();if(!tv)return alert('متن سند خالی است.');if(tv.length>300000)return alert('متن بزرگ‌تر از 300KB است.');window.aiTeamsKnowledge=window.aiTeamsKnowledge||[];window.aiTeamsKnowledge.unshift({id:String(Date.now()),name:(document.getElementById('knowledgeName').value.trim()||'سند بدون نام').slice(0,160),text:tv});renderFallback();document.getElementById('knowledgeText').value='';};}
+  function renderFallback(){var box=document.getElementById('knowledgeList');if(!box)return;var items=window.aiTeamsKnowledge||[];box.innerHTML=items.length?items.map(function(x){return '<div class="agent-row" style="margin-top:8px"><strong>📄 '+String(x.name).replace(/[&<>]/g,'')+'</strong><div class="tiny">'+String(x.text).slice(0,700).replace(/[&<>]/g,'')+'</div></div>';}).join(''):'<div class="empty">Knowledge خالی است.</div>';}
+  renderFallback();el.style.display='block';
+ };
+})();
+</script></body>
 </html>

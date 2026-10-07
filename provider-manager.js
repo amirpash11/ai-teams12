@@ -110,7 +110,7 @@ function attachProviderChange(){
  window.__aiTeamsProviderChangeAttached=true;
 }
 
-async function universalCallAgent(a,goal,transcript){
+async function universalCallAgent(a,goal,transcript,signal){
  const p=providerById(a.provider)||providerById('horde');
  if(!p)throw new Error('سرویس این Agent پیدا نشد.');
  const prompt='هدف تیم:\\n'+goal+'\\n\\nخروجی اعضای قبلی:\\n'+(transcript||'هنوز خروجی قبلی وجود ندارد.')+'\\n\\nاکنون فقط وظیفه نقش خودت را انجام بده و نتیجه مشخص و قابل استفاده تحویل بده.';
@@ -132,7 +132,7 @@ async function universalCallAgent(a,goal,transcript){
  if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0&&a.endpoint!=='https://aihorde.net/api/v2/generate/text/async')throw new Error('برای AI Horde فقط Endpointهای رسمی مجاز هستند.');
  let models=Array.isArray(state.hordeModels)?state.hordeModels.filter(Boolean):[];
  try{
-  const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+  const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store',signal:signal});
   if(mr.ok){const mj=await mr.json();const live=Array.isArray(mj.data)?mj.data.map(x=>x&&x.id?String(x.id):'').filter(Boolean):[];if(live.length){models=live.slice(0,200);state.hordeModels=models;state.hordeModelsFetchedAt=Date.now();}}
  }catch(e){}
  if(!models.length&&a.model)models=[a.model];
@@ -147,14 +147,14 @@ async function universalCallAgent(a,goal,transcript){
    const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
    let id='';
    try{
-     const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:hordePrompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:controller.signal});
+     const requestSignal=signal||controller.signal; const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:hordePrompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:requestSignal});
      const raw=await submit.text();let data={};try{data=JSON.parse(raw)}catch(e){}
      if(!submit.ok)throw new Error((data.message||data.error||raw.slice(0,600)||('HTTP '+submit.status)));
      id=String(data.id||'');if(!id)throw new Error('AI Horde شناسه درخواست برنگرداند.');
      const deadline=Date.now()+85000;
      while(Date.now()<deadline){
        await new Promise(function(resolve){setTimeout(resolve,2500)});
-       const st=await fetch(hordeStatus+encodeURIComponent(id),{headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},cache:'no-store'});
+       const st=await fetch(hordeStatus+encodeURIComponent(id),{headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},cache:'no-store',signal:requestSignal});
        const sr=await st.text();let sd={};try{sd=JSON.parse(sr)}catch(e){}
        if(!st.ok)continue;
        if(sd.done){
@@ -176,7 +176,7 @@ async function universalCallAgent(a,goal,transcript){
   const model=String(candidates[attempt-1]||'').trim();if(!model)continue;a.model=model;a.endpoint=hordeEndpoints[0];
   const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
   try{
-   const res=await fetch(hordeEndpoints[0],{method:'POST',headers:headers,body:JSON.stringify({model:model,messages:messages,temperature:0.2}),signal:controller.signal});
+   const res=await fetch(hordeEndpoints[0],{method:'POST',headers:headers,body:JSON.stringify({model:model,messages:messages,temperature:0.2}),signal:signal||controller.signal});
    const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
    if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));}
    else{const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;const textOut=data.choices&&data.choices[0]&&data.choices[0].text;if(typeof out==='string'&&out.trim()){save();return out;}if(typeof textOut==='string'&&textOut.trim()){save();return textOut;}lastError=new Error('پاسخ مدل پیدا نشد.');}

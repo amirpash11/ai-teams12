@@ -29,8 +29,10 @@ assert(provider.includes("https://oai.aihorde.net/v1/chat/completions"),'current
 assert(provider.includes("https://aihorde.net/api/v2/generate/text/async"),'Horde direct async endpoint missing');
 assert(provider.includes("const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'}"),'Horde fallback headers missing');
 assert(provider.includes('async function universalCallAgent(a,goal,transcript,signal)'),'AI Horde universal runtime must accept cancellation signal');
-assert(provider.includes('signal:signal||controller.signal'),'AI Horde request must propagate cancellation signal');
+assert(provider.includes('const requestSignal=controller.signal'),'AI Horde must use the controller signal for every request');
 assert(provider.includes('signal.addEventListener(\'abort\',abortHandler,{once:true})'),'AI Horde must bridge external AbortSignal to its timeout controller');
+assert(provider.includes('window.aiTeamsTrackController?window.aiTeamsTrackController():new AbortController()'),'AI Horde must register its controller with the team-wide cancellation manager');
+assert(provider.includes('window.aiTeamsReleaseController(controller)'),'AI Horde must release its controller after completion');
 assert(provider.includes("const requestSignal=controller.signal"),'AI Horde must use its own timeout controller signal');
 assert(provider.includes('signal&&abortHandler)signal.removeEventListener(\'abort\',abortHandler)'),'AI Horde must remove abort listeners after each request');
 assert(html.includes("window.aiTeamsUniversalCallAgent==='function'"),'index must delegate Horde to robust provider runtime');

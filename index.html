@@ -1042,12 +1042,15 @@ async function runTeam(){
  const runId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now());
  state.runs=state.runs||[];
  state.chat=[];
+ timelineReset(runId);
+ timelineEvent('run',null,'اجرای زنجیره‌ای تیم شروع شد.',{agents:active.length});
  resetLiveRun(active);
  let teamHadError=false;
  msg('شما','👤','هدف: '+goal,'user',false);
  let transcript=buildTeamRoster(active)+'\\n\\nحافظه اخیر تیم:\\n'+(previousMemory||'موردی وجود ندارد.')+'\\n\\nشروع اجرای زنجیره‌ای تیم:\\n';
  try{ for(let i=0;i<active.length;i++){
   const a=active[i];
+  timelineEvent('start',a,'شروع مرحله '+(i+1)+' از '+active.length+'.');
   const stageMessage={name:a.name,icon:a.icon,text:(i===0?'مرحله ۱ — در حال تحلیل اولیه...':'مرحله '+(i+1)+' — در حال بررسی خروجی اعضای قبلی...'),kind:'agent',error:false}; state.chat.push(stageMessage); renderChat();
   setLiveAgent(a,'running','');
   try{
@@ -1058,14 +1061,16 @@ async function runTeam(){
     '\\nاین یک اجرای زنجیره‌ای است: خروجی اعضای قبلی را بررسی کن، خطاها یا کمبودهای آن‌ها را اصلاح کن و سپس خروجی خودت را به‌عنوان ورودی مرحله بعد کامل‌تر کن.'+
     '\\nاگر عضو قبلی راه‌حل ناقص یا اشتباهی داده، بدون تعارف آن بخش را مشخص و اصلاح کن.';
    setLiveAgent(a,'thinking','');
+   timelineEvent('thinking',a,'Agent در حال تحلیل و تولید پاسخ است.');
    const result=state.mode==='demo'?mockResponse(a,goal,state.chat):await callAgentResilient(a,context,transcript,function(delta){stageMessage.text=(stageMessage.text||'').replace(/^مرحله [^—]+— در حال[^\n]*\.\.\.$/,'')+delta;liveDelta(a,delta);renderChat();});
-   stageMessage.text=result;stageMessage.error=false;setLiveAgent(a,'completed',result);
+   stageMessage.text=result;stageMessage.error=false;setLiveAgent(a,'completed',result);timelineEvent('complete',a,'مرحله با موفقیت تکمیل شد.',{outputLength:String(result||'').length});
    transcript+=(transcript?'\\n\\n':'')+'[مرحله '+(i+1)+' | '+a.name+']\\n'+result;
    transcript=compactContext(transcript,30000);
    renderChat();save();
   }catch(e){
    teamHadError=true;
    setLiveAgent(a,(cancelRequested||e.name==='AbortError')?'cancelled':'error',undefined,e.message);
+   timelineEvent((cancelRequested||e.name==='AbortError')?'cancel':'error',a,(cancelRequested||e.name==='AbortError')?'مرحله لغو شد.':'مرحله با خطا پایان یافت.',{error:String(e.message||'')});
    stageMessage.text=(cancelRequested||e.name==='AbortError')?'⏹️ لغو شد: '+e.message:'خطا: '+e.message;stageMessage.error=true;
    renderChat();save();
    transcript+='\\n\\n[مرحله '+(i+1)+' | '+a.name+' - خطا]\\n'+e.message;
@@ -1074,6 +1079,7 @@ async function runTeam(){
  }
  const coordinator=active[active.length-1];
  let reviewTranscript='';
+ timelineEvent('review',coordinator,'شروع نقد و بررسی خروجی‌های تیم.');
  if(state.mode!=='demo'){try{reviewTranscript=await reviewTeamOutputs(active,goal,transcript);}catch(e){reviewTranscript='خطای مرحله نقد: '+e.message;}}
  const finalMessage={name:'جمع‌بندی تیم',icon:'🧠',text:'در حال جمع‌بندی خروجی همه اعضا...',kind:'agent',error:false}; state.chat.push(finalMessage); renderChat();
  let finalResult='';
@@ -1089,10 +1095,12 @@ async function runTeam(){
    finalResult=await callAgentResilient(coordinator,finalGoal,transcript);
   }
   finalMessage.text=finalResult;finalMessage.error=false;
+  timelineEvent('final',coordinator,'جمع‌بندی نهایی تولید شد.',{outputLength:String(finalResult||'').length});
   transcript+='\\n\\n[جمع‌بندی نهایی | '+coordinator.name+']\\n'+finalResult;
   renderChat();save();
  }catch(e){
   teamHadError=true;
+  timelineEvent('error',coordinator,'جمع‌بندی نهایی با خطا مواجه شد.',{error:String(e.message||'')});
   finalMessage.text='خطا در جمع‌بندی نهایی: '+e.message;finalMessage.error=true;
   renderChat();save();
  }
@@ -1116,6 +1124,17 @@ async function runTeam(){
   finishLiveRun();
   save();
  }
+}
+function ensureTimeline(){if(!window.__aiTeamsTimeline)window.__aiTeamsTimeline={runId:null,startedAt:null,events:[],seq:0};return window.__aiTeamsTimeline;}
+function timelineReset(runId){const t=ensureTimeline();t.runId=String(runId||'');t.startedAt=Date.now();t.events=[];t.seq=0;renderTimeline();}
+function timelineEvent(type,agent,text,meta){const t=ensureTimeline();const now=Date.now();t.events.push({id:++t.seq,at:new Date(now).toISOString(),elapsed:t.startedAt?now-t.startedAt:0,type:String(type||'info'),agentId:agent&&agent.id||null,agentName:agent&&agent.name||'سیستم',text:String(text||''),meta:meta||null});if(t.events.length>200)t.events=t.events.slice(-200);renderTimeline();}
+function timelineIcon(type){return ({run:'🚀',start:'▶️',thinking:'🧠',stream:'✍️',complete:'✅',error:'❌',cancel:'⏹️',retry:'🔁',skip:'⏭️',review:'🔎',final:'🏁',info:'ℹ️'})[type]||'•';}
+function renderTimeline(){
+ let el=document.getElementById('teamTimelinePanel');
+ if(!el){el=document.createElement('div');el.id='teamTimelinePanel';el.className='card wide';el.style.marginTop='12px';const host=document.querySelector('.main .grid');if(host)host.appendChild(el);else return;}
+ const t=ensureTimeline(),events=t.events||[];
+ const rows=events.slice().reverse().map(function(e){const sec=Math.max(0,Math.floor(Number(e.elapsed||0)/1000));const mm=String(Math.floor(sec/60)).padStart(2,'0'),ss=String(sec%60).padStart(2,'0');return '<div style="display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>'+timelineIcon(e.type)+'</span><span class="pill">'+mm+':'+ss+'</span><div><b style="font-size:10px">'+esc(e.agentName)+'</b><div class="tiny">'+esc(e.text)+'</div></div></div>';}).join('');
+ el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><h3 style="margin:0">🕒 Timeline اجرای تیم</h3><div class="tiny">'+(t.startedAt?'زمان سپری‌شده و رویدادهای اجرای فعلی':'هنوز اجرایی شروع نشده است.')+'</div></div><button class="btn" type="button" style="width:auto" onclick="timelineReset(ensureTimeline().runId)">پاک‌سازی</button></div><div style="margin-top:8px;max-height:260px;overflow:auto">'+(rows||'<div class="empty" style="min-height:100px">پس از اجرای تیم، Timeline اینجا نمایش داده می‌شود.</div>')+'</div>';
 }
 function ensureLiveRun(){if(!window.__aiTeamsLive)window.__aiTeamsLive={active:false,currentAgentId:null,statuses:{},outputs:{},errors:{},throttles:{}};return window.__aiTeamsLive;}
 function liveStatusLabel(s){return ({waiting:'در انتظار',running:'در حال اجرا',thinking:'در حال فکر کردن',streaming:'در حال تولید',completed:'تکمیل شد',error:'خطا',cancelled:'لغو شد'})[s]||s;}

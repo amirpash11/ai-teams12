@@ -356,21 +356,14 @@ function injectUI(){
    }
  }
  if(btn){
-   btn.onclick=openPanel;
-   btn.setAttribute('onclick',"if(window.aiTeamsV3Open){try{window.aiTeamsV3Open()}catch(e){}};var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');");
+   btn.onclick=null;
+   btn.setAttribute('onclick',"var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');");
    if(!btn.dataset.v3OpenBound){
      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();openPanel();},true);
      btn.dataset.v3OpenBound='1';
    }
  }
  const stop=document.getElementById('stopBtn');
- if(!window.__aiTeamsV3OpenClickBound){
-   document.addEventListener('click',function(ev){
-     const b=ev.target.closest&&ev.target.closest('#v3ControlBtn');
-     if(b){ev.preventDefault();ev.stopImmediatePropagation();try{openPanel();}catch(e){};var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');setTimeout(function(){var x=document.getElementById('v3Panel');if(x)x.style.setProperty('display','block','important');},0);}
-   },true);
-   window.__aiTeamsV3OpenClickBound=true;
- }
  if(stop)stop.dataset.v3Enhanced='1';
  const mainRun=document.getElementById('runBtn');if(mainRun&&!mainRun.dataset.v3Bound){mainRun.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();runSequentialV3();},true);mainRun.dataset.v3Bound='1';}
  const globalStop=document.getElementById('stopBtn');if(globalStop&&!globalStop.dataset.v3StopBound){globalStop.addEventListener('click',function(){if(V.active)stopRun();},true);globalStop.dataset.v3StopBound='1';}

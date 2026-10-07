@@ -363,6 +363,13 @@ function injectUI(){
    }
  }
  const stop=document.getElementById('stopBtn');
+ if(!window.__aiTeamsV3OpenClickBound){
+   document.addEventListener('click',function(ev){
+     const b=ev.target.closest&&ev.target.closest('#v3ControlBtn');
+     if(b){ev.preventDefault();ev.stopImmediatePropagation();try{openPanel();}catch(e){}}
+   },true);
+   window.__aiTeamsV3OpenClickBound=true;
+ }
  if(stop)stop.dataset.v3Enhanced='1';
  const mainRun=document.getElementById('runBtn');if(mainRun&&!mainRun.dataset.v3Bound){mainRun.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();runSequentialV3();},true);mainRun.dataset.v3Bound='1';}
  const globalStop=document.getElementById('stopBtn');if(globalStop&&!globalStop.dataset.v3StopBound){globalStop.addEventListener('click',function(){if(V.active)stopRun();},true);globalStop.dataset.v3StopBound='1';}

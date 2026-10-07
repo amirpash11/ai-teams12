@@ -131,7 +131,9 @@ async function universalCallAgent(a,goal,transcript,signal){
  const hordeStatus='https://aihorde.net/api/v2/generate/text/status/';
  if(a.endpoint&&hordeEndpoints.indexOf(a.endpoint)<0&&a.endpoint!=='https://aihorde.net/api/v2/generate/text/async')throw new Error('برای AI Horde فقط Endpointهای رسمی مجاز هستند.');
  let models=Array.isArray(state.hordeModels)?state.hordeModels.filter(Boolean):[];
+ const modelCacheFresh=Number(state.hordeModelsFetchedAt||0)>0&&(Date.now()-Number(state.hordeModelsFetchedAt||0)<10*60*1000);
  try{
+  if(modelCacheFresh&&models.length)throw new Error('cached');
   const mr=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store',signal:signal});
   if(mr.ok){const mj=await mr.json();const live=Array.isArray(mj.data)?mj.data.map(x=>x&&x.id?String(x.id):'').filter(Boolean):[];if(live.length){models=live.slice(0,200);state.hordeModels=models;state.hordeModelsFetchedAt=Date.now();}}
  }catch(e){}
@@ -144,7 +146,7 @@ async function universalCallAgent(a,goal,transcript,signal){
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const hordePrompt=messages.map(function(m){return String(m.role||'user').toUpperCase()+': '+String(m.content||'');}).join('\n\n');
  async function directHorde(model){
-   const controller=new AbortController();
+   const controller=(window.aiTeamsTrackController?window.aiTeamsTrackController():new AbortController());
    const requestSignal=controller.signal;
    let id='';
    let abortHandler=null;
@@ -186,6 +188,7 @@ async function universalCallAgent(a,goal,transcript,signal){
    }finally{
      clearTimeout(timer);
      if(signal&&abortHandler)signal.removeEventListener('abort',abortHandler);
+     if(window.aiTeamsReleaseController)window.aiTeamsReleaseController(controller);
      if(id){fetch('https://aihorde.net/api/v2/generate/text/status/'+encodeURIComponent(id),{method:'DELETE',headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},keepalive:true}).catch(function(){})}
    }
  }

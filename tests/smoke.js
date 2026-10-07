@@ -69,3 +69,11 @@ assert(fs.existsSync('ai-teams-v3.js'),'v3 orchestration layer missing');
 const v3=fs.readFileSync('ai-teams-v3.js','utf8');
 for(const needle of ['runSequentialV3','pauseRun','resumeRun','retryCurrent','skipCurrent','stopRun','safeCalc','aiTeamsV3Audit','v3TimelineList','agentMemory']) assert(v3.includes(needle),'v3 invariant missing: '+needle);
 console.log('AI Teams v3 smoke invariants: PASS');
+
+(function(){
+ const fs=require('fs'); const v3=fs.readFileSync('ai-teams-v3.js','utf8');
+ if(!v3.includes('const src=String(text||\'\');')) throw new Error('v3 tool parser source guard missing');
+ if(!v3.includes('new AbortController()')) throw new Error('v3 AbortController missing');
+ if(!v3.includes('window.aiTeamsAbortAll')) throw new Error('v3 global abort integration missing');
+ console.log('v3 tool parser/abort invariants PASS');
+})();

@@ -99,7 +99,7 @@ function executeTool(name,input){
 function extractToolCalls(text){
  const src=String(text||'');
  const out=[];
- const re=/\\[\\[TOOL\\s*:\\s*([a-zA-Z0-9_\\-]+)\\s*\\]\\]\\s*([\\s\\S]*?)\\s*\\[\\[\\/TOOL\\s*\\]\\]/g;
+ const re=/\[\[TOOL\s*:\s*([a-zA-Z0-9_-]+)\s*\]\]([\s\S]*?)\[\[\/TOOL\s*\]\]/g;
  let m;
  while((m=re.exec(src))&&out.length<4)out.push({name:m[1],input:m[2].trim()});
  return out;

@@ -338,7 +338,7 @@ function bindCoreUiFallback(){
 }
 function injectUI(){
  ensurePanel();
- if(document.getElementById('v3Css'))return;
+ if(!document.getElementById('v3Css')){
  const st=document.createElement('style');st.id='v3Css';st.textContent=
  '.v3-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}'+
  '.v3-sub{box-shadow:none!important;padding:13px!important}'+
@@ -348,6 +348,7 @@ function injectUI(){
  '.v3-time{font-size:9px;color:#90a0bc}.v3-dot{font-size:15px}.v3-pre{white-space:pre-wrap;min-height:30px;color:#dbe4f7}.v3-tools{display:flex;gap:7px;margin-top:8px}.v3-tools input{flex:1}'+
  '@media(max-width:700px){.v3-grid{grid-template-columns:1fr}.v3-actions{grid-template-columns:1fr}.v3-tools{flex-direction:column}}';
  document.head.appendChild(st);
+ }
  let btn=document.getElementById('v3ControlBtn');
  if(!btn){
    const side=document.querySelector('.sidebar'); if(side){
@@ -357,7 +358,8 @@ function injectUI(){
  }
  if(btn){
    btn.onclick=null;
-   btn.setAttribute('onclick',"var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');");
+   btn.removeAttribute('onclick');
+   btn.addEventListener('click',openPanel,{once:false});
  }
  const stop=document.getElementById('stopBtn');
  if(stop)stop.dataset.v3Enhanced='1';

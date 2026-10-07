@@ -1388,8 +1388,8 @@ document.addEventListener('click',function(ev){
     if(knowledge)knowledge.onclick=openKnowledgePanel;
     el.dataset.bound='1';
    }
-   if(typeof renderMemory==='function')renderMemory();
-   el.style.display='block';
+   try{if(typeof renderMemory==='function')renderMemory();}catch(e){}
+   el.style.setProperty('display','block','important');
    return true;
   }
   return false;
@@ -1433,7 +1433,8 @@ document.addEventListener('click',function(ev){
   }
   if(el){
    el.style.setProperty('display','block','important');
-   if(typeof renderMemory==='function')renderMemory();
+   try{if(typeof renderMemory==='function')renderMemory();}catch(e){}
+   el.style.setProperty('display','block','important');
   }
  }
  window.aiTeamsOpenMemoryPanel=forceOpenMemory;

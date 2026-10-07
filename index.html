@@ -1426,16 +1426,13 @@ document.addEventListener('click',function(ev){
 <script>
 (function(){
  function forceOpenMemory(){
-  var el=document.getElementById('teamMemoryPanel');
-  if(!el){
-   if(typeof openMemoryPanel==='function'){try{openMemoryPanel();}catch(e){}}
-   el=document.getElementById('teamMemoryPanel');
-  }
-  if(el){
-   el.style.setProperty('display','block','important');
-   try{if(typeof renderMemory==='function')renderMemory();}catch(e){}
-   el.style.setProperty('display','block','important');
-  }
+  var el=null;
+  try{if(typeof openMemoryPanel==='function')openMemoryPanel();}catch(e){}
+  el=document.getElementById('teamMemoryPanel');
+  if(!el)return;
+  try{if(typeof renderMemory==='function')renderMemory();}catch(e){}
+  el.style.setProperty('display','block','important');
+  setTimeout(function(){var x=document.getElementById('teamMemoryPanel');if(x)x.style.setProperty('display','block','important');},0);
  }
  window.aiTeamsOpenMemoryPanel=forceOpenMemory;
  var b=document.getElementById('memoryBtn');

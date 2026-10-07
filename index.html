@@ -1236,7 +1236,7 @@ function moveHomeOptionsToRightDrawer(){
  if(!sidebar.contains(panel))sidebar.appendChild(panel);
  sidebar.dataset.optionsMoved='1';
 }
-window.aiTeamsAbortAll=abortAllActiveRequests;window.aiTeamsReleaseController=releaseAbortController;window.aiTeamsTrackController=trackAbortController;window.openMemoryPanel=openMemoryPanel;function init(){moveHomeOptionsToRightDrawer();var s=document.querySelector('.sidebar');var b=document.getElementById('memoryBtn');var anchor=document.getElementById('workspaceBtn');if(s&&!b){b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}if(b)b.onclick=openMemoryPanel;refreshHordeModels();}
+window.aiTeamsAbortAll=abortAllActiveRequests;window.aiTeamsReleaseController=releaseAbortController;window.aiTeamsTrackController=trackAbortController;window.openMemoryPanel=openMemoryPanel;function init(){moveHomeOptionsToRightDrawer();var s=document.querySelector('.sidebar');var b=document.getElementById('memoryBtn');var anchor=document.getElementById('workspaceBtn');if(s&&!b){b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}if(b)b.onclick=safeOpenMemoryPanel;refreshHordeModels();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script>
@@ -1373,12 +1373,24 @@ document.addEventListener('click',function(ev){
 <script src="google-drive-storage.js?v=1"></script>\n<script src="ai-teams-v3.js?v=1"></script>
 <script id="restoreMemoryControlV1">
 (function(){
+ function safeOpenMemoryPanel(){
+  try{
+   if(typeof openMemoryPanel==='function')openMemoryPanel();
+  }catch(e){}
+  var el=document.getElementById('teamMemoryPanel');
+  if(el){
+   el.style.display='block';
+   return true;
+  }
+  return false;
+ }
  function bindMemoryClick(){
   if(window.__aiTeamsMemoryClickBound)return;
   document.addEventListener('click',function(ev){
    var b=ev.target&&ev.target.closest?ev.target.closest('#memoryBtn'):null;
    if(!b)return;
-   if(typeof openMemoryPanel==='function'){ev.preventDefault();ev.stopImmediatePropagation();openMemoryPanel();}
+   ev.preventDefault();ev.stopImmediatePropagation();
+   safeOpenMemoryPanel();
   },true);
   window.__aiTeamsMemoryClickBound=true;
  }

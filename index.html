@@ -245,7 +245,7 @@ input,textarea,select{font-size:16px}
   <button class="btn primary" id="addAgentBtn" onclick="openAgentBuilder()">＋ افزودن عضو</button>
   <button class="btn" id="workflowBuilderBtn" onclick="openWorkflowBuilder()">⚙ Workflow</button>
   <button class="btn" id="providersBtn">⚙ مدیریت و افزودن سرویس</button>
-  <button class="btn" id="memoryBtn" onclick="document.getElementById('teamMemoryPanel').style.display='block';if(typeof renderMemory==='function')renderMemory()">🧠 حافظه تیم</button>
+  <button class="btn" id="memoryBtn" onclick="try{if(typeof openMemoryPanel==='function')openMemoryPanel();}catch(e){};var x=document.getElementById('teamMemoryPanel');if(x)x.style.setProperty('display','block','important');">🧠 حافظه تیم</button>
   <button class="btn" id="aiCatalogBtn">🔎 جستجوی هوش مصنوعی</button>
 </aside>
 
@@ -1371,49 +1371,6 @@ document.addEventListener('click',function(ev){
 <script src="cloud-storage.js?v=2"></script>
 <script src="workspace-manager.js?v=1"></script>\n<script src="github-storage.js?v=1"></script>
 <script src="google-drive-storage.js?v=1"></script>\n<script src="ai-teams-v3.js?v=1"></script>
-<script id="restoreMemoryControlV1">
-(function(){
- function safeOpenMemoryPanel(){
-  try{
-   if(typeof openMemoryPanel==='function')openMemoryPanel();
-  }catch(e){}
-  var el=document.getElementById('teamMemoryPanel');
-  if(el){
-   if(!el.dataset.bound){
-    var close=document.getElementById('memoryClose'),clear=document.getElementById('memoryClear'),refresh=document.getElementById('memoryRefresh'),search=document.getElementById('memorySearch'),knowledge=document.getElementById('knowledgeOpen');
-    if(close)close.onclick=function(){el.style.display='none';};
-    if(clear)clear.onclick=function(){if(confirm('تمام حافظه اجرای این پروژه پاک شود؟')){state.memory=[];save();renderMemory();}};
-    if(refresh)refresh.onclick=renderMemory;
-    if(search)search.oninput=renderMemory;
-    if(knowledge)knowledge.onclick=openKnowledgePanel;
-    el.dataset.bound='1';
-   }
-   try{if(typeof renderMemory==='function')renderMemory();}catch(e){}
-   el.style.setProperty('display','block','important');
-   return true;
-  }
-  return false;
- }
- function bindMemoryClick(){
-  if(window.__aiTeamsMemoryClickBound)return;
-  document.addEventListener('click',function(ev){
-   var b=ev.target&&ev.target.closest?ev.target.closest('#memoryBtn'):null;
-   if(!b)return;
-   ev.preventDefault();ev.stopImmediatePropagation();
-   safeOpenMemoryPanel();
-  },true);
-  window.__aiTeamsMemoryClickBound=true;
- }
- function ensureMemoryButton(){
-  if(document.getElementById('memoryBtn')||typeof openMemoryPanel!=='function')return;
-  var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;
-  var s=document.querySelector('.sidebar'),anchor=document.getElementById('workspaceBtn');
-  if(s){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){bindMemoryClick();ensureMemoryButton();});else{bindMemoryClick();ensureMemoryButton();}
- setTimeout(ensureMemoryButton,500);
-})();
-</script>
 <div id="teamMemoryPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:3200;padding:14px;overflow:auto">
  <div class="card" style="max-width:800px;margin:25px auto;background:#121a2d">
   <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🧠 حافظه و Knowledge تیم</h3><button class="icon-btn" id="memoryClose">✕</button></div>
@@ -1423,24 +1380,5 @@ document.addEventListener('click',function(ev){
   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button><button class="btn primary" id="knowledgeOpen" style="width:auto">📚 مدیریت Knowledge</button></div>
  </div>
 </div>
-<script>
-(function(){
- function forceOpenMemory(){
-  var el=null;
-  try{if(typeof openMemoryPanel==='function')openMemoryPanel();}catch(e){}
-  el=document.getElementById('teamMemoryPanel');
-  if(!el)return;
-  try{if(typeof renderMemory==='function')renderMemory();}catch(e){}
-  el.style.setProperty('display','block','important');
-  setTimeout(function(){var x=document.getElementById('teamMemoryPanel');if(x)x.style.setProperty('display','block','important');},0);
- }
- window.aiTeamsOpenMemoryPanel=forceOpenMemory;
- var b=document.getElementById('memoryBtn');
- if(b&&!b.dataset.forceMemoryBound){
-  b.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();forceOpenMemory();},true);
-  b.dataset.forceMemoryBound='1';
- }
-})();
-</script>
 </body>
 </html>

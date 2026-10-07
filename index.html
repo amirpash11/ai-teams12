@@ -1373,13 +1373,22 @@ document.addEventListener('click',function(ev){
 <script src="google-drive-storage.js?v=1"></script>\n<script src="ai-teams-v3.js?v=1"></script>
 <script id="restoreMemoryControlV1">
 (function(){
+ function bindMemoryClick(){
+  if(window.__aiTeamsMemoryClickBound)return;
+  document.addEventListener('click',function(ev){
+   var b=ev.target&&ev.target.closest?ev.target.closest('#memoryBtn'):null;
+   if(!b)return;
+   if(typeof openMemoryPanel==='function'){ev.preventDefault();ev.stopImmediatePropagation();openMemoryPanel();}
+  },true);
+  window.__aiTeamsMemoryClickBound=true;
+ }
  function ensureMemoryButton(){
   if(document.getElementById('memoryBtn')||typeof openMemoryPanel!=='function')return;
   var b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';b.onclick=openMemoryPanel;
   var s=document.querySelector('.sidebar'),anchor=document.getElementById('workspaceBtn');
   if(s){if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureMemoryButton);else ensureMemoryButton();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){bindMemoryClick();ensureMemoryButton();});else{bindMemoryClick();ensureMemoryButton();}
  setTimeout(ensureMemoryButton,500);
 })();
 </script>

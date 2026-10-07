@@ -144,16 +144,34 @@ async function universalCallAgent(a,goal,transcript,signal){
  const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'};
  const hordePrompt=messages.map(function(m){return String(m.role||'user').toUpperCase()+': '+String(m.content||'');}).join('\n\n');
  async function directHorde(model){
-   const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
+   const controller=new AbortController();
+   const requestSignal=controller.signal;
    let id='';
+   let abortHandler=null;
+   const timer=setTimeout(function(){controller.abort()},90000);
+   const wait=function(ms){
+     return new Promise(function(resolve,reject){
+       let done=false;
+       const finish=function(fn,value){if(done)return;done=true;clearTimeout(t);if(requestSignal)requestSignal.removeEventListener('abort',onAbort);fn(value);};
+       const onAbort=function(){const e=new DOMException('The operation was aborted.','AbortError');finish(reject,e);};
+       const t=setTimeout(function(){finish(resolve)},ms);
+       if(requestSignal)requestSignal.addEventListener('abort',onAbort,{once:true});
+       if(requestSignal.aborted)onAbort();
+     });
+   };
    try{
-     const requestSignal=signal||controller.signal; const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:hordePrompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:requestSignal});
+     if(signal){
+       if(signal.aborted){controller.abort();throw new DOMException('The operation was aborted.','AbortError');}
+       abortHandler=function(){controller.abort()};
+       signal.addEventListener('abort',abortHandler,{once:true});
+     }
+     const submit=await fetch(hordeDirect,{method:'POST',headers:{'Content-Type':'application/json','apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},body:JSON.stringify({prompt:hordePrompt,params:{max_context_length:4096,max_length:256,temperature:0.2,top_p:0.95},models:[model]}),signal:requestSignal});
      const raw=await submit.text();let data={};try{data=JSON.parse(raw)}catch(e){}
      if(!submit.ok)throw new Error((data.message||data.error||raw.slice(0,600)||('HTTP '+submit.status)));
      id=String(data.id||'');if(!id)throw new Error('AI Horde شناسه درخواست برنگرداند.');
      const deadline=Date.now()+85000;
      while(Date.now()<deadline){
-       await new Promise(function(resolve){setTimeout(resolve,2500)});
+       await wait(2500);
        const st=await fetch(hordeStatus+encodeURIComponent(id),{headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},cache:'no-store',signal:requestSignal});
        const sr=await st.text();let sd={};try{sd=JSON.parse(sr)}catch(e){}
        if(!st.ok)continue;
@@ -165,7 +183,11 @@ async function universalCallAgent(a,goal,transcript,signal){
        if(sd.faulted)throw new Error('AI Horde اجرای درخواست را ناموفق اعلام کرد.');
      }
      throw new Error('زمان انتظار AI Horde تمام شد.');
-   }finally{clearTimeout(timer);if(id){fetch('https://aihorde.net/api/v2/generate/text/status/'+encodeURIComponent(id),{method:'DELETE',headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},keepalive:true}).catch(function(){})}}
+   }finally{
+     clearTimeout(timer);
+     if(signal&&abortHandler)signal.removeEventListener('abort',abortHandler);
+     if(id){fetch('https://aihorde.net/api/v2/generate/text/status/'+encodeURIComponent(id),{method:'DELETE',headers:{'apikey':'0000000000','Client-Agent':'AI-Teams/1.0'},keepalive:true}).catch(function(){})}
+   }
  }
  for(let attempt=1;attempt<=Math.min(3,candidates.length||1);attempt++){
   const model=String(candidates[attempt-1]||'').trim();if(!model)continue;a.model=model;a.endpoint=hordeDirect;
@@ -174,14 +196,21 @@ async function universalCallAgent(a,goal,transcript,signal){
  // Last-resort OpenAI-compatible proxy; it is useful when the direct queue is unavailable.
  for(let attempt=1;attempt<=Math.min(2,candidates.length||1);attempt++){
   const model=String(candidates[attempt-1]||'').trim();if(!model)continue;a.model=model;a.endpoint=hordeEndpoints[0];
-  const controller=new AbortController(),timer=setTimeout(function(){controller.abort()},90000);
+  const controller=new AbortController();
+  let abortHandler=null;
+  const timer=setTimeout(function(){controller.abort()},90000);
   try{
-   const res=await fetch(hordeEndpoints[0],{method:'POST',headers:headers,body:JSON.stringify({model:model,messages:messages,temperature:0.2}),signal:signal||controller.signal});
+   if(signal){
+    if(signal.aborted){controller.abort();throw new DOMException('The operation was aborted.','AbortError');}
+    abortHandler=function(){controller.abort()};
+    signal.addEventListener('abort',abortHandler,{once:true});
+   }
+   const res=await fetch(hordeEndpoints[0],{method:'POST',headers:headers,body:JSON.stringify({model:model,messages:messages,temperature:0.2}),signal:controller.signal});
    const raw=await res.text();let data={};try{data=JSON.parse(raw)}catch(e){}
    if(!res.ok){lastError=new Error((data.error&&data.error.message)||data.message||raw.slice(0,600)||('HTTP '+res.status));}
    else{const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;const textOut=data.choices&&data.choices[0]&&data.choices[0].text;if(typeof out==='string'&&out.trim()){save();return out;}if(typeof textOut==='string'&&textOut.trim()){save();return textOut;}lastError=new Error('پاسخ مدل پیدا نشد.');}
   }catch(err){lastError=err.name==='AbortError'?new Error('زمان پاسخ تمام شد.'):err;}
-  finally{clearTimeout(timer)}
+  finally{clearTimeout(timer);if(signal&&abortHandler)signal.removeEventListener('abort',abortHandler)}
  }
  throw lastError||new Error('اتصال به AI Horde ناموفق بود.');
 }

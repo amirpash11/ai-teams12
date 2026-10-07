@@ -1377,7 +1377,7 @@ document.addEventListener('click',function(ev){
   <div class="notice" style="margin:10px 0">حافظه اجرای تیم و اسناد متنی پروژه جداگانه نگهداری می‌شوند.</div>
   <div class="field"><input id="memorySearch" placeholder="جستجو در حافظه و Knowledge..."></div>
   <div id="memoryList"></div>
-  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button><button class="btn primary" id="knowledgeOpen" style="width:auto">📚 مدیریت Knowledge</button></div>
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px"><button class="btn danger" id="memoryClear" style="width:auto">پاک کردن حافظه</button><button class="btn" id="memoryRefresh" style="width:auto">بروزرسانی</button><button class="btn primary" id="knowledgeOpen" style="width:auto" onclick="if(typeof openKnowledgePanel==='function')openKnowledgePanel()">📚 مدیریت Knowledge</button></div>
  </div>
 </div>
 </body>

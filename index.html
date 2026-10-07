@@ -529,31 +529,6 @@ async function refreshHordeModels(){try{const r=await fetch('https://oai.aihorde
  let models=agentBuilderModels(provider.value);if(provider.value==='horde'&&Array.isArray(state.hordeModels)&&state.hordeModels.length)models=state.hordeModels.slice(0,100);list.innerHTML=models.map(function(m){return '<option value="'+esc(m)+'"></option>'}).join('');if(!input.value&&models[0])input.value=models[0];
 }
 function workflowSteps(){return (state.workflow&&Array.isArray(state.workflow.steps))?state.workflow.steps:[]}
-function openWorkflowBuilder(){
- let modal=document.getElementById('workflowBuilderModal');
- if(!modal){
-  modal=document.createElement('div');modal.id='workflowBuilderModal';modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:2100;padding:12px;overflow:auto';
-  modal.innerHTML='<div class="card" style="width:min(760px,100%);margin:30px auto;padding:18px"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0">Workflow Builder</h3><div class="tiny">ترتیب اجرای Agentها را بساز و ذخیره کن.</div></div><button class="icon-btn" id="workflowBuilderClose">✕</button></div><div class="field" style="margin-top:14px"><label>نام Workflow</label><input id="workflowName" maxlength="120" placeholder="مثلاً تحلیل عمیق"></div><div id="workflowSteps" style="display:grid;gap:8px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="workflowAddStep" style="width:auto">＋ افزودن مرحله</button><button class="btn primary" id="workflowSave" style="width:auto">ذخیره Workflow</button><button class="btn" id="workflowReset" style="width:auto">بازنشانی</button></div></div>';
-  document.body.appendChild(modal);
-  document.getElementById('workflowBuilderClose').onclick=function(){modal.style.display='none'};
-  document.getElementById('workflowAddStep').onclick=function(){const steps=workflowSteps();if(steps.length>Math.min(20,state.agents.length))return alert('حداکثر ۲۰ مرحله مجاز است.');steps.push({agentId:(state.agents.find(a=>a.kind!=='human'&&a.enabled)||{}).id||'',label:'مرحله جدید'});renderWorkflowSteps();};
-  document.getElementById('workflowReset').onclick=function(){state.workflow={name:'پیش‌فرض',steps:state.agents.filter(a=>a.kind!=='human'&&a.enabled).map(a=>({agentId:a.id,label:a.role||a.name}))};renderWorkflowSteps();};
-  document.getElementById('workflowSave').onclick=function(){const name=document.getElementById('workflowName').value.trim()||'Workflow جدید',steps=workflowSteps().filter(s=>s.agentId);if(!steps.length)return alert('حداقل یک Agent انتخاب کن.');state.workflow={name:name.slice(0,120),steps:steps.slice(0,20).map(s=>({agentId:s.agentId,label:String(s.label||'مرحله').slice(0,180)}))};save();render();modal.style.display='none';};
- }
- if(!state.workflow)state.workflow={name:'پیش‌فرض',steps:state.agents.filter(a=>a.kind!=='human'&&a.enabled).map(a=>({agentId:a.id,label:a.role||a.name}))};
- document.getElementById('workflowName').value=state.workflow.name||'Workflow جدید';renderWorkflowSteps();modal.style.display='block';
-}
-function renderWorkflowSteps(){
- const box=document.getElementById('workflowSteps');if(!box)return;const steps=workflowSteps();const agents=state.agents.filter(a=>a.kind!=='human');
- box.innerHTML=steps.map(function(s,i){const opts=agents.map(function(a){return '<option value="'+esc(a.id)+'" '+(a.id===s.agentId?'selected':'')+'>'+esc(a.name)+' · '+esc(a.model||'default')+'</option>'}).join('');return '<div class="card" style="padding:10px;display:grid;grid-template-columns:40px 1fr 1fr auto;gap:8px;align-items:center"><strong>'+(i+1)+'</strong><select data-wf-agent="'+i+'">'+opts+'</select><input data-wf-label="'+i+'" value="'+esc(s.label||'مرحله '+(i+1))+'" maxlength="180"><button class="icon-btn" data-wf-up="'+i+'">↑</button><button class="icon-btn" data-wf-down="'+i+'">↓</button><button class="icon-btn" data-wf-del="'+i+'">✕</button></div>'}).join('');
- box.querySelectorAll('[data-wf-agent]').forEach(function(el){el.onchange=function(){stepsChange(el.dataset.wfAgent,'agentId',el.value)}});
- box.querySelectorAll('[data-wf-label]').forEach(function(el){el.oninput=function(){stepsChange(el.dataset.wfLabel,'label',el.value)}});
- box.querySelectorAll('[data-wf-up]').forEach(function(el){el.onclick=function(){moveWorkflowStep(+el.dataset.wfUp,-1)}});
- box.querySelectorAll('[data-wf-down]').forEach(function(el){el.onclick=function(){moveWorkflowStep(+el.dataset.wfDown,1)}});
- box.querySelectorAll('[data-wf-del]').forEach(function(el){el.onclick=function(){workflowSteps().splice(+el.dataset.wfDel,1);renderWorkflowSteps()}});
-}
-function stepsChange(i,k,v){const s=workflowSteps()[+i];if(s)s[k]=v}
-function moveWorkflowStep(i,d){const a=workflowSteps(),j=i+d;if(j<0||j>=a.length)return;const t=a[i];a[i]=a[j];a[j]=t;renderWorkflowSteps()}
 function openAgentBuilder(){\n refreshHordeModels().then(function(){agentBuilderRefreshModels();});
  let modal=document.getElementById('agentBuilderModal');
  if(!modal){

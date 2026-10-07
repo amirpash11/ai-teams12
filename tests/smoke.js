@@ -30,6 +30,9 @@ assert(provider.includes("https://aihorde.net/api/v2/generate/text/async"),'Hord
 assert(provider.includes("const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'}"),'Horde fallback headers missing');
 assert(provider.includes('async function universalCallAgent(a,goal,transcript,signal)'),'AI Horde universal runtime must accept cancellation signal');
 assert(provider.includes('signal:signal||controller.signal'),'AI Horde request must propagate cancellation signal');
+assert(provider.includes('signal.addEventListener(\'abort\',abortHandler,{once:true})'),'AI Horde must bridge external AbortSignal to its timeout controller');
+assert(provider.includes("const requestSignal=controller.signal"),'AI Horde must use its own timeout controller signal');
+assert(provider.includes('signal&&abortHandler)signal.removeEventListener(\'abort\',abortHandler)'),'AI Horde must remove abort listeners after each request');
 assert(html.includes("window.aiTeamsUniversalCallAgent==='function'"),'index must delegate Horde to robust provider runtime');
 assert(!provider.includes('oai.stablehorde.net'),'stale Horde endpoint remains');
 assert((provider.match(/oai\.aihorde\.net\/v1\/chat\/completions/g)||[]).length===2,'Horde endpoint should have one catalog and one runtime reference');

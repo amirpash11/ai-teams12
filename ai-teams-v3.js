@@ -97,7 +97,10 @@ function executeTool(name,input){
  return {ok:false,error:'ابزار ناشناخته است.'};
 }
 function extractToolCalls(text){
- 
+ const src=String(text||'');
+ const out=[];
+ const re=/\\[\\[TOOL\\s*:\\s*([a-zA-Z0-9_\\-]+)\\s*\\]\\]\\s*([\\s\\S]*?)\\s*\\[\\[\\/TOOL\\s*\\]\\]/g;
+ let m;
  while((m=re.exec(src))&&out.length<4)out.push({name:m[1],input:m[2].trim()});
  return out;
 }
@@ -245,10 +248,14 @@ async function callOne(a,goal,transcript){
 }
 async function callOneRaw(a,goal,transcript){
  const safeGoal=compact(goal,8000),safeTranscript=compact(transcript,28000);
- if(a.provider==='horde'&&typeof window.aiTeamsUniversalCallAgent==='function')return await window.aiTeamsUniversalCallAgent(a,safeGoal,safeTranscript);
-
- if(typeof window.aiTeamsUniversalCallAgent==='function')return await window.aiTeamsUniversalCallAgent(a,safeGoal,safeTranscript);
- throw new Error('هسته اجرای Provider در دسترس نیست.');
+ if(typeof window.aiTeamsUniversalCallAgent!=='function')throw new Error('هسته اجرای Provider در دسترس نیست.');
+ const controller=new AbortController();
+ V.controller=controller;
+ try{
+   return await window.aiTeamsUniversalCallAgent(a,safeGoal,safeTranscript,controller.signal);
+ }finally{
+   if(V.controller===controller)V.controller=null;
+ }
 }
 function demoResult(a,goal,transcript){return 'حالت Demo — '+a.role+' برای هدف «'+goal.slice(0,180)+'» تحلیل خود را انجام داد و خروجی برای Agent بعدی آماده شد.'}
 function compact(v,max){const s=String(v||'');if(s.length<=max)return s;const h=Math.floor(max*.4);return s.slice(0,h)+'\n… Context کوتاه شد …\n'+s.slice(-(max-h));}
@@ -258,9 +265,9 @@ function isAbort(e){return e&&e.code==='ABORTED'}
 
 function pauseRun(){if(!V.active)return;V.paused=true;timelineEvent('run_pause',null,{message:'اجرا مکث شد'});refreshPanel()}
 function resumeRun(){if(!V.active)return;V.paused=false;timelineEvent('run_resume',null,{message:'اجرا ادامه یافت'});refreshPanel()}
-function retryCurrent(){if(!V.active||!V.currentId)return;V.retryNow=true;V.paused=false;if(V.controller){try{V.controller.abort()}catch(e){}}timelineEvent('retry',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Retry دستی ثبت شد'});refreshPanel()}
+function retryCurrent(){if(!V.active||!V.currentId)return;V.retryNow=true;V.paused=false;if(V.controller){try{V.controller.abort()}catch(e){}V.controller=null}if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('retry',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Retry دستی ثبت شد'});refreshPanel()}
 function skipCurrent(){if(!V.active||!V.currentId)return;V.skipNow=true;V.skipIds.add(V.currentId);if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('skip',getState()?.agents?.find(a=>a.id===V.currentId),{message:'درخواست Skip ثبت شد'});V.paused=false;refreshPanel()}
-function stopRun(){if(!V.active)return;V.retryNow=false;V.skipNow=false;V.active=false;V.paused=false;if(V.controller){try{V.controller.abort()}catch(e){}}refreshPanel()}
+function stopRun(){if(!V.active)return;V.retryNow=false;V.skipNow=false;V.active=false;V.paused=false;if(V.controller){try{V.controller.abort()}catch(e){}V.controller=null}if(typeof window.aiTeamsAbortAll==='function')window.aiTeamsAbortAll();timelineEvent('run_stop',null,{message:'توقف دستی اجرا'});refreshPanel()}
 function rememberAgent(a,goal,result){
  const s=ensureState(); if(!s)return;
  if(!s.agentMemory[a.id])s.agentMemory[a.id]=[];

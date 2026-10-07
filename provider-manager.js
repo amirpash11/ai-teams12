@@ -61,11 +61,40 @@ function makeModal(){
  '<div class="two"><div class="field"><label>Header سفارشی</label><input id="pmHeader" placeholder="X-API-Key"></div><div class="field"><label>Query Parameter</label><input id="pmQuery" placeholder="key"></div></div>'+
  '<div class="field"><label>JSON Template برای Custom JSON</label><textarea id="pmTemplate" placeholder="{&quot;model&quot;:&quot;{{model}}&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;{{prompt}}&quot;}]}"></textarea></div>'+
  '<div class="field"><label>مسیر پاسخ</label><input id="pmResponse" placeholder="choices.0.message.content"></div>'+
- '<div class="actions"><button class="btn primary" style="width:auto" id="pmAdd">＋ افزودن</button><button class="btn" style="width:auto" id="pmClose2">بستن</button></div></div>';
+ '<div class="actions"><button class="btn primary" style="width:auto" id="pmAdd">＋ افزودن</button><button class="btn" style="width:auto" id="pmTestAll">🧪 تست اتصال</button><button class="btn" style="width:auto" id="pmClose2">بستن</button></div></div>';
  document.body.appendChild(wrap);
  document.getElementById('pmClose').onclick=closeModal;
  document.getElementById('pmClose2').onclick=closeModal;
  document.getElementById('pmAdd').onclick=addProvider;
+ document.getElementById('pmTestAll').onclick=testAllProviders;
+}
+async function testProviderConnection(p){
+ if(!p)return {ok:false,message:'Provider پیدا نشد.'};
+ if(p.id==='horde'){
+  try{
+   const r=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const j=await r.json(),models=Array.isArray(j.data)?j.data.filter(x=>x&&x.id):[];
+   return {ok:models.length>0,message:'AI Horde متصل است · '+models.length+' مدل در دسترس'};
+  }catch(e){return {ok:false,message:'AI Horde: '+String(e.message||e)};}
+ }
+ if(!window.aiTeamsCloud||!window.aiTeamsCloud.isReady())return {ok:false,message:'ورود امن ابری لازم است.'};
+ try{
+  const data=await window.aiTeamsCloud.invokeAI({
+   provider:p.id,model:p.model||'',messages:[{role:'user',content:'Reply with exactly: OK'}],
+   system:'Connection test. Reply with exactly OK.',endpoint:p.id==='custom'?p.endpoint:undefined,temperature:0
+  });
+  return {ok:!!(data&&data.output),message:data&&data.output?'اتصال موفق · پاسخ دریافت شد':'پاسخ خالی دریافت شد.'};
+ }catch(e){return {ok:false,message:String(e.message||e)};}
+}
+async function testAllProviders(){
+ const box=document.getElementById('providerList');if(!box)return;
+ box.innerHTML=state.providers.map(function(p){return '<div class="agent-row"><div class="agent-head"><strong>'+esc(p.name)+'</strong><span class="pill" data-test="'+esc(p.id)+'">⏳ در حال تست</span></div><div class="tiny">درخواست تست واقعی در حال اجراست...</div></div>';}).join('');
+ for(const p of state.providers){
+  const result=await testProviderConnection(p);
+  const row=box.querySelector('[data-test="'+CSS.escape(p.id)+'"]');
+  if(row){row.textContent=result.ok?'🟢 متصل':'🔴 خطا';row.style.color=result.ok?'var(--good)':'var(--danger)';const detail=row.parentElement&&row.parentElement.nextElementSibling;if(detail)detail.textContent=result.message;}
+ }
 }
 function openModal(){makeModal();renderProviderMini();document.getElementById('providerModal2').style.display='block';}
 function closeModal(){const el=document.getElementById('providerModal2');if(el)el.style.display='none';}

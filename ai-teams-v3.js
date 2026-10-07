@@ -357,6 +357,7 @@ function injectUI(){
  }
  if(btn){
    btn.onclick=openPanel;
+   btn.setAttribute('onclick',"if(window.aiTeamsV3Open){try{window.aiTeamsV3Open()}catch(e){}};var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');");
    if(!btn.dataset.v3OpenBound){
      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();openPanel();},true);
      btn.dataset.v3OpenBound='1';

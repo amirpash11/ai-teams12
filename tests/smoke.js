@@ -28,6 +28,8 @@ const provider=fs.readFileSync('provider-manager.js','utf8');
 assert(provider.includes("https://oai.aihorde.net/v1/chat/completions"),'current Horde endpoint missing');
 assert(provider.includes("https://aihorde.net/api/v2/generate/text/async"),'Horde direct async endpoint missing');
 assert(provider.includes("const headers={'Content-Type':'application/json','Authorization':'Bearer 0000000000','X-Client':'AI-Teams'}"),'Horde fallback headers missing');
+assert(provider.includes('async function universalCallAgent(a,goal,transcript,signal)'),'AI Horde universal runtime must accept cancellation signal');
+assert(provider.includes('signal:signal||controller.signal'),'AI Horde request must propagate cancellation signal');
 assert(html.includes("window.aiTeamsUniversalCallAgent==='function'"),'index must delegate Horde to robust provider runtime');
 assert(!provider.includes('oai.stablehorde.net'),'stale Horde endpoint remains');
 assert((provider.match(/oai\.aihorde\.net\/v1\/chat\/completions/g)||[]).length===2,'Horde endpoint should have one catalog and one runtime reference');
@@ -67,6 +69,11 @@ assert(html.includes("provider.value==='horde'"),'Agent Builder should use refre
 
 assert(fs.existsSync('ai-teams-v3.js'),'v3 orchestration layer missing');
 const v3=fs.readFileSync('ai-teams-v3.js','utf8');
+assert(v3.includes('function buildEvidence('),'Evidence builder missing');
+assert(v3.includes('function renderFinalHTML('),'Final output renderer missing');
+assert(v3.includes('function exportReport('),'Final report export missing');
+assert(v3.includes('function pauseRun()')&&v3.includes('function resumeRun()'),'Pause/resume controls missing');
+assert(v3.includes('function retryCurrent()')&&v3.includes('function skipCurrent()')&&v3.includes('function stopRun()'),'Run control functions missing');
 for(const needle of ['runSequentialV3','pauseRun','resumeRun','retryCurrent','skipCurrent','stopRun','safeCalc','aiTeamsV3Audit','v3TimelineList','agentMemory']) assert(v3.includes(needle),'v3 invariant missing: '+needle);
 console.log('AI Teams v3 smoke invariants: PASS');
 

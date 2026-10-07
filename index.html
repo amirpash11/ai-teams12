@@ -1379,6 +1379,16 @@ document.addEventListener('click',function(ev){
   }catch(e){}
   var el=document.getElementById('teamMemoryPanel');
   if(el){
+   if(!el.dataset.bound){
+    var close=document.getElementById('memoryClose'),clear=document.getElementById('memoryClear'),refresh=document.getElementById('memoryRefresh'),search=document.getElementById('memorySearch'),knowledge=document.getElementById('knowledgeOpen');
+    if(close)close.onclick=function(){el.style.display='none';};
+    if(clear)clear.onclick=function(){if(confirm('تمام حافظه اجرای این پروژه پاک شود؟')){state.memory=[];save();renderMemory();}};
+    if(refresh)refresh.onclick=renderMemory;
+    if(search)search.oninput=renderMemory;
+    if(knowledge)knowledge.onclick=openKnowledgePanel;
+    el.dataset.bound='1';
+   }
+   if(typeof renderMemory==='function')renderMemory();
    el.style.display='block';
    return true;
   }

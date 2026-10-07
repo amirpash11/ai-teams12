@@ -366,7 +366,7 @@ function injectUI(){
  if(!window.__aiTeamsV3OpenClickBound){
    document.addEventListener('click',function(ev){
      const b=ev.target.closest&&ev.target.closest('#v3ControlBtn');
-     if(b){ev.preventDefault();ev.stopImmediatePropagation();try{openPanel();}catch(e){}}
+     if(b){ev.preventDefault();ev.stopImmediatePropagation();try{openPanel();}catch(e){};var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');setTimeout(function(){var x=document.getElementById('v3Panel');if(x)x.style.setProperty('display','block','important');},0);}
    },true);
    window.__aiTeamsV3OpenClickBound=true;
  }

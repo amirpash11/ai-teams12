@@ -351,8 +351,15 @@ function injectUI(){
  let btn=document.getElementById('v3ControlBtn');
  if(!btn){
    const side=document.querySelector('.sidebar'); if(side){
-     btn=document.createElement('button');btn.id='v3ControlBtn';btn.className='btn primary';btn.textContent='🚀 مرکز کنترل v3';btn.onclick=openPanel;
+     btn=document.createElement('button');btn.id='v3ControlBtn';btn.className='btn primary';btn.textContent='🚀 مرکز کنترل v3';
      side.insertBefore(btn,side.firstChild?.nextSibling||null);
+   }
+ }
+ if(btn){
+   btn.onclick=openPanel;
+   if(!btn.dataset.v3OpenBound){
+     btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();openPanel();},true);
+     btn.dataset.v3OpenBound='1';
    }
  }
  const stop=document.getElementById('stopBtn');

@@ -358,10 +358,6 @@ function injectUI(){
  if(btn){
    btn.onclick=null;
    btn.setAttribute('onclick',"var p=document.getElementById('v3Panel');if(p)p.style.setProperty('display','block','important');");
-   if(!btn.dataset.v3OpenBound){
-     btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopImmediatePropagation();openPanel();},true);
-     btn.dataset.v3OpenBound='1';
-   }
  }
  const stop=document.getElementById('stopBtn');
  if(stop)stop.dataset.v3Enhanced='1';

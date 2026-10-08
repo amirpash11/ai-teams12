@@ -84,6 +84,12 @@ assert(v3.includes('function exportReport('),'Final report export missing');
 assert(v3.includes('function pauseRun()')&&v3.includes('function resumeRun()'),'Pause/resume controls missing');
 assert(v3.includes('function retryCurrent()')&&v3.includes('function skipCurrent()')&&v3.includes('function stopRun()'),'Run control functions missing');
 for(const needle of ['runSequentialV3','pauseRun','resumeRun','retryCurrent','skipCurrent','stopRun','safeCalc','aiTeamsV3Audit','v3TimelineList','agentMemory']) assert(v3.includes(needle),'v3 invariant missing: '+needle);
+assert(v3.includes('function runtimePerformance()'),'runtime performance health check missing');
+assert(v3.includes('function runtimeUIHealth()'),'runtime UI health check missing');
+assert(v3.includes('function runtimeTestHealth()'),'runtime test health check missing');
+assert(v3.includes("{n:12,label:'Performance',ok:perf.ok"),'Performance stage must use measured health');
+assert(v3.includes("{n:13,label:'UI/UX',ok:ui.ok"),'UI/UX stage must use measured health');
+assert(v3.includes("{n:14,label:'Tests/CI',ok:tests.ok"),'Tests/CI stage must use runtime health');
 console.log('AI Teams v3 smoke invariants: PASS');
 
 (function(){

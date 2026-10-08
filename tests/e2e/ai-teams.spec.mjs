@@ -45,15 +45,15 @@ test.describe('AI Teams end-to-end smoke', () => {
 
     await page.locator('#githubCloudBtn').click({ force: true });
     await expect(page.locator('#githubCloudPanel')).toBeVisible();
-    await page.locator('#ghClose').click();
+    await page.locator('#ghClose').click({ force: true });
 
     await page.locator('#googleDriveBtn').click({ force: true });
     await expect(page.locator('#googleDrivePanel')).toBeVisible();
-    await page.locator('#gdriveClose').click();
+    await page.locator('#gdriveClose').click({ force: true });
 
     await page.locator('#onlineTeamBtn').click({ force: true });
     await expect(page.locator('#onlineModal')).toBeVisible();
-    await page.locator('#onlineClose').click();
+    await page.locator('#onlineClose').click({ force: true });
 
     await page.locator('#v3ControlBtn').click({ force: true });
     await page.locator('#v3Pause').click();

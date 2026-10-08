@@ -207,17 +207,21 @@ function refreshPanel(){
 
 function audit(){
  const s=ensureState();
- const html=document.documentElement.outerHTML;
  if(!s)return [{name:'Core state',ok:false,note:'هسته برنامه هنوز آماده نشده است.'}];
+ const browserAgentKeys=(s.agents||[]).filter(function(a){return Object.prototype.hasOwnProperty.call(a,'apiKey')||Object.prototype.hasOwnProperty.call(a,'api_key')});
+ const browserProviderKeys=(s.providers||[]).filter(function(p){return Object.prototype.hasOwnProperty.call(p,'apiKey')||Object.prototype.hasOwnProperty.call(p,'api_key')});
+ const unsafeEndpoints=(s.providers||[]).filter(function(p){return p&&p.endpoint&&!/^https:\/\//i.test(String(p.endpoint))});
+ const humanRunnable=(s.agents||[]).filter(function(a){return a&&a.kind==='human'&&a.enabled===true});
+ const html=document.documentElement;
  return [
-  {name:'Browser API key پاکسازی',ok:!(html.includes('localStorage.setItem')&&/apiKey\s*[:=]/.test(html)),note:'کلیدها باید سمت Gateway بمانند'},
-  {name:'Supabase publishable key only',ok:html.indexOf('service_role')<0&&html.indexOf('SUPABASE_SERVICE_ROLE_KEY')<0},
-  {name:'Horde endpoint رسمی',ok:html.includes('https://oai.aihorde.net/v1/chat/completions')&&!html.includes('oai.stablehorde.net')},
-  {name:'HTTPS Provider endpoint',ok:(s.providers||[]).filter(p=>p.endpoint).every(p=>/^https:\/\//i.test(p.endpoint)||p.id==='horde')},
-  {name:'Human Agent اجرا نمی‌شود',ok:(s.agents||[]).every(a=>a.kind!=='human'||a.enabled===true)},
+  {name:'Browser API key پاکسازی',ok:browserAgentKeys.length===0&&browserProviderKeys.length===0,note:'کلید حساس نباید در State مرورگر ذخیره شود'},
+  {name:'Supabase publishable key only',ok:!html.outerHTML.includes('service_role')&&!html.outerHTML.includes('SUPABASE_SERVICE_ROLE_KEY')},
+  {name:'Horde endpoint رسمی',ok:html.outerHTML.includes('https://oai.aihorde.net/v1/chat/completions')&&!html.outerHTML.includes('oai.stablehorde.net')},
+  {name:'HTTPS Provider endpoint',ok:unsafeEndpoints.length===0,note:unsafeEndpoints.length?'Provider دارای Endpoint غیر HTTPS است.':''},
+  {name:'Human Agent اجرا نمی‌شود',ok:humanRunnable.length===0,note:'عضو انسانی نباید در Workflow اجرایی قرار بگیرد'},
   {name:'State size bounded',ok:(s.chat||[]).length<=200&&(s.runs||[]).length<=20&&(s.memory||[]).length<=30},
   {name:'Knowledge bounded',ok:(s.knowledge||[]).length<=50},
-  {name:'CSP موجود',ok:html.includes('Content-Security-Policy')}
+  {name:'CSP موجود',ok:!!document.querySelector('meta[http-equiv="Content-Security-Policy"]')}
  ];
 }
 

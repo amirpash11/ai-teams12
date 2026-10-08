@@ -345,7 +345,7 @@ function moveHomeOptionsToRightDrawer(){
  if(!sidebar.contains(panel))sidebar.appendChild(panel);
  sidebar.dataset.optionsMoved='1';
 }
-window.aiTeamsAbortAll=abortAllActiveRequests;window.aiTeamsReleaseController=releaseAbortController;window.aiTeamsTrackController=trackAbortController;window.openMemoryPanel=openMemoryPanel;function init(){moveHomeOptionsToRightDrawer();var s=document.querySelector('.sidebar');var b=document.getElementById('memoryBtn');var anchor=document.getElementById('workspaceBtn');if(s&&!b){b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}if(b)b.onclick=safeOpenMemoryPanel;refreshHordeModels();}
+window.aiTeamsAbortAll=abortAllActiveRequests;window.aiTeamsReleaseController=releaseAbortController;window.aiTeamsTrackController=trackAbortController;window.openMemoryPanel=openMemoryPanel;function init(){moveHomeOptionsToRightDrawer();var s=document.querySelector('.sidebar');var b=document.getElementById('memoryBtn');var anchor=document.getElementById('workspaceBtn');if(s&&!b){b=document.createElement('button');b.id='memoryBtn';b.className='btn';b.textContent='🧠 حافظه تیم';if(anchor)anchor.insertAdjacentElement('beforebegin',b);else s.appendChild(b);}if(b)b.onclick=openMemoryPanel;refreshHordeModels();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script><script>

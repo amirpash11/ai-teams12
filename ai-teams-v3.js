@@ -129,14 +129,63 @@ async function resolveAgentTools(a,goal,transcript,result){
 function safeCalc(expr){
  const s=String(expr||'').trim();
  if(!s||s.length>120)return {ok:false,error:'عبارت نامعتبر است.'};
- if(!/^[0-9+\-*/%().\s]+$/.test(s))return {ok:false,error:'فقط اعداد و عملگرهای ریاضی مجاز هستند.'};
+ let i=0;
+ function skip(){while(i<s.length&&/\s/.test(s[i]))i++;}
+ function number(){
+  skip();
+  const m=s.slice(i).match(/^(?:\d+(?:\.\d*)?|\.\d+)/);
+  if(!m)throw new Error('number');
+  i+=m[0].length;
+  const n=Number(m[0]);
+  if(!Number.isFinite(n))throw new Error('number');
+  return n;
+ }
+ function primary(){
+  skip();
+  if(s[i]==='('){
+   i++;const v=addSub();skip();
+   if(s[i]!==')')throw new Error('paren');
+   i++;return v;
+  }
+  return number();
+ }
+ function unary(){
+  skip();
+  if(s[i]==='+'){i++;return unary();}
+  if(s[i]==='-'){i++;return -unary();}
+  return primary();
+ }
+ function mulDiv(){
+  let v=unary();
+  while(true){
+   skip();const op=s[i];
+   if(op!=='*'&&op!=='/'&&op!=='%')break;
+   i++;const rhs=unary();
+   if((op==='/'||op==='%')&&rhs===0)throw new Error('zero');
+   v=op==='*'?v:(op==='/'?v/rhs:v%rhs);
+   if(!Number.isFinite(v))throw new Error('finite');
+  }
+  return v;
+ }
+ function addSub(){
+  let v=mulDiv();
+  while(true){
+   skip();const op=s[i];
+   if(op!=='+'&&op!=='-')break;
+   i++;const rhs=mulDiv();
+   v=op==='+'?v+rhs:v-rhs;
+   if(!Number.isFinite(v))throw new Error('finite');
+  }
+  return v;
+ }
  try{
-   const value=Function('"use strict";return ('+s+')')();
-   if(typeof value!=='number'||!Number.isFinite(value))return {ok:false,error:'نتیجه نامعتبر است.'};
-   return {ok:true,value};
- }catch(e){return {ok:false,error:'خطا در محاسبه.'}}
+  const value=addSub();skip();
+  if(i!==s.length||!Number.isFinite(value))throw new Error('invalid');
+  return {ok:true,value};
+ }catch(e){
+  return {ok:false,error:'عبارت ریاضی نامعتبر است.'};
+ }
 }
-
 function refreshPanel(){
  ensurePanel();
  const s=ensureState();

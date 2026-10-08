@@ -96,6 +96,10 @@ assert(v3.includes('function retryCurrent()')&&v3.includes('function skipCurrent
 for(const needle of ['runSequentialV3','pauseRun','resumeRun','retryCurrent','skipCurrent','stopRun','safeCalc','aiTeamsV3Audit','v3TimelineList','agentMemory']) assert(v3.includes(needle),'v3 invariant missing: '+needle);
 assert(v3.includes('function runtimePerformance()'),'runtime performance health check missing');
 assert(v3.includes('function safeCalc(expr){'),'safe calculator missing');
+assert(v3.includes('const browserAgentKeys='),'runtime audit must inspect actual browser state');
+assert(v3.includes('const browserProviderKeys='),'runtime audit must inspect actual provider state');
+assert(v3.includes('const unsafeEndpoints='),'runtime audit HTTPS validation missing');
+assert(v3.includes('document.querySelector(\'meta[http-equiv="Content-Security-Policy"]\')'),'runtime audit CSP check missing');
 assert(!/function safeCalc[\\s\\S]{0,1800}Function\\(/.test(v3),'safe calculator must not use dynamic Function evaluation');
 assert(v3.includes("if((op==='/'||op==='%')&&rhs===0)throw new Error('zero')"),'safe calculator zero-division guard missing');
 assert(v3.includes('if(i!==s.length||!Number.isFinite(value))throw new Error(\'invalid\')'),'safe calculator trailing-token guard missing');

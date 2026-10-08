@@ -25,6 +25,8 @@ assert(core.includes("state.workflowOrder=(state.workflowOrder||[]).filter(funct
 assert(core.includes("if(!confirm('عضو «'+target.name+'» از تیم حذف شود؟'))return"),'Removing a member must require confirmation');
 assert(core.includes("const duplicate=state.agents.some(function(a){return String(a.name||'').trim().toLowerCase()===name.toLowerCase()})"),'Duplicate member names must be rejected');
 assert(core.includes('state.workflowOrder.push(newAgent.id)'),'New members must be persisted into workflow order');
+assert(core.includes("if(target.kind==='human'&&state.agents.filter(function(a){return a.kind==='human'}).length<=1)return alert('حداقل یک عضو انسانی باید باقی بماند.')"),'Last human member must be protected');
+assert(core.includes("if(name.length>120||role.length>180||system.length>12000)return alert('یکی از فیلدها بیش از حد مجاز طولانی است.')"),'Member fields must have explicit length validation');
 
 assert(core.includes('function applyWorkflowOrder()'),'Workflow order persistence missing');
 assert(core.includes('state.workflowOrder'),'Workflow order state missing');

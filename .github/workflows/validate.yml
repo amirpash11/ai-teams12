@@ -20,7 +20,7 @@ jobs:
       - name: Validate JavaScript and HTML structure
         run: |
           node -e "const fs=require('fs'); const html=fs.readFileSync('index.html','utf8'); const n=(html.match(/<script(?:\\s[^>]*)?>[\\s\\S]*?<\\/script>/gi)||[]).length; if(n<5) throw new Error('Expected app scripts'); const body=html.replace(/<script(?:\\s[^>]*)?>[\\s\\S]*?<\\/script>/gi,''); const ids=[...body.matchAll(/\\bid=[\"']([^\"']+)[\"']/g)].map(m=>m[1]); const dup=ids.filter((x,i)=>ids.indexOf(x)!==i); if(dup.length) throw new Error('Duplicate DOM IDs: '+dup.join(',')); console.log('HTML structure PASS; inline script blocks:',n)"
-          for f in provider-manager.js cloud-storage.js github-storage.js google-drive-storage.js multiplayer.js workspace-manager.js ai-teams-v3.js; do node --check "$f"; done
+          for f in app-core.js provider-manager.js cloud-storage.js github-storage.js google-drive-storage.js multiplayer.js workspace-manager.js ai-teams-v3.js; do node --check "$f"; done
           echo "External JavaScript syntax PASS"
       - name: Validate Gateway security invariants
         run: |

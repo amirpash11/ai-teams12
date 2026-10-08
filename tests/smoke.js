@@ -21,6 +21,11 @@ assert(html.includes('id="workflowBuilderModal"'),'Workflow Builder modal missin
 assert(core.includes('function openWorkflowBuilder()'),'Workflow Builder opener missing');
 assert((core.match(/function openWorkflowBuilder\(\)/g)||[]).length===1,'Workflow Builder must have exactly one implementation');
 assert(core.includes('function getWorkflowAgents()'),'Workflow agent ordering helper missing');
+assert(core.includes("state.workflowOrder=(state.workflowOrder||[]).filter(function(x){return x!==id})"),'Removing a member must clean its workflow entry');
+assert(core.includes("if(!confirm('عضو «'+target.name+'» از تیم حذف شود؟'))return"),'Removing a member must require confirmation');
+assert(core.includes("const duplicate=state.agents.some(function(a){return String(a.name||'').trim().toLowerCase()===name.toLowerCase()})"),'Duplicate member names must be rejected');
+assert(core.includes('state.workflowOrder.push(newAgent.id)'),'New members must be persisted into workflow order');
+
 assert(core.includes('function applyWorkflowOrder()'),'Workflow order persistence missing');
 assert(core.includes('state.workflowOrder'),'Workflow order state missing');
 assert(core.includes('const legacySteps=state.workflow&&Array.isArray(state.workflow.steps)?state.workflow.steps:[]'),'Legacy workflow migration missing');

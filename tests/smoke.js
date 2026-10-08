@@ -3,6 +3,7 @@ const assert=require('assert');
 const vm=require('vm');
 
 const html=fs.readFileSync('index.html','utf8');
+const core=fs.readFileSync('app-core.js','utf8');
 const inlineBlocks=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)];
 inlineBlocks.forEach((m,i)=>new vm.Script(m[1],{filename:'index-inline-'+i+'.js'}));
 const requiredIds=['chat','adminChatInput','adminChatBtn','teamName','goal','onlineTeamBtn'];
@@ -17,9 +18,15 @@ assert(html.includes('function openAgentBuilder()'),'Agent Builder opener missin
 
 assert(html.includes('id="workflowBuilderBtn"'),'Workflow Builder trigger missing');
 assert(html.includes('id="workflowBuilderModal"'),'Workflow Builder modal missing');
-assert(html.includes('function openWorkflowBuilder()'),'Workflow Builder opener missing');
-assert(html.includes('function renderWorkflowSteps()'),'Workflow step renderer missing');
-assert(html.includes('const configured=workflowSteps()'),'Workflow execution integration missing');
+assert(core.includes('function openWorkflowBuilder()'),'Workflow Builder opener missing');
+assert((core.match(/function openWorkflowBuilder\(\)/g)||[]).length===1,'Workflow Builder must have exactly one implementation');
+assert(core.includes('function getWorkflowAgents()'),'Workflow agent ordering helper missing');
+assert(core.includes('function applyWorkflowOrder()'),'Workflow order persistence missing');
+assert(core.includes('state.workflowOrder'),'Workflow order state missing');
+assert(core.includes('const legacySteps=state.workflow&&Array.isArray(state.workflow.steps)?state.workflow.steps:[]'),'Legacy workflow migration missing');
+assert(core.includes('delete state.workflow;'),'Legacy workflow state must be normalized away');
+assert(!core.includes('function renderWorkflowSteps()'),'Legacy Workflow step renderer must be removed');
+assert(!core.includes('state.workflow=state.workflow||{name:\'پیش\u200cفرض\',steps:[]}'),'Legacy workflow initialization must be removed');
 
 const forbidden=['oai.stablehorde.net','YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLISHABLE_KEY'];
 for(const value of forbidden) assert(!html.includes(value),'forbidden/stale marker in index.html: '+value);

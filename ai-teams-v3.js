@@ -341,7 +341,15 @@ function openKnowledgeTool(){
 }
 
 function bindCoreUiFallback(){
+ if(document.documentElement.dataset.aiTeamsV3Delegates==='1')return;
+ document.documentElement.dataset.aiTeamsV3Delegates='1';
  document.addEventListener('click',function(ev){
+   const v3=ev.target.closest&&ev.target.closest('#v3ControlBtn');
+   if(v3){
+     ev.preventDefault();ev.stopImmediatePropagation();
+     openPanel();
+     return;
+   }
    const t=ev.target.closest&&ev.target.closest('#drawerToggle');
    if(t){
      const app=document.querySelector('.app'); if(!app)return;

@@ -53,7 +53,7 @@ jobs:
           grep -q "Content-Security-Policy" index.html
           grep -q "function safeAgentId" app-core.js
           grep -q "function stripBrowserSecrets" app-core.js
-          grep -q "stripBrowserSecrets(p)" index.html
+          grep -q "stripBrowserSecrets(p)" app-core.js
           grep -q "core.importState(x.project)" github-storage.js
           grep -q "@media(max-width:920px)" index.html
           grep -q "@media(max-width:520px)" index.html
@@ -63,7 +63,7 @@ jobs:
           grep -q "getItem(__leftDrawerState.key)!=='0'" index.html
           grep -q "const RETRY_DELAYS=" github-storage.js
           grep -q "async function fetchWithRetry(url,init)" github-storage.js
-          grep -q "transcript=compactContext(transcript,30000)" index.html
+          grep -q "transcript=compactContext(transcript,30000)" app-core.js
           test -f ai-teams-v3.js
           node -e "new Function(require('fs').readFileSync('ai-teams-v3.js','utf8')); console.log('AI Teams v3 syntax PASS')"
           echo "Gateway and GitHub security invariants passed."

@@ -347,7 +347,7 @@ function bindCoreUiFallback(){
    const v3=ev.target.closest&&ev.target.closest('#v3ControlBtn');
    if(v3){
      ev.preventDefault();ev.stopImmediatePropagation();
-     openPanel();
+     (window.aiTeamsV3Open||openPanel)();
      return;
    }
    const t=ev.target.closest&&ev.target.closest('#drawerToggle');
@@ -384,7 +384,7 @@ function injectUI(){
  }
  if(btn){
    btn.type='button';
-   btn.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}openPanel();return false;};
+   btn.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}(window.aiTeamsV3Open||openPanel)();return false;};
  }
  const stop=document.getElementById('stopBtn');
  if(stop)stop.dataset.v3Enhanced='1';

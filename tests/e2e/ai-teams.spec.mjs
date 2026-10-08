@@ -30,6 +30,14 @@ test.describe('AI Teams end-to-end smoke', () => {
     page.once('dialog', dialog => dialog.accept());
     await memberRow.locator('button[title="حذف"]').click();
     await expect(page.locator('#editor')).not.toContainText('عضو تستی');
+    await page.locator('#addAgentBtn').click();
+    await page.locator('#agentBuilderName').fill('عضو تستی');
+    await page.locator('#agentBuilderRole').fill('تکراری');
+    await page.locator('#agentBuilderModel').fill('koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix');
+    page.once('dialog', dialog => dialog.dismiss());
+    await page.locator('#agentBuilderCreate').click();
+    await expect(page.locator('#agentBuilderModal')).toBeVisible();
+    await page.locator('#agentBuilderCancel').click();
     await expect(page.locator('#workflowBuilderBtn')).toBeAttached();
     await page.locator('#memoryBtn').click({ force: true });
     await expect(page.locator('#teamMemoryPanel')).toBeVisible();

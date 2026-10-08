@@ -39,6 +39,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#v3Close').click();
 
     await page.locator('#cloudStorageBtn').click({ force: true });
+    await page.evaluate(() => { if(window.aiTeamsCloud && typeof window.aiTeamsCloud.open==='function') window.aiTeamsCloud.open(); });
     await expect(page.locator('#cloudStoragePanel')).toBeVisible();
     await page.locator('#cloudClose').click();
 

@@ -75,7 +75,17 @@ function ensurePanel(){
  document.getElementById('v3ExportReport').onclick=exportReport;
 }
 function closePanel(){const x=document.getElementById('v3Panel');if(x)x.style.display='none'}
-function openPanel(){ensurePanel(); const x=document.getElementById('v3Panel');x.style.display='block';refreshPanel();}
+function openPanel(){
+ ensurePanel();
+ const x=document.getElementById('v3Panel');x.style.display='block';
+ let tries=0;
+ const waitForCore=()=>{
+   if(core()){refreshPanel();return;}
+   if(++tries>=20){refreshPanel();return;}
+   setTimeout(waitForCore,50);
+ };
+ waitForCore();
+}
 
 function toolKnowledge(query){
  const s=ensureState(); const q=String(query||'').toLowerCase().trim();

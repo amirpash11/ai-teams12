@@ -162,7 +162,7 @@ function safeCalc(expr){
    if(op!=='*'&&op!=='/'&&op!=='%')break;
    i++;const rhs=unary();
    if((op==='/'||op==='%')&&rhs===0)throw new Error('zero');
-   v=op==='*'?v:(op==='/'?v/rhs:v%rhs);
+   v=op==='*'?v*rhs:(op==='/'?v/rhs:v%rhs);
    if(!Number.isFinite(v))throw new Error('finite');
   }
   return v;

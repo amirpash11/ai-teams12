@@ -18,6 +18,18 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#agentList')).toBeAttached();
     await expect(page.locator('#addAgentBtn')).toBeAttached();
     await expect(page.locator('#addAgentBtn')).toHaveAttribute('onclick', /openAgentBuilder/);
+    await page.locator('#addAgentBtn').click();
+    await expect(page.locator('#agentBuilderModal')).toBeVisible();
+    await page.locator('#agentBuilderName').fill('عضو تستی');
+    await page.locator('#agentBuilderRole').fill('تست مدیریت اعضا');
+    await page.locator('#agentBuilderModel').fill('koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix');
+    await page.locator('#agentBuilderCreate').click();
+    await expect(page.locator('#editor')).toContainText('عضو تستی');
+    const memberRow = page.locator('#editor .agent-row').filter({ hasText: 'عضو تستی' }).first();
+    await expect(memberRow).toBeVisible();
+    page.once('dialog', dialog => dialog.accept());
+    await memberRow.locator('button[title="حذف"]').click();
+    await expect(page.locator('#editor')).not.toContainText('عضو تستی');
     await expect(page.locator('#workflowBuilderBtn')).toBeAttached();
     await page.locator('#memoryBtn').click({ force: true });
     await expect(page.locator('#teamMemoryPanel')).toBeVisible();

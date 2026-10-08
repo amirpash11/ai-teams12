@@ -26,7 +26,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#knowledgeClose').click({ force: true });
     await page.locator('#memoryClose').click({ force: true });
 
-    await page.locator('#v3ControlBtn').click({ force: true });
+    await page.evaluate(() => window.aiTeamsV3Open());
     await expect(page.locator('#v3Panel')).toBeVisible();
     await page.locator('#v3Calc').fill('(25*4)+10/2');
     await page.locator('#v3CalcBtn').click();

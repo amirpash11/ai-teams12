@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 
 test.describe('AI Teams end-to-end smoke', () => {
   test('desktop core controls and demo execution', async ({ page }) => {
-    page.on('pageerror', error => console.log('PAGE_ERROR', error.stack || error.message));
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => localStorage.clear());

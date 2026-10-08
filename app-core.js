@@ -227,7 +227,15 @@ function updateAgent(e){
  save();renderSidebarOnly();if((k==='provider'||k==='model')&&e.type==='change')render();
 }
 function toggleAgent(id){if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);render()}
-function removeAgent(id){if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');state.agents=state.agents.filter(function(a){return a.id!==id});save();render()}
+function removeAgent(id){
+ const target=selectedAgent(id);if(!target)return;
+ if(state.agents.length<=1)return alert('حداقل یک عضو باید باقی بماند.');
+ if(!confirm('عضو «'+target.name+'» از تیم حذف شود؟'))return;
+ state.agents=state.agents.filter(function(a){return a.id!==id});
+ state.workflowOrder=(state.workflowOrder||[]).filter(function(x){return x!==id});
+ collapsed.delete(id);
+ save();render();
+}
 function agentBuilderModels(providerId){
  const p=(state.providers||[]).find(function(x){return x.id===providerId});
  const defaults={horde:['koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix','Llama-3.3-70B-Instruct','Qwen2.5-72B-Instruct','Mistral-Small-24B-Instruct-2501'],openai:['gpt-4o-mini','gpt-4o','gpt-5'],openrouter:['openrouter/free','deepseek/deepseek-chat-v3-0324:free','google/gemini-2.0-flash-exp:free'],claude:['claude-sonnet-4-5','claude-3-5-haiku'],gemini:['gemini-2.5-flash','gemini-2.5-pro'],custom:[]};
@@ -254,7 +262,7 @@ function openAgentBuilder(){
   document.getElementById('agentBuilderClose').onclick=function(){modal.style.display='none'};document.getElementById('agentBuilderCancel').onclick=function(){modal.style.display='none'};
   document.getElementById('agentBuilderProvider').onchange=agentBuilderRefreshModels;
   document.getElementById('agentBuilderTemplate').onchange=function(){const presets={analyst:['تحلیل‌گر جدید','تحلیل‌گر متخصص','تو یک تحلیل‌گر دقیق هستی. شواهد را بررسی کن، فرضیات را جدا کن و نتیجه روشن بده.'],researcher:['پژوهشگر جدید','پژوهشگر اطلاعات','تو یک پژوهشگر دقیق هستی. اطلاعات را ساختاربندی کن و تناقض‌ها را مشخص کن.'],critic:['منتقد جدید','منتقد و کنترل کیفیت','تو منتقد تیم هستی. خطاها، ریسک‌ها و اصلاحات خروجی قبلی را مشخص کن.'],writer:['نویسنده نهایی','نویسنده','تو نویسنده نهایی تیم هستی. ورودی اعضای قبلی را ترکیب و خروجی دقیق تولید کن.'],custom:['Agent جدید','عامل هوش مصنوعی','تو یک عامل متخصص در تیم AI Teams هستی. نقش خودت را دقیق انجام بده و خروجی قابل استفاده تحویل بده.']};const p=presets[this.value]||presets.custom;document.getElementById('agentBuilderName').value=p[0];document.getElementById('agentBuilderRole').value=p[1];document.getElementById('agentBuilderSystem').value=p[2];};
-  document.getElementById('agentBuilderCreate').onclick=function(){const name=document.getElementById('agentBuilderName').value.trim(),provider=document.getElementById('agentBuilderProvider').value,model=document.getElementById('agentBuilderModel').value.trim();if(!name||!provider||!model)return alert('نام، Provider و مدل را کامل کن.');const p=(state.providers||[]).find(function(x){return x.id===provider});state.agents.push({id:uid(),kind:'ai',name:name.slice(0,120),role:document.getElementById('agentBuilderRole').value.trim().slice(0,180)||'عامل هوش مصنوعی',icon:'🤖',provider:provider,endpoint:(p&&p.endpoint)||'',model:model.slice(0,200),system:document.getElementById('agentBuilderSystem').value.trim().slice(0,12000),enabled:document.getElementById('agentBuilderEnabled').checked});save();render();modal.style.display='none';};
+  document.getElementById('agentBuilderCreate').onclick=function(){const name=document.getElementById('agentBuilderName').value.trim(),provider=document.getElementById('agentBuilderProvider').value,model=document.getElementById('agentBuilderModel').value.trim();if(!name||!provider||!model)return alert('نام، Provider و مدل را کامل کن.');const p=(state.providers||[]).find(function(x){return x.id===provider});const duplicate=state.agents.some(function(a){return String(a.name||'').trim().toLowerCase()===name.toLowerCase()});if(duplicate)return alert('عضوی با این نام از قبل در تیم وجود دارد.');const newAgent={id:uid(),kind:'ai',name:name.slice(0,120),role:document.getElementById('agentBuilderRole').value.trim().slice(0,180)||'عامل هوش مصنوعی',icon:'🤖',provider:provider,endpoint:(p&&p.endpoint)||'',model:model.slice(0,200),system:document.getElementById('agentBuilderSystem').value.trim().slice(0,12000),enabled:document.getElementById('agentBuilderEnabled').checked};state.agents.push(newAgent);state.workflowOrder=state.workflowOrder||[];if(state.workflowOrder.indexOf(newAgent.id)<0)state.workflowOrder.push(newAgent.id);collapsed.add(newAgent.id);save();render();modal.style.display='none';};
  }
  const ps=document.getElementById('agentBuilderProvider');ps.innerHTML=(state.providers||[]).filter(function(p){return p.id!=='custom'||p.endpoint}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'}).join('');
  const first=(state.providers||[]).find(function(p){return p.id==='horde'})||(state.providers||[])[0];if(first)ps.value=first.id;

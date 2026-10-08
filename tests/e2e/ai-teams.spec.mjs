@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('AI Teams end-to-end smoke', () => {
   test('desktop core controls and demo execution', async ({ page }) => {
+    page.on('console', msg => { if(msg.type() === 'error') console.log('CONSOLE_ERROR', msg.text()); });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+    const coreResponse = await page.request.get('http://127.0.0.1:4173/app-core.js?v=1');
+    console.log('CORE_HTTP', coreResponse.status(), coreResponse.headers()['content-type']);
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: 'domcontentloaded' });
 

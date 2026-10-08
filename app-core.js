@@ -16,7 +16,8 @@ function defaults(){
   ],
   chat:[],
   runs:[],
-   memory:[]
+   memory:[],
+  workflowOrder:[]
  };
 }
 function load(){
@@ -63,6 +64,10 @@ function normalizeStateShape(){
  state.providers=Array.isArray(state.providers)?state.providers.slice(0,50).map(function(p){return Object.assign({},stripBrowserSecrets(p),{id:String(p.id||'').slice(0,80),name:String(p.name||'').slice(0,160),protocol:String(p.protocol||'').slice(0,40),auth:String(p.auth||'').slice(0,40),endpoint:String(p.endpoint||'').slice(0,500),model:String(p.model||'').slice(0,200),header:String(p.header||'').slice(0,100),query:String(p.query||'').slice(0,100),template:String(p.template||'').slice(0,12000),responsePath:String(p.responsePath||'').slice(0,300)});}):[];
  const source=Array.isArray(state.agents)&&state.agents.length?state.agents:d.agents;
  const seenAgentIds=new Set();
+ const legacySteps=state.workflow&&Array.isArray(state.workflow.steps)?state.workflow.steps:[];
+ const legacyOrder=legacySteps.map(function(s){return String((s&&s.agentId)||(s&&s.id)||'').trim();}).filter(Boolean);
+ const rawOrder=Array.isArray(state.workflowOrder)?state.workflowOrder:[];
+ const preferredOrder=rawOrder.length?rawOrder:legacyOrder;
  state.agents=source.slice(0,50).map(function(a,i){
    const base=d.agents[i%d.agents.length]||d.agents[0];
    return Object.assign({},base,stripBrowserSecrets(a),{
@@ -78,8 +83,14 @@ function normalizeStateShape(){
      enabled:a&&a.enabled!==false
    });
  });
+ const validIds=new Set(state.agents.map(function(a){return a.id;}));
+ const seenOrder=new Set();
+ state.workflowOrder=preferredOrder.filter(function(id){return validIds.has(id)&&!seenOrder.has(id)&&seenOrder.add(id);});
+ state.agents.forEach(function(a){if(!seenOrder.has(a.id)){state.workflowOrder.push(a.id);seenOrder.add(a.id);}});
+ delete state.workflow;
 }
 normalizeStateShape();
+save();
 
 function sanitizeBrowserSecrets(){
  let changed=false;
@@ -225,7 +236,7 @@ async function refreshHordeModels(){try{const r=await fetch('https://oai.aihorde
  const provider=document.getElementById('agentBuilderProvider'),input=document.getElementById('agentBuilderModel'),list=document.getElementById('agentBuilderModels');if(!provider||!input||!list)return;
  let models=agentBuilderModels(provider.value);if(provider.value==='horde'&&Array.isArray(state.hordeModels)&&state.hordeModels.length)models=state.hordeModels.slice(0,100);list.innerHTML=models.map(function(m){return '<option value="'+esc(m)+'"></option>'}).join('');if(!input.value&&models[0])input.value=models[0];
 }
-function workflowSteps(){return (state.workflow&&Array.isArray(state.workflow.steps))?state.workflow.steps:[]}
+function workflowSteps(){return getWorkflowAgents().map(function(a,i){return {id:a.id,agentId:a.id,order:i+1};})}
 function openAgentBuilder(){\n refreshHordeModels().then(function(){agentBuilderRefreshModels();});
  let modal=document.getElementById('agentBuilderModal');
  if(!modal){

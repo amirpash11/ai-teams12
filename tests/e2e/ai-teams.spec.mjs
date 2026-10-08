@@ -27,6 +27,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#memoryClose').click({ force: true });
 
     await page.locator('#v3ControlBtn').click({ force: true });
+    console.log('V3_DIAG', await page.evaluate(() => ({display:document.getElementById('v3Panel')?.style.display, computed:getComputedStyle(document.getElementById('v3Panel')).display, opener:typeof window.aiTeamsV3Open, button:document.getElementById('v3ControlBtn')?.outerHTML?.slice(0,500)})));
     await expect(page.locator('#v3Panel')).toBeVisible();
     await page.locator('#v3Calc').fill('(25*4)+10/2');
     await page.locator('#v3CalcBtn').click();

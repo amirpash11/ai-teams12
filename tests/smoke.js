@@ -24,7 +24,7 @@ assert(html.includes('const configured=workflowSteps()'),'Workflow execution int
 const forbidden=['oai.stablehorde.net','YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLISHABLE_KEY'];
 for(const value of forbidden) assert(!html.includes(value),'forbidden/stale marker in index.html: '+value);
 
-const scripts=['provider-manager.js','cloud-storage.js','github-storage.js','google-drive-storage.js','multiplayer.js','workspace-manager.js','ai-teams-v3.js'];
+const scripts=['app-core.js','provider-manager.js','cloud-storage.js','github-storage.js','google-drive-storage.js','multiplayer.js','workspace-manager.js','ai-teams-v3.js'];
 for(const file of scripts){const source=fs.readFileSync(file,'utf8');new Function(source);}
 
 const provider=fs.readFileSync('provider-manager.js','utf8');

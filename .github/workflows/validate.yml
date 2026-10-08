@@ -93,7 +93,7 @@ jobs:
           console.log('AI Horde models:', horde.data.length);
           NODE
           grep -q "openrouter/free" index.html
-          grep -q "await ensureHordeModel(a)" index.html
+          grep -q "await ensureHordeModel(a)" app-core.js
           node <<'NODE'
           (async()=>{
           const fs = require('fs');

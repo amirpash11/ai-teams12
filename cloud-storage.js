@@ -89,7 +89,7 @@ function panel(){
 function status(t,good){
   const x=document.getElementById('cloudStatus');if(x){x.textContent=t;x.className='notice'+(good?'':' warn');}
 }
-function openPanel(){panel();document.getElementById('cloudStoragePanel').style.display='block';refreshAuthUI();}
+function openPanel(){panel();const el=document.getElementById('cloudStoragePanel');if(el)el.style.setProperty('display','block','important');refreshAuthUI();}
 function closePanel(){const x=document.getElementById('cloudStoragePanel');if(x)x.style.display='none';}
 function refreshAuthUI(){
   const cu=document.getElementById('cloudProjectUrl'),ck=document.getElementById('cloudPublishableKey');

@@ -149,6 +149,7 @@ function refreshPanel(){
 function audit(){
  const s=ensureState();
  const html=document.documentElement.outerHTML;
+ if(!s)return [{name:'Core state',ok:false,note:'هسته برنامه هنوز آماده نشده است.'}];
  return [
   {name:'Browser API key پاکسازی',ok:!(html.includes('localStorage.setItem')&&/apiKey\s*[:=]/.test(html)),note:'کلیدها باید سمت Gateway بمانند'},
   {name:'Supabase publishable key only',ok:html.indexOf('service_role')<0&&html.indexOf('SUPABASE_SERVICE_ROLE_KEY')<0},

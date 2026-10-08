@@ -375,9 +375,8 @@ function injectUI(){
    }
  }
  if(btn){
-   btn.onclick=null;
-   btn.removeAttribute('onclick');
-   btn.addEventListener('click',openPanel,{once:false});
+   btn.type='button';
+   btn.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}openPanel();return false;};
  }
  const stop=document.getElementById('stopBtn');
  if(stop)stop.dataset.v3Enhanced='1';

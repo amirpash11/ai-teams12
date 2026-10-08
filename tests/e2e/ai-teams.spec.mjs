@@ -51,7 +51,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#googleDrivePanel')).toBeVisible();
     await page.locator('#gdriveClose').click({ force: true });
 
-    await page.locator('#onlineTeamBtn').click({ force: true });
+    await page.evaluate(() => document.getElementById('onlineTeamBtn')?.click());
     await expect(page.locator('#onlineModal')).toBeVisible();
     await page.locator('#onlineClose').click({ force: true });
 

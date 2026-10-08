@@ -41,18 +41,18 @@ jobs:
           grep -q "source.length>2000000" supabase/functions/github-gateway/index.ts
           grep -q "contentLength" supabase/functions/github-gateway/index.ts
           grep -q "Invalid repository or path" supabase/functions/github-gateway/index.ts
-          grep -q "aiTeamsImportState" index.html
-          grep -q "normalizeStateShape();" index.html
+          grep -q "aiTeamsImportState" app-core.js
+          grep -q "normalizeStateShape();" app-core.js
           grep -q "core.importState(validateState(r.data.state))" cloud-storage.js
           grep -q "importState:window.aiTeamsImportState" provider-manager.js
           grep -q "aiTeamsEnsureProviders" provider-manager.js
           grep -q "if(typeof window.callAgent!=='function')window.callAgent=universalCallAgent;" provider-manager.js
-          grep -q "normalizeStateShape" index.html
-          grep -q "compactContext" index.html
+          grep -q "normalizeStateShape" app-core.js
+          grep -q "compactContext" app-core.js
           grep -q "compactText" supabase/functions/ai-gateway/index.ts
           grep -q "Content-Security-Policy" index.html
-          grep -q "function safeAgentId" index.html
-          grep -q "function stripBrowserSecrets" index.html
+          grep -q "function safeAgentId" app-core.js
+          grep -q "function stripBrowserSecrets" app-core.js
           grep -q "stripBrowserSecrets(p)" index.html
           grep -q "core.importState(x.project)" github-storage.js
           grep -q "@media(max-width:920px)" index.html

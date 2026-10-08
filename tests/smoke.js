@@ -1,7 +1,10 @@
 const fs=require('fs');
 const assert=require('assert');
+const vm=require('vm');
 
 const html=fs.readFileSync('index.html','utf8');
+const inlineBlocks=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)];
+inlineBlocks.forEach((m,i)=>new vm.Script(m[1],{filename:'index-inline-'+i+'.js'}));
 const requiredIds=['chat','adminChatInput','adminChatBtn','teamName','goal','onlineTeamBtn'];
 for(const id of requiredIds) assert(html.includes('id="'+id+'"')||html.includes("id='"+id+"'"),'missing UI id: '+id);
 assert(html.includes('id="addAgentBtn"')||html.includes("id='addAgentBtn'"),'Agent Builder trigger missing');

@@ -294,5 +294,6 @@ function boot(){
 }
 readConfig();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+document.addEventListener('click',function(e){const b=e.target&&e.target.closest?e.target.closest('#cloudStorageBtn'):null;if(b){e.preventDefault();openPanel();}},true);
 window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},invokeAI:invokeAIGateway,streamAI:streamAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,renameProject:renameProject,deleteProject:deleteProject,duplicateProject:duplicateProject,getConfig:function(){return {url:CONFIG.url,publishableKey:CONFIG.publishableKey,configured:configured(),user:cloudUser};}};
 })();

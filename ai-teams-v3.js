@@ -281,23 +281,41 @@ function buildEvidence(goal,transcript,agents){
  (s.knowledge||[]).forEach(d=>{const t=String(d.name||'')+' '+String(d.text||'');const l=t.toLowerCase();const score=q.reduce((n,w)=>n+(l.includes(w)?1:0),0);if(score)items.push({type:'knowledge',name:d.name,score,excerpt:String(d.text||'').slice(0,3000)})});
  return items.slice(0,20);
 }
-function projectStageStatus(){
+function runtimePerformance(){
  const s=ensureState();
+ const chat=(s?.chat||[]).length,runs=(s?.runs||[]).length,knowledge=(s?.knowledge||[]).length;
+ const bounded=chat<=200&&runs<=20&&knowledge<=50;
+ const domNodes=document.getElementsByTagName('*').length;
+ const domHealthy=domNodes<12000;
+ return {ok:bounded&&domHealthy,nodes:domNodes,chat,runs,knowledge};
+}
+function runtimeUIHealth(){
+ const ids=['chat','adminChatInput','adminChatBtn','runBtn','stopBtn','v3ControlBtn'];
+ const missing=ids.filter(id=>!document.getElementById(id));
+ const viewport=document.querySelector('meta[name="viewport"]');
+ return {ok:missing.length===0&&!!viewport,missing};
+}
+function runtimeTestHealth(){
+ const required=['aiTeamsV3Open','aiTeamsV3Audit','aiTeamsTools'];
+ return {ok:required.every(k=>typeof window[k]==='function'||typeof window[k]==='object')};
+}
+function projectStageStatus(){
+ const s=ensureState(), perf=runtimePerformance(), ui=runtimeUIHealth(), tests=runtimeTestHealth();
  return [
   {n:1,label:'Providerهای AI',ok:(s.providers||[]).some(p=>p.id==='horde')},
-  {n:2,label:'همکاری Agentها',ok:true},
-  {n:3,label:'Timeline',ok:true},
-  {n:4,label:'Pause/Resume/Retry/Skip/Stop',ok:true},
-  {n:5,label:'خروجی و Evidence',ok:true},
+  {n:2,label:'همکاری Agentها',ok:typeof runSequentialV3==='function'},
+  {n:3,label:'Timeline',ok:typeof timelineEvent==='function'&&Array.isArray(V.events)},
+  {n:4,label:'Pause/Resume/Retry/Skip/Stop',ok:[pauseRun,resumeRun,retryCurrent,skipCurrent,stopRun].every(fn=>typeof fn==='function')},
+  {n:5,label:'خروجی و Evidence',ok:typeof buildEvidence==='function'&&typeof exportReport==='function'},
   {n:6,label:'Auth/Cloud',ok:!!window.aiTeamsCloud},
   {n:7,label:'GitHub',ok:!!window.aiTeamsGitHub},
   {n:8,label:'Google Drive',ok:!!window.aiTeamsDrive},
   {n:9,label:'Tools',ok:!!window.aiTeamsTools},
   {n:10,label:'Memory',ok:!!s.agentMemory},
-  {n:11,label:'Security',ok:audit().filter(x=>x.name).every(x=>x.ok)},
-  {n:12,label:'Performance',ok:true},
-  {n:13,label:'UI/UX',ok:true},
-  {n:14,label:'Tests/CI',ok:true}
+  {n:11,label:'Security',ok:audit().every(x=>x.ok)},
+  {n:12,label:'Performance',ok:perf.ok,note:'DOM '+perf.nodes+' · Chat '+perf.chat+' · Runs '+perf.runs+' · Knowledge '+perf.knowledge},
+  {n:13,label:'UI/UX',ok:ui.ok,note:ui.missing.length?'Missing: '+ui.missing.join(', '):'ساختار پایه UI سالم است'},
+  {n:14,label:'Tests/CI',ok:tests.ok,note:'تست‌های ساختاری runtime آماده‌اند؛ وضعیت CI واقعی در GitHub Actions بررسی می‌شود.'}
  ];
 }
 function rememberRunFinal(goal,finalResult,run){

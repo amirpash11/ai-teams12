@@ -232,12 +232,14 @@ function agentBuilderModels(providerId){
  const defaults={horde:['koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix','Llama-3.3-70B-Instruct','Qwen2.5-72B-Instruct','Mistral-Small-24B-Instruct-2501'],openai:['gpt-4o-mini','gpt-4o','gpt-5'],openrouter:['openrouter/free','deepseek/deepseek-chat-v3-0324:free','google/gemini-2.0-flash-exp:free'],claude:['claude-sonnet-4-5','claude-3-5-haiku'],gemini:['gemini-2.5-flash','gemini-2.5-pro'],custom:[]};
  const list=(defaults[providerId]||[]).slice();if(p&&p.model&&list.indexOf(p.model)<0)list.unshift(p.model);return list;
 }
-async function refreshHordeModels(){try{const r=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});if(!r.ok)return [];const j=await r.json();const models=(j.data||[]).map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean);if(models.length){state.hordeModels=models;save();}return models;}catch(e){return [];}}\nfunction agentBuilderRefreshModels(){
+async function refreshHordeModels(){try{const r=await fetch('https://oai.aihorde.net/v1/models',{headers:{'Authorization':'Bearer 0000000000','X-Client':'AI-Teams'},cache:'no-store'});if(!r.ok)return [];const j=await r.json();const models=(j.data||[]).map(function(x){return x&&x.id?String(x.id):''}).filter(Boolean);if(models.length){state.hordeModels=models;save();}return models;}catch(e){return [];}}
+function agentBuilderRefreshModels(){
  const provider=document.getElementById('agentBuilderProvider'),input=document.getElementById('agentBuilderModel'),list=document.getElementById('agentBuilderModels');if(!provider||!input||!list)return;
  let models=agentBuilderModels(provider.value);if(provider.value==='horde'&&Array.isArray(state.hordeModels)&&state.hordeModels.length)models=state.hordeModels.slice(0,100);list.innerHTML=models.map(function(m){return '<option value="'+esc(m)+'"></option>'}).join('');if(!input.value&&models[0])input.value=models[0];
 }
 function workflowSteps(){return getWorkflowAgents().map(function(a,i){return {id:a.id,agentId:a.id,order:i+1};})}
-function openAgentBuilder(){\n refreshHordeModels().then(function(){agentBuilderRefreshModels();});
+function openAgentBuilder(){
+ refreshHordeModels().then(function(){agentBuilderRefreshModels();});
  let modal=document.getElementById('agentBuilderModal');
  if(!modal){
   modal=document.createElement('div');modal.id='agentBuilderModal';modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:2000;padding:12px;overflow:auto';

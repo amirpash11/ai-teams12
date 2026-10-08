@@ -104,7 +104,7 @@ async function init(){
   panel();
   if(!document.getElementById('cloudStorageBtn')){
     const btn=document.createElement('button');btn.id='cloudStorageBtn';btn.className='btn';btn.textContent='☁ ذخیره‌سازی ابری';
-    const sidebar=document.querySelector('.sidebar');if(sidebar){const reset=document.getElementById('resetBtn');if(reset)sidebar.insertBefore(btn,reset);else sidebar.appendChild(btn);btn.onclick=openPanel;}
+    const sidebar=document.querySelector('.sidebar');if(sidebar){const reset=document.getElementById('resetBtn');if(reset)sidebar.insertBefore(btn,reset);else sidebar.appendChild(btn);btn.onclick=function(e){if(e)e.preventDefault();openPanel();};btn.addEventListener('click',openPanel);}
   }
   if(!configured()){refreshAuthUI();return;}
   try{

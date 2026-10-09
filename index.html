@@ -580,5 +580,112 @@ document.addEventListener('click',function(ev){
 })();
 </script>
 
+
+<style id="ai-teams-clean-ui-v2">
+/* Second-pass decluttering: prioritize chat and make secondary controls quieter */
+.sidebar{padding:14px 12px}
+.sidebar>.brand{margin-bottom:12px;padding-bottom:10px}
+.sidebar>.brand .logo{width:36px;height:36px;border-radius:11px}
+.sidebar>.brand h1{font-size:16px}
+.sidebar>.brand span,.left-sidebar>.brand span{display:none}
+.sidebar>#v3ControlBtn{margin-top:0}
+.sidebar>.section-title{margin:12px 0 7px}
+.sidebar .agent-list{gap:6px}
+.sidebar .agent-card{padding:8px;border-radius:10px}
+.sidebar .agent-card .avatar{width:32px;height:32px;flex-basis:32px}
+.sidebar>#rightTeamMembersToggle{margin:10px 0 6px!important}
+#rightTeamMembersBody{display:none!important}
+#rightTeamMembersBody.is-open{display:block!important}
+#rightTeamMembersToggle{min-height:40px}
+.sidebar #addAgentBtn,.sidebar #aiCatalogBtn{min-height:42px}
+#rightHomeOptions{margin-top:12px;padding-top:10px}
+#rightHomeOptions>.section-title{margin:4px 2px 8px;letter-spacing:.1px}
+#rightHomeOptions .topbar{border:0;padding:0;margin:0 0 8px}
+#rightHomeOptions .title h2{font-size:13px}
+#rightHomeOptions .top-actions{grid-template-columns:1fr 1fr;gap:6px}
+#rightHomeOptions .top-actions .btn{min-height:38px;padding:7px 5px;font-size:10px;white-space:normal}
+#rightHomeOptions .card{padding:10px;margin-top:7px;border-radius:11px;box-shadow:none}
+#rightHomeOptions .card h3{font-size:11px}
+#rightHomeOptions .card .field label{font-size:10px}
+#rightHomeOptions input,#rightHomeOptions textarea,#rightHomeOptions select{font-size:12px;padding:9px}
+#rightHomeOptions textarea{min-height:64px}
+#rightHomeOptions .notice{font-size:9px;padding:8px;line-height:1.6}
+#rightHomeOptions .stats{gap:4px}
+#rightHomeOptions .pill{font-size:8px;padding:4px 6px}
+#rightHomeOptions .drawer-fold-toggle{height:28px;min-width:28px}
+#rightHomeOptions .card.folded{padding-top:9px;padding-bottom:9px}
+#rightHomeOptions .card.folded .drawer-fold-header{min-height:28px}
+#rightHomeOptions #editor{max-height:240px}
+#rightHomeOptions .drawer-fold-content{margin-top:8px}
+.left-sidebar{padding:62px 12px 14px}
+.left-sidebar .notice{font-size:9px}
+.ai-tools-group{margin-top:8px;border:1px solid rgba(88,108,145,.25);border-radius:11px;background:rgba(14,21,38,.75);overflow:hidden}
+.ai-tools-group>button.ai-tools-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;background:transparent;color:var(--text);padding:11px 12px;font-size:11px;text-align:right}
+.ai-tools-group .ai-tools-content{display:none;padding:0 8px 8px}
+.ai-tools-group.open .ai-tools-content{display:grid;gap:5px}
+.ai-tools-group .ai-tools-content .btn{margin:0;min-height:38px;font-size:11px}
+.ai-tools-group .ai-tools-content #v3ControlBtn{width:100%}
+@media(max-width:920px){
+ .sidebar{padding:62px 12px 18px}
+ #rightHomeOptions .top-actions{grid-template-columns:1fr 1fr}
+ #rightHomeOptions .card{margin-top:7px}
+ #rightHomeOptions #editor{max-height:30vh}
+}
+@media(max-width:420px){
+ #rightHomeOptions .top-actions{grid-template-columns:1fr 1fr}
+ #rightHomeOptions .top-actions .btn{font-size:10px}
+}
+</style>
+<script id="ai-teams-clean-ui-v2-init">
+(function(){
+ function organizeTools(){
+  var sidebar=document.querySelector('.sidebar');
+  if(!sidebar||sidebar.dataset.toolsOrganized==='1')return;
+  var ids=['v3ControlBtn','workflowBuilderBtn','providersBtn','memoryBtn'];
+  var nodes=ids.map(function(id){return document.getElementById(id)}).filter(Boolean);
+  if(!nodes.length)return;
+  var group=document.createElement('div');group.className='ai-tools-group';
+  var toggle=document.createElement('button');toggle.type='button';toggle.className='ai-tools-toggle';
+  toggle.innerHTML='<span>ابزارهای بیشتر</span><span class="ai-tools-chevron" aria-hidden="true">＋</span>';
+  toggle.setAttribute('aria-expanded','false');
+  var content=document.createElement('div');content.className='ai-tools-content';
+  nodes.forEach(function(node){content.appendChild(node)});
+  group.appendChild(toggle);group.appendChild(content);
+  var search=document.getElementById('aiCatalogBtn');
+  if(search&&search.parentNode===sidebar)search.insertAdjacentElement('afterend',group);
+  else sidebar.appendChild(group);
+  toggle.addEventListener('click',function(){
+   var open=group.classList.toggle('open');
+   toggle.setAttribute('aria-expanded',String(open));
+   toggle.querySelector('.ai-tools-chevron').textContent=open?'−':'＋';
+  });
+  sidebar.dataset.toolsOrganized='1';
+ }
+ function setupMemberToggle(){
+  var button=document.getElementById('rightTeamMembersToggle');
+  var body=document.getElementById('rightTeamMembersBody');
+  var symbol=document.getElementById('rightTeamMembersBtn');
+  if(!button||!body||button.dataset.cleanToggle==='1')return;
+  body.classList.remove('is-open');
+  body.style.setProperty('display','none','important');
+  if(symbol)symbol.textContent='＋';
+  button.setAttribute('aria-expanded','false');
+  button.addEventListener('click',function(e){
+   e.preventDefault();e.stopImmediatePropagation();
+   var open=!body.classList.contains('is-open');
+   body.classList.toggle('is-open',open);
+   body.style.setProperty('display',open?'block':'none','important');
+   button.setAttribute('aria-expanded',String(open));
+   if(symbol)symbol.textContent=open?'−':'＋';
+  },true);
+  button.dataset.cleanToggle='1';
+ }
+ function run(){organizeTools();setupMemberToggle()}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);
+ else run();
+ setTimeout(run,300);
+})();
+</script>
+
 </body>
 </html>

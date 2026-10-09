@@ -260,7 +260,11 @@ async function renameProject(id,name){
   if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شوید.');
   const clean=String(name||'').trim().slice(0,MAX_PROJECT_NAME);
   if(!clean)throw new Error('نام پروژه نمی‌تواند خالی باشد.');
-  const r=await supabase.from(TABLE).update({name:clean}).eq('user_id',cloudUser.id).eq('project_id',String(id));
+  const row=await supabase.from(TABLE).select('state').eq('user_id',cloudUser.id).eq('project_id',String(id)).maybeSingle();
+  if(row.error)throw row.error;
+  if(!row.data)throw new Error('پروژه پیدا نشد.');
+  const nextState=Object.assign({},row.data.state||{},{teamName:clean});
+  const r=await supabase.from(TABLE).update({name:clean,state:nextState,updated_at:new Date().toISOString()}).eq('user_id',cloudUser.id).eq('project_id',String(id));
   if(r.error)throw r.error;
   return true;
 }

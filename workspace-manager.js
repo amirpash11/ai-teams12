@@ -24,9 +24,9 @@ async function refresh(){
  try{
   const list=await window.aiTeamsCloud.listProjects();
   const current=localStorage.getItem('ai-teams12-cloud-project-id-v1');
-  p.innerHTML=list.map(function(x){return '<div class="agent-row"><div class="agent-head"><strong>'+esc(x.name||'AI Teams')+'</strong><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn '+(x.project_id===current?'primary':'')+'" data-project="'+esc(x.project_id)+'" style="width:auto;margin:0">'+(x.project_id===current?'فعال':'باز کردن')+'</button><button class="btn" data-rename="'+esc(x.project_id)+'" style="width:auto;margin:0">تغییرنام</button><button class="btn" data-copy="'+esc(x.project_id)+'" style="width:auto;margin:0">تکثیر</button><button class="btn danger" data-delete="'+esc(x.project_id)+'" style="width:auto;margin:0">حذف</button></div></div><div class="tiny">'+esc(new Date(x.updated_at||Date.now()).toLocaleString('fa-IR'))+'</div></div>'}).join('')||'<div class="empty">هنوز پروژه‌ای ساخته نشده است.</div>';
+  p.innerHTML=list.map(function(x){return '<div class="agent-row"><div class="agent-head"><strong>'+esc(x.name||'AI Teams')+'</strong><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn '+(x.project_id===current?'primary':'')+'" data-project="'+esc(x.project_id)+'" style="width:auto;margin:0">'+(x.project_id===current?'فعال':'باز کردن')+'</button><button class="btn" data-rename="'+esc(x.project_id)+'" style="width:auto;margin:0">تغییرنام</button><button class="btn" data-copy="'+esc(x.project_id)+'" style="width:auto;margin:0">تکثیر</button></div></div><div class="tiny">'+esc(new Date(x.updated_at||Date.now()).toLocaleString('fa-IR'))+'</div></div>'}).join('')||'<div class="empty">هنوز پروژه‌ای ساخته نشده است.</div>';
   p.onclick=async function(e){
-   const b=e.target.closest('[data-project],[data-rename],[data-copy],[data-delete]');if(!b)return;
+   const b=e.target.closest('[data-project],[data-rename],[data-copy]');if(!b)return;
    try{
     if(b.dataset.project){status('در حال باز کردن پروژه...',true);await window.aiTeamsCloud.switchProject(b.dataset.project);location.reload();return}
     if(b.dataset.rename){const n=prompt('نام جدید پروژه:');if(!n)return;await window.aiTeamsCloud.renameProject(b.dataset.rename,n);await refresh();return}
@@ -34,7 +34,7 @@ async function refresh(){
     if(b.dataset.delete){if(!confirm('این پروژه از فضای ابری حذف شود؟'))return;await window.aiTeamsCloud.deleteProject(b.dataset.delete);await refresh();return}
    }catch(err){status(err.message,false)}
   };
-  status('پروژه‌ها و تاریخچه آماده‌اند.',true);
+  status('پروژه‌ها و تاریخچه آماده‌اند. برای محافظت از اطلاعات، حذف پروژه از این فهرست غیرفعال است.',true);
  }catch(e){status(e.message,false)}
 }
 async function newProject(){

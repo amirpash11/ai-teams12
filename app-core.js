@@ -935,3 +935,22 @@ function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)!=='
   sync();
   window.addEventListener('pageshow',sync);
 })();
+
+// Public bridge used by cloud/workspace managers to save and restore complete projects.
+window.aiTeamsCore = {
+  getState: function(){ return state; },
+  save: save,
+  render: function(){ render(); renderChat(); },
+  importState: function(incoming){
+    if(!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) throw new Error('ساختار پروژه نامعتبر است.');
+    const safe = JSON.parse(JSON.stringify(incoming));
+    if(!Array.isArray(safe.agents) || safe.agents.length < 1 || safe.agents.length > 50) throw new Error('تعداد اعضای پروژه نامعتبر است.');
+    state = safe;
+    normalizeStateShape();
+    collapsed = new Set(state.agents.map(function(a){ return a.id; }));
+    save();
+    render();
+    renderChat();
+    return true;
+  }
+};

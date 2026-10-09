@@ -687,5 +687,59 @@ document.addEventListener('click',function(ev){
 })();
 </script>
 
+
+<style id="chatgpt-mobile-sidebar-style">
+/* Mobile navigation inspired by the reference screenshot: dark sheet, dimmed chat, clear recent chats. */
+#aiTeamsDrawerBackdrop{display:none}
+@media(max-width:920px){
+ body.ai-teams-drawer-open{overflow:hidden}
+ #aiTeamsDrawerBackdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.66);z-index:1390;opacity:0;pointer-events:none;transition:opacity .18s ease}
+ body.ai-teams-drawer-open #aiTeamsDrawerBackdrop{opacity:1;pointer-events:auto}
+ .app{display:block!important;min-height:100dvh}
+ .app .sidebar{position:fixed!important;top:0;right:0;bottom:0;left:auto;width:min(82vw,360px)!important;height:100dvh!important;max-height:100dvh;z-index:1400;padding:24px 16px max(24px,env(safe-area-inset-bottom))!important;background:#212121!important;border:0!important;border-left:1px solid #3a3a3a!important;box-shadow:-18px 0 50px rgba(0,0,0,.35);transform:translateX(105%);transition:transform .2s ease;overflow-y:auto!important;overscroll-behavior:contain}
+ body.ai-teams-right-open .app .sidebar{transform:translateX(0)}
+ .app.drawer-hidden .sidebar{display:block!important;width:min(82vw,360px)!important;padding:24px 16px max(24px,env(safe-area-inset-bottom))!important}
+ .app .main{padding:64px 14px 24px!important;min-width:0}
+ .drawer-toggle{position:fixed!important;top:12px!important;right:12px!important;left:auto!important;z-index:1501;width:44px;height:44px;border:1px solid #484848!important;border-radius:50%!important;background:#292929!important;color:#fff!important;box-shadow:none!important}
+ body.ai-teams-right-open .drawer-toggle{right:calc(min(82vw,360px) + 12px)!important;background:#333!important}
+ .left-sidebar{z-index:1401!important;left:auto!important;right:0!important;width:min(82vw,360px)!important;background:#212121!important;border:0!important;box-shadow:-18px 0 50px rgba(0,0,0,.35)}
+ .left-sidebar.open{transform:translateX(0)!important}
+ .left-drawer-toggle{left:12px!important;right:auto!important;z-index:1501}
+ body.ai-teams-right-open .left-sidebar{transform:translateX(105%)!important}
+ body.ai-teams-left-open .app .sidebar{transform:translateX(105%)!important}
+ body.ai-teams-left-open #aiTeamsDrawerBackdrop{opacity:1;pointer-events:auto}
+ .sidebar>.brand{padding:12px 4px 18px!important;margin-bottom:10px!important;border-bottom:1px solid #373737}
+ .sidebar>.brand .logo{width:42px;height:42px;border-radius:50%;background:#333}
+ .sidebar>.brand h1{font-size:22px!important;font-weight:600}
+ .sidebar>.brand span{display:none!important}
+ .sidebar .section-title{font-size:14px!important;color:#e8e8e8!important}
+ .sidebar .btn{background:transparent;border:0;border-radius:10px;text-align:right;padding:12px 10px;margin:2px 0;min-height:46px;font-size:14px;color:#eee}
+ .sidebar .btn.primary{background:#303030;border:1px solid #424242}
+ .sidebar .agent-card{background:transparent;border-color:#383838}
+ .sidebar .ai-tools-group{background:transparent;border-color:#3b3b3b}
+ .sidebar .ai-tools-group>button.ai-tools-toggle{font-size:14px;padding:13px 10px}
+ #rightTeamMembersToggle{background:transparent!important;border-color:#383838!important;font-size:14px!important}
+ #rightHomeOptions{border-top:1px solid #3b3b3b}
+ #rightHomeOptions .card{background:#292929;border-color:#414141}
+}
+</style>
+<div id="aiTeamsDrawerBackdrop" aria-hidden="true"></div>
+<script id="chatgpt-mobile-sidebar-init">
+(function(){
+ var body=document.body,app=document.querySelector('.app'),right=document.getElementById('drawerToggle'),left=document.getElementById('leftDrawerToggle'),backdrop=document.getElementById('aiTeamsDrawerBackdrop');
+ if(!app||!right||!backdrop)return;
+ function mobile(){return window.matchMedia('(max-width: 920px)').matches}
+ function closeAll(){body.classList.remove('ai-teams-right-open','ai-teams-left-open','ai-teams-drawer-open');if(app)app.classList.add('drawer-hidden');var ls=document.getElementById('leftSidebar');if(ls)ls.classList.remove('open')}
+ function openRight(){if(!mobile())return;body.classList.remove('ai-teams-left-open');body.classList.add('ai-teams-right-open','ai-teams-drawer-open');app.classList.remove('drawer-hidden');var ls=document.getElementById('leftSidebar');if(ls)ls.classList.remove('open')}
+ function openLeft(){if(!mobile())return;body.classList.remove('ai-teams-right-open');body.classList.add('ai-teams-left-open','ai-teams-drawer-open');app.classList.add('drawer-hidden');var ls=document.getElementById('leftSidebar');if(ls)ls.classList.add('open')}
+ right.addEventListener('click',function(e){if(!mobile())return;e.preventDefault();e.stopImmediatePropagation();if(body.classList.contains('ai-teams-right-open'))closeAll();else openRight()},true);
+ if(left)left.addEventListener('click',function(e){if(!mobile())return;e.preventDefault();e.stopImmediatePropagation();if(body.classList.contains('ai-teams-left-open'))closeAll();else openLeft()},true);
+ backdrop.addEventListener('click',closeAll);
+ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
+ window.addEventListener('resize',function(){if(!mobile())closeAll()});
+ if(mobile()){app.classList.add('drawer-hidden');closeAll()}
+})();
+</script>
+
 </body>
 </html>

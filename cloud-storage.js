@@ -27,10 +27,15 @@ function saveConfig(url,key){
   localStorage.setItem(CONFIG_KEY,JSON.stringify({version:2,url:u,publishableKey:k}));
 }
 function configured(){return !!normalizeUrl(CONFIG.url)&&!!CONFIG.publishableKey&&CONFIG.publishableKey.indexOf('YOUR_')!==0;}
+function createProjectId(){
+  const c=window.crypto;
+  if(c&&typeof c.randomUUID==='function')return c.randomUUID();
+  return 'project-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,16);
+}
 function projectId(){
   let id=String(localStorage.getItem(LOCAL_KEY)||'');
   if(!/^[A-Za-z0-9_-]{8,120}$/.test(id)){
-    id=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();
+    id=createProjectId();
     localStorage.setItem(LOCAL_KEY,id);
   }
   return id;
@@ -266,6 +271,14 @@ async function renameProject(id,name){
   const nextState=Object.assign({},row.data.state||{},{teamName:clean});
   const r=await supabase.from(TABLE).update({name:clean,state:nextState,updated_at:new Date().toISOString()}).eq('user_id',cloudUser.id).eq('project_id',String(id));
   if(r.error)throw r.error;
+  if(String(id)===projectId()){
+    const core=window.aiTeamsCore;
+    if(core&&typeof core.getState==='function'){
+      core.getState().teamName=clean;
+      core.save();
+      core.render();
+    }
+  }
   return true;
 }
 async function duplicateProject(id,name){
@@ -273,7 +286,7 @@ async function duplicateProject(id,name){
   const source=await supabase.from(TABLE).select('state,name').eq('user_id',cloudUser.id).eq('project_id',String(id)).maybeSingle();
   if(source.error)throw source.error;
   if(!source.data)throw new Error('پروژه پیدا نشد.');
-  const newId=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();
+  const newId=createProjectId();
   const clean=String(name||((source.data.name||'AI Teams')+' - کپی')).trim().slice(0,MAX_PROJECT_NAME);
   const r=await supabase.from(TABLE).insert({user_id:cloudUser.id,project_id:newId,name:clean,state:source.data.state,updated_at:new Date().toISOString()});
   if(r.error)throw r.error;
@@ -288,7 +301,7 @@ async function deleteProject(id){
 }
 async function newProject(name){
   if(!cloudReady||!cloudUser)throw new Error('ابتدا وارد حساب ابری شو.');
-  const id=(crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+'-'+Math.random();localStorage.setItem(LOCAL_KEY,id);
+  const id=createProjectId();localStorage.setItem(LOCAL_KEY,id);
   const core=window.aiTeamsCore;
   if(core){const s=core.getState();s.teamName=String(name||'تیم جدید').slice(0,MAX_PROJECT_NAME);s.goal='';s.chat=[];s.runs=[];core.save();core.render();}
   await syncNow(false);return id;

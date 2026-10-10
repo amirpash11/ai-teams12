@@ -1,35 +1,25 @@
 /* AI Teams - Google Drive cloud storage */
 (function(){
 'use strict';
-const CONFIG_KEY='ai-teams-google-drive-config-v1'; const CONFIG={clientId:'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com'}; try{const saved=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');if(saved.clientId)CONFIG.clientId=String(saved.clientId).trim();}catch(_){}
 const DRIVE_API='https://www.googleapis.com/drive/v3';
-const TOKEN_SCOPE='https://www.googleapis.com/auth/drive.appdata';
 const FILE_NAME='ai-teams-project.json';
-let tokenClient=null,accessToken='',tokenExpiresAt=0,initialized=false;
-
-function configured(){return CONFIG.clientId.indexOf('YOUR_')!==0;}
-function loadGIS(){return new Promise(function(resolve,reject){
-  if(window.google&&google.accounts&&google.accounts.oauth2){resolve();return;}
-  const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
-  s.onload=resolve;s.onerror=function(){reject(new Error('کتابخانه Google Identity Services بارگذاری نشد.'));};
-  document.head.appendChild(s);
-});}
+let accessToken='',tokenExpiresAt=0,initialized=false;
 function panel(){
  if(document.getElementById('googleDrivePanel'))return;
  const el=document.createElement('div');el.id='googleDrivePanel';
  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:3000;padding:16px;overflow:auto;display:none';
  el.innerHTML='<div class="card" style="max-width:650px;margin:30px auto;background:#121a2d">'+
  '<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">☁️ Google Drive</h3><button class="icon-btn" id="gdriveClose">✕</button></div>'+
- '<div id="gdriveStatus" class="notice" style="margin-top:12px">در حال بررسی اتصال...</div>'+ '<div class="field" style="margin-top:12px"><label>Google OAuth Client ID</label><input id="gdriveClientId" placeholder="123...apps.googleusercontent.com" autocomplete="off"><div class="tiny">این شناسه محرمانه نیست و فقط برای شروع OAuth در مرورگر استفاده می‌شود.</div></div>'+
+ '<div id="gdriveStatus" class="notice" style="margin-top:12px">برای اتصال، با حساب Gmail وارد شو.</div>'+
  '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
- '<button class="btn primary" style="width:auto" id="gdriveConnect">🔐 اتصال Google Drive</button>'+
+ '<button class="btn primary" style="width:auto" id="gdriveConnect">📧 اتصال با Gmail</button>'+
  '<button class="btn" style="width:auto;display:none" id="gdriveSave">☁️ ذخیره پروژه</button>'+
  '<button class="btn" style="width:auto;display:none" id="gdriveLoad">📥 بازیابی پروژه</button>'+
  '<button class="btn" style="width:auto;display:none" id="gdriveDisconnect">قطع اتصال</button></div>'+
  '<div class="notice" style="margin-top:12px">AI Teams فقط به فضای اختصاصی همین برنامه در Google Drive یعنی appDataFolder دسترسی می‌گیرد. رمز Google داخل برنامه ذخیره نمی‌شود.</div>'+
  '<div style="margin-top:12px"><button class="btn" style="width:auto" id="gdriveClose2">بستن</button></div></div>';
  document.body.appendChild(el);
- document.getElementById('gdriveClientId').value=CONFIG.clientId.indexOf('YOUR_')===0?'':CONFIG.clientId;document.getElementById('gdriveClientId').onchange=function(){const v=String(this.value||'').trim();if(v){CONFIG.clientId=v;localStorage.setItem(CONFIG_KEY,JSON.stringify({version:1,clientId:v}));initialized=false;init().catch(function(){})}};document.getElementById('gdriveClose').onclick=closePanel;document.getElementById('gdriveClose2').onclick=closePanel;
+ document.getElementById('gdriveClose').onclick=closePanel;document.getElementById('gdriveClose2').onclick=closePanel;
  document.getElementById('gdriveConnect').onclick=connect;document.getElementById('gdriveSave').onclick=function(){saveToDrive(true)};
  document.getElementById('gdriveLoad').onclick=function(){loadFromDrive(true)};document.getElementById('gdriveDisconnect').onclick=disconnect;
 }
@@ -39,25 +29,43 @@ function closePanel(){const x=document.getElementById('googleDrivePanel');if(x)x
 function updateUI(){
  const c=document.getElementById('gdriveConnect'),s=document.getElementById('gdriveSave'),l=document.getElementById('gdriveLoad'),d=document.getElementById('gdriveDisconnect');if(!c)return;
  const connected=!!accessToken;c.style.display=connected?'none':'inline-block';s.style.display=connected?'inline-block':'none';l.style.display=connected?'inline-block':'none';d.style.display=connected?'inline-block':'none';
- if(!configured())status('برای فعال‌سازی، Google OAuth Client ID را در google-drive-storage.js قرار بده.',false);
- else if(!initialized)status('آماده اتصال به Google Drive.',false);
- else if(connected)status('Google Drive متصل است و پروژه می‌تواند خودکار ذخیره شود.',true);
- else status('برای ذخیره ابری، اتصال Google را تأیید کن.',false);
+ if(connected)status('Google Drive از طریق حساب Gmail متصل است.',true);
+ else if(initialized)status('برای اتصال، دکمه «اتصال با Gmail» را بزن.',false);
+ else status('در حال آماده‌سازی ورود با Gmail…',false);
 }
 async function init(){
  panel();
- const btn=document.createElement('button');btn.id='googleDriveBtn';btn.className='btn';btn.textContent='☁️ اتصال Google Drive';
+ const btn=document.createElement('button');btn.id='googleDriveBtn';btn.className='btn';btn.textContent='📧 اتصال Google Drive با Gmail';
  const sidebar=document.querySelector('.sidebar');if(sidebar){const reset=document.getElementById('resetBtn');if(reset)sidebar.insertBefore(btn,reset);else sidebar.appendChild(btn);btn.onclick=openPanel;}
- if(!configured()){updateUI();return;}
- try{await loadGIS();tokenClient=google.accounts.oauth2.initTokenClient({client_id:CONFIG.clientId,scope:TOKEN_SCOPE,callback:handleToken});initialized=true;updateUI();}
- catch(e){status('Google Drive آماده نشد: '+e.message,false);}
+ initialized=!!(window.aiTeamsCloud&&typeof window.aiTeamsCloud.connectGoogleDrive==='function');
+ window.addEventListener('ai-teams-google-drive-token',function(event){
+  const token=event.detail&&event.detail.token;if(!token)return;
+  accessToken=token;tokenExpiresAt=Date.now()+45*60*1000;initialized=true;updateUI();syncAfterConnect();
+ });
+ try{
+  if(window.aiTeamsCloud&&typeof window.aiTeamsCloud.getGoogleDriveToken==='function'){
+   const token=await window.aiTeamsCloud.getGoogleDriveToken();
+   if(token){accessToken=token;tokenExpiresAt=Date.now()+45*60*1000;}
+  }
+ }catch(_){}
+ updateUI();
 }
-function handleToken(response){if(response.error){status('اتصال Google ناموفق بود: '+(response.error_description||response.error),false);return;}accessToken=response.access_token||'';tokenExpiresAt=Date.now()+Number(response.expires_in||3600)*1000-60000;updateUI();syncAfterConnect();}
-function connect(){if(!initialized||!tokenClient)return alert('اتصال Google هنوز آماده نشده است.');tokenClient.requestAccessToken({prompt:'consent'});}
+function connect(){
+ if(!window.aiTeamsCloud||typeof window.aiTeamsCloud.connectGoogleDrive!=='function'){
+  status('ابتدا اتصال ابری برنامه را آماده کن.',false);return;
+ }
+ window.aiTeamsCloud.connectGoogleDrive().then(function(ok){
+  if(ok){status('حساب Gmail شناسایی شد؛ Google Drive آماده است.',true);}
+ }).catch(function(e){status('اتصال Gmail ناموفق بود: '+e.message,false);alert('اتصال با Gmail ناموفق بود: '+e.message);});
+}
 function ensureToken(){
  if(accessToken&&Date.now()<tokenExpiresAt)return Promise.resolve(accessToken);
- return new Promise(function(resolve,reject){if(!tokenClient)return reject(new Error('Google Identity Services آماده نیست.'));
-  const old=tokenClient.callback;tokenClient.callback=function(response){tokenClient.callback=old;if(response.error)return reject(new Error(response.error_description||response.error));accessToken=response.access_token||'';tokenExpiresAt=Date.now()+Number(response.expires_in||3600)*1000-60000;updateUI();resolve(accessToken);};tokenClient.requestAccessToken({prompt:''});
+ accessToken='';tokenExpiresAt=0;
+ if(!window.aiTeamsCloud||typeof window.aiTeamsCloud.getGoogleDriveToken!=='function')return Promise.reject(new Error('ابتدا وارد حساب Gmail شو.'));
+ return window.aiTeamsCloud.getGoogleDriveToken().then(function(token){
+  if(token){accessToken=token;tokenExpiresAt=Date.now()+45*60*1000;updateUI();return token;}
+  if(typeof window.aiTeamsCloud.connectGoogleDrive==='function')window.aiTeamsCloud.connectGoogleDrive().catch(function(){});
+  throw new Error('برای ادامه، یک بار ورود با Gmail و اجازه دسترسی Google Drive را تأیید کن.');
  });
 }
 async function driveFetch(url,options){
@@ -97,7 +105,7 @@ async function loadFromDrive(manual){
  }catch(e){status('بازیابی از Google Drive ناموفق بود: '+e.message,false);if(manual)alert('بازیابی ناموفق بود: '+e.message);}
 }
 async function syncAfterConnect(){try{const file=await findFile();if(file)await loadFromDrive(false);else await saveToDrive(false);}catch(e){status('همگام‌سازی اولیه ناموفق بود: '+e.message,false);}}
-function disconnect(){try{if(accessToken&&google&&google.accounts&&google.accounts.oauth2)google.accounts.oauth2.revoke(accessToken,()=>{});}catch(e){}accessToken='';tokenExpiresAt=0;updateUI();}
+function disconnect(){accessToken='';tokenExpiresAt=0;updateUI();}
 function wrapSave(){const core=window.aiTeamsCore;if(!core||core.__gdriveSaveWrapped)return;const original=core.save;core.save=function(){original();if(accessToken&&!core.__gdriveApplyingRemote){clearTimeout(core.__gdriveTimer);core.__gdriveTimer=setTimeout(function(){saveToDrive(false)},1200)}};core.__gdriveSaveWrapped=true;}
 async function boot(){await init();wrapSave();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

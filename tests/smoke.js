@@ -80,6 +80,8 @@ assert(drive.includes('__gdriveApplyingRemote'),'Drive remote-apply guard missin
 
 const aiGateway=fs.readFileSync('supabase/functions/ai-gateway/index.ts','utf8');
 assert(aiGateway.includes('consume_ai_gateway_rate_limit'),'Gateway rate limit missing');
+assert(aiGateway.includes('async function readJsonLimited(req: Request, maxBytes: number)'),'Gateway must bound streamed request bodies');
+assert(aiGateway.includes('await readJsonLimited(req, 1200000)'),'Gateway must parse only after enforcing streamed body limits');
 assert(aiGateway.includes('https://oai.aihorde.net/v1/chat/completions'),'Gateway Horde endpoint missing');
 assert(!aiGateway.includes('oai.stablehorde.net'),'stale Gateway Horde endpoint remains');
 

@@ -918,13 +918,15 @@ function applyLeftDrawer(){var h=localStorage.getItem(__leftDrawerState.key)!=='
   var r=document.getElementById('drawerToggle'),l=document.getElementById('leftDrawerToggle');
   function sync(){applyDrawer();applyLeftDrawer();}
   function openRight(){
-    var hidden=localStorage.getItem(__drawerState.key)==='1';
+    var app=document.querySelector('.app');
+    var hidden=!!(app&&app.classList.contains('drawer-hidden'));
     localStorage.setItem(__drawerState.key,hidden?'0':'1');
     if(hidden)localStorage.setItem(__leftDrawerState.key,'1');
     sync();
   }
   function openLeft(){
-    var hidden=localStorage.getItem(__leftDrawerState.key)==='1';
+    var app=document.querySelector('.app');
+    var hidden=!!(app&&app.classList.contains('left-drawer-hidden'));
     localStorage.setItem(__leftDrawerState.key,hidden?'0':'1');
     if(hidden)localStorage.setItem(__drawerState.key,'1');
     sync();

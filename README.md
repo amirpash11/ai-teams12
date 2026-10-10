@@ -93,3 +93,11 @@
 ## Completion validation (v3)
 The repository includes the v3 orchestration layer with sequential team control, timeline events, pause/resume/retry/skip/stop controls, structured evidence, executable local tools, per-agent memory, security audit checks, and JSON run reports.
 Free AI connectivity uses the official AI Horde OpenAI-compatible endpoint. Paid Providers remain server-side Gateway integrations and require their provider credentials to be configured in Supabase.
+
+## راه‌اندازی ورود ابری و Google
+
+- نشانی سایت در تنظیمات URL احراز هویت Supabase باید `https://amirpash11.github.io/ai-teams12/` باشد و در فهرست Redirect URLs هم ثبت شود.
+- برای ورود Google در Supabase، Provider مربوط به Google باید در داشبورد فعال و با OAuth Client متعلق به مالک برنامه تنظیم شود. آدرس بازگشت Google به Supabase برابر است با `https://gqymrljvbkxlgyvoykpv.supabase.co/auth/v1/callback`.
+- Google Drive اتصال جداگانه‌ای است؛ Google Drive API باید فعال و Client ID برنامه در پنجره اتصال Drive وارد شود. برنامه از فضای `appDataFolder` استفاده می‌کند.
+- هنگام بازیابی پروژه از Supabase یا Drive، اگر نسخه ابری با نسخه مرورگر فرق داشته باشد، برنامه پیش از جایگزینی تأیید می‌گیرد و نسخه‌های قبلی را در پشتیبان محلی نگه می‌دارد.
+- تنظیم OAuth به دسترسی مالک به داشبوردهای Supabase و Google Cloud نیاز دارد. کلیدهای محرمانه را داخل مخزن GitHub قرار نده.

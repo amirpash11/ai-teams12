@@ -128,6 +128,26 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#chat')).toContainText('بحث چندعاملی پایان یافت', { timeout: 15000 });
   });
 
+  test('browser can reach the free AI Horde model catalog', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+    const result = await page.evaluate(async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch('https://oai.aihorde.net/v1/models', { signal: controller.signal });
+        if (!response.ok) return { ok:false, status:response.status, count:0 };
+        const data = await response.json();
+        return { ok:true, status:response.status, count:Array.isArray(data.data)?data.data.length:0 };
+      } catch (error) {
+        return { ok:false, status:0, count:0, error:String(error && error.message || error) };
+      } finally { clearTimeout(timer); }
+    });
+    console.log('BROWSER_HORDE_CATALOG', JSON.stringify(result));
+    expect(result.ok, result.error || ('HTTP '+result.status)).toBeTruthy();
+    expect(result.count).toBeGreaterThan(0);
+  });
+
   test('mobile chat-first layout and drawer behavior', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });

@@ -76,6 +76,9 @@ assert(multi.includes("people:[{id:'host-'+roomCode"),'guest roster must include
 
 const drive=fs.readFileSync('google-drive-storage.js','utf8');
 assert(drive.includes('appDataFolder'),'Drive scope/storage isolation missing');
+assert(drive.includes("const DRIVE_UPLOAD_API='https://www.googleapis.com/upload/drive/v3'"),'Drive upload API base URL missing');
+assert(drive.includes("DRIVE_UPLOAD_API+'/files?uploadType=multipart'"),'Drive create must use the upload API endpoint');
+assert(drive.includes("DRIVE_UPLOAD_API+'/files/'+encodeURIComponent(existing.id)+'?uploadType=media'"),'Drive updates must use the upload API endpoint');
 assert(drive.includes('__gdriveApplyingRemote'),'Drive remote-apply guard missing');
 
 const aiGateway=fs.readFileSync('supabase/functions/ai-gateway/index.ts','utf8');

@@ -54,6 +54,10 @@ test.describe('AI Teams end-to-end smoke', () => {
     await memberRow.locator('button[title="حذف"]').click();
     await expect(page.locator('#editor')).not.toContainText('عضو تستی');
     await expect(page.locator('#workflowBuilderBtn')).toBeAttached();
+    // Member operations can rerender the drawer; re-open it if its persisted state closed it.
+    if (await page.locator('.app').evaluate(el => el.classList.contains('drawer-hidden'))) {
+      await page.locator('#drawerToggle').click({ force: true });
+    }
     await page.locator('#memoryBtn').click({ force: true });
     await expect(page.locator('#teamMemoryPanel')).toBeVisible();
     await page.locator('#knowledgeOpen').click({ force: true });

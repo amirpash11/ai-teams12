@@ -34,6 +34,9 @@ test.describe('AI Teams end-to-end smoke', () => {
       await page.locator('#drawerToggle').click();
     }
     await expect(page.locator('.app')).not.toHaveClass(/(^| )drawer-hidden( |$)/);
+    const editorCard = page.locator('#rightHomeOptions .card').filter({ has: page.locator('#editor') });
+    const editorToggle = editorCard.locator('.drawer-fold-toggle');
+    if (await editorToggle.getAttribute('aria-expanded') === 'false') await editorToggle.click();
     const memberRow = page.locator('#editor .agent-row').filter({ hasText: 'عضو تستی' }).first();
     await expect(memberRow).toBeVisible();
     await page.locator('#addAgentBtn').click();

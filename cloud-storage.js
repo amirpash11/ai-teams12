@@ -186,11 +186,11 @@ async function signInWithGoogle(includeDriveScope){
     alert('ورود با Google ناموفق بود: '+e.message+'\nاگر Google در Supabase فعال نشده باشد، ابتدا آن را فعال کن.');
   }
 }
-async function connectGoogleDrive(){
+async function connectGoogleDrive(force){
   if(!cloudReady)throw new Error('اتصال ابری Supabase آماده نیست.');
   const sessionResult=await supabase.auth.getSession();
   const session=sessionResult.data&&sessionResult.data.session;
-  if(localStorage.getItem(DRIVE_SCOPE_GRANTED_KEY)==='1'&&session&&session.provider_token){
+  if(!force&&localStorage.getItem(DRIVE_SCOPE_GRANTED_KEY)==='1'&&session&&session.provider_token){
     emitGoogleDriveToken(session);return true;
   }
   localStorage.setItem(DRIVE_OAUTH_PENDING_KEY,'1');

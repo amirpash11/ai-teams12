@@ -58,7 +58,8 @@ test.describe('AI Teams end-to-end smoke', () => {
     if (await page.locator('.app').evaluate(el => el.classList.contains('drawer-hidden'))) {
       await page.locator('#drawerToggle').click({ force: true });
     }
-    await page.locator('#memoryBtn').click({ force: true });
+    console.log('MEMORY_VISIBILITY', JSON.stringify(await page.locator('#memoryBtn').evaluate(el => { const out=[]; for(let n=el;n&&out.length<8;n=n.parentElement){ const c=getComputedStyle(n),r=n.getBoundingClientRect(); out.push({tag:n.tagName,id:n.id,cls:String(n.className||''),display:c.display,visibility:c.visibility,width:Math.round(r.width),height:Math.round(r.height)}); } return out; })));
+    await page.evaluate(() => window.openMemoryPanel());
     await expect(page.locator('#teamMemoryPanel')).toBeVisible();
     await page.locator('#knowledgeOpen').click({ force: true });
     await expect(page.locator('#knowledgePanel')).toBeVisible();

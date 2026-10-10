@@ -89,7 +89,7 @@ function panel(){
   document.getElementById('cloudClose').onclick=closePanel;
   document.getElementById('cloudClose2').onclick=closePanel;
   document.getElementById('cloudSignIn').onclick=signIn;
-  document.getElementById('cloudGoogleSignIn').onclick=signInWithGoogle;
+  document.getElementById('cloudGoogleSignIn').onclick=function(){signInWithGoogle(false);};
   document.getElementById('cloudSignUp').onclick=signUp;
   document.getElementById('cloudResend').onclick=resendConfirmation;
   document.getElementById('cloudReset').onclick=resetPassword;
@@ -127,7 +127,7 @@ async function init(){
     cloudReady=true;
     const session=await supabase.auth.getSession();
     cloudUser=session.data&&session.data.session&&session.data.session.user||null;
-    emitGoogleDriveToken(session.data&&session.data.session);
+    handleGoogleDriveAuthSession(session.data&&session.data.session);
     refreshAuthUI();
     if(cloudUser)await syncFromCloud();
   }catch(e){cloudReady=false;cloudUser=null;status('اتصال ابری آماده نشد: '+e.message,false);}
@@ -164,38 +164,54 @@ async function resetPassword(){
     alert('اگر این ایمیل در سیستم ثبت شده باشد، لینک بازیابی رمز ارسال می‌شود.');
   }catch(e){alert('درخواست بازیابی رمز ناموفق بود: '+e.message);}
 }
+const DRIVE_SCOPE_GRANTED_KEY='ai-teams-google-drive-scope-granted-v1';
+const DRIVE_OAUTH_PENDING_KEY='ai-teams-google-drive-oauth-pending-v1';
 function emitGoogleDriveToken(session){
   const token=session&&session.provider_token;
-  if(token&&typeof token==='string')window.dispatchEvent(new CustomEvent('ai-teams-google-drive-token',{detail:{token:token}}));
+  if(token&&typeof token==='string'&&localStorage.getItem(DRIVE_SCOPE_GRANTED_KEY)==='1')
+    window.dispatchEvent(new CustomEvent('ai-teams-google-drive-token',{detail:{token:token}}));
 }
-async function signInWithGoogle(){
+async function signInWithGoogle(includeDriveScope){
   if(!cloudReady)return;
   try{
-    const r=await supabase.auth.signInWithOAuth({provider:'google',options:{
-      redirectTo:location.origin+location.pathname,
-      scopes:'openid email profile https://www.googleapis.com/auth/drive.appdata',
-      queryParams:{access_type:'offline',prompt:'consent'}
-    }});
+    const options={redirectTo:location.origin+location.pathname};
+    if(includeDriveScope){
+      options.scopes='openid email profile https://www.googleapis.com/auth/drive.appdata';
+      options.queryParams={access_type:'offline',prompt:'consent'};
+    }
+    const r=await supabase.auth.signInWithOAuth({provider:'google',options:options});
     if(r.error)throw r.error;
-  }catch(e){alert('ورود با Google ناموفق بود: '+e.message+'\nاگر Google در Supabase فعال نشده باشد، ابتدا آن را فعال کن.');}
+  }catch(e){
+    if(includeDriveScope)localStorage.removeItem(DRIVE_OAUTH_PENDING_KEY);
+    alert('ورود با Google ناموفق بود: '+e.message+'\nاگر Google در Supabase فعال نشده باشد، ابتدا آن را فعال کن.');
+  }
 }
 async function connectGoogleDrive(){
   if(!cloudReady)throw new Error('اتصال ابری Supabase آماده نیست.');
   const sessionResult=await supabase.auth.getSession();
   const session=sessionResult.data&&sessionResult.data.session;
-  if(session&&session.provider_token){
-    emitGoogleDriveToken(session);
-    return true;
+  if(localStorage.getItem(DRIVE_SCOPE_GRANTED_KEY)==='1'&&session&&session.provider_token){
+    emitGoogleDriveToken(session);return true;
   }
-  await signInWithGoogle();
+  localStorage.setItem(DRIVE_OAUTH_PENDING_KEY,'1');
+  await signInWithGoogle(true);
   return false;
 }
 async function getGoogleDriveToken(){
   if(!cloudReady)throw new Error('ابتدا اتصال ابری را آماده کن.');
+  if(localStorage.getItem(DRIVE_SCOPE_GRANTED_KEY)!=='1')return '';
   const r=await supabase.auth.getSession();
   const session=r.data&&r.data.session;
   if(session&&session.provider_token)return session.provider_token;
   return '';
+}
+function handleGoogleDriveAuthSession(session){
+  if(!session)return;
+  if(localStorage.getItem(DRIVE_OAUTH_PENDING_KEY)==='1'&&session.provider_token){
+    localStorage.setItem(DRIVE_SCOPE_GRANTED_KEY,'1');
+    localStorage.removeItem(DRIVE_OAUTH_PENDING_KEY);
+  }
+  emitGoogleDriveToken(session);
 }
 async function signIn(){
   if(!cloudReady)return;
@@ -355,7 +371,7 @@ async function newProject(name){
   await syncNow(false);return id;
 }
 function boot(){
-  init().then(function(){wrapSave();if(cloudReady)supabase.auth.onAuthStateChange(function(event,session){cloudUser=session&&session.user||null;emitGoogleDriveToken(session);refreshAuthUI();if(cloudUser&&event!=='INITIAL_SESSION')syncFromCloud();});});
+  init().then(function(){wrapSave();if(cloudReady)supabase.auth.onAuthStateChange(function(event,session){cloudUser=session&&session.user||null;if(event==='SIGNED_IN'||event==='INITIAL_SESSION')handleGoogleDriveAuthSession(session);else emitGoogleDriveToken(session);refreshAuthUI();if(cloudUser&&event!=='INITIAL_SESSION')syncFromCloud();});});
 }
 readConfig();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

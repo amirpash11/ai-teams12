@@ -21,6 +21,9 @@ assert((html+core).includes('id="workflowBuilderModal"')||(html+core).includes("
 assert(core.includes('function openWorkflowBuilder()'),'Workflow Builder opener missing');
 assert((core.match(/function openWorkflowBuilder\(\)/g)||[]).length===1,'Workflow Builder must have exactly one implementation');
 assert(core.includes('function getWorkflowAgents()'),'Workflow agent ordering helper missing');
+assert(core.includes('function parseAgentVote(rawText,active)'),'Strict multi-agent vote parser missing');
+assert(core.includes('window.aiTeamsParseAgentVote=parseAgentVote'),'Vote parser test bridge missing');
+assert(core.includes('رأی قابل‌اعتبارسنجی نیست'),'Invalid votes must not default to the coordinator');
 assert(core.includes("state.workflowOrder=(state.workflowOrder||[]).filter(function(x){return x!==id})"),'Removing a member must clean its workflow entry');
 assert(core.includes("if(!confirm('عضو «'+target.name+'» از تیم حذف شود؟'))return"),'Removing a member must require confirmation');
 assert(core.includes("const duplicate=state.agents.some(function(a){return String(a.name||'').trim().toLowerCase()===name.toLowerCase()})"),'Duplicate member names must be rejected');

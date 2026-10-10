@@ -127,6 +127,7 @@ async function init(){
     cloudReady=true;
     const session=await supabase.auth.getSession();
     cloudUser=session.data&&session.data.session&&session.data.session.user||null;
+    emitGoogleDriveToken(session.data&&session.data.session);
     refreshAuthUI();
     if(cloudUser)await syncFromCloud();
   }catch(e){cloudReady=false;cloudUser=null;status('اتصال ابری آماده نشد: '+e.message,false);}
@@ -163,10 +164,38 @@ async function resetPassword(){
     alert('اگر این ایمیل در سیستم ثبت شده باشد، لینک بازیابی رمز ارسال می‌شود.');
   }catch(e){alert('درخواست بازیابی رمز ناموفق بود: '+e.message);}
 }
+function emitGoogleDriveToken(session){
+  const token=session&&session.provider_token;
+  if(token&&typeof token==='string')window.dispatchEvent(new CustomEvent('ai-teams-google-drive-token',{detail:{token:token}}));
+}
 async function signInWithGoogle(){
   if(!cloudReady)return;
-  try{const r=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(r.error)throw r.error;}
-  catch(e){alert('ورود با Google ناموفق بود: '+e.message+'\nاگر Google در Supabase فعال نشده باشد، ابتدا آن را فعال کن.');}
+  try{
+    const r=await supabase.auth.signInWithOAuth({provider:'google',options:{
+      redirectTo:location.origin+location.pathname,
+      scopes:'openid email profile https://www.googleapis.com/auth/drive.appdata',
+      queryParams:{access_type:'offline',prompt:'consent'}
+    }});
+    if(r.error)throw r.error;
+  }catch(e){alert('ورود با Google ناموفق بود: '+e.message+'\nاگر Google در Supabase فعال نشده باشد، ابتدا آن را فعال کن.');}
+}
+async function connectGoogleDrive(){
+  if(!cloudReady)throw new Error('اتصال ابری Supabase آماده نیست.');
+  const sessionResult=await supabase.auth.getSession();
+  const session=sessionResult.data&&sessionResult.data.session;
+  if(session&&session.provider_token){
+    emitGoogleDriveToken(session);
+    return true;
+  }
+  await signInWithGoogle();
+  return false;
+}
+async function getGoogleDriveToken(){
+  if(!cloudReady)throw new Error('ابتدا اتصال ابری را آماده کن.');
+  const r=await supabase.auth.getSession();
+  const session=r.data&&r.data.session;
+  if(session&&session.provider_token)return session.provider_token;
+  return '';
 }
 async function signIn(){
   if(!cloudReady)return;
@@ -326,10 +355,10 @@ async function newProject(name){
   await syncNow(false);return id;
 }
 function boot(){
-  init().then(function(){wrapSave();if(cloudReady)supabase.auth.onAuthStateChange(function(event,session){cloudUser=session&&session.user||null;refreshAuthUI();if(cloudUser&&event!=='INITIAL_SESSION')syncFromCloud();});});
+  init().then(function(){wrapSave();if(cloudReady)supabase.auth.onAuthStateChange(function(event,session){cloudUser=session&&session.user||null;emitGoogleDriveToken(session);refreshAuthUI();if(cloudUser&&event!=='INITIAL_SESSION')syncFromCloud();});});
 }
 readConfig();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 document.addEventListener('click',function(e){const b=e.target&&e.target.closest?e.target.closest('#cloudStorageBtn'):null;if(b){e.preventDefault();openPanel();}},true);
-window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},invokeAI:invokeAIGateway,streamAI:streamAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,renameProject:renameProject,deleteProject:deleteProject,duplicateProject:duplicateProject,getConfig:function(){return {url:CONFIG.url,publishableKey:CONFIG.publishableKey,configured:configured(),user:cloudUser};}};
+window.aiTeamsCloud={open:openPanel,sync:function(){return syncNow(true);},isReady:function(){return cloudReady&&!!cloudUser;},connectGoogleDrive:connectGoogleDrive,getGoogleDriveToken:getGoogleDriveToken,invokeAI:invokeAIGateway,streamAI:streamAIGateway,listProjects:listProjects,switchProject:switchProject,newProject:newProject,renameProject:renameProject,deleteProject:deleteProject,duplicateProject:duplicateProject,getConfig:function(){return {url:CONFIG.url,publishableKey:CONFIG.publishableKey,configured:configured(),user:cloudUser};}};
 })();

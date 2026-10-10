@@ -10,6 +10,8 @@ test.describe('AI Teams end-to-end smoke', () => {
     console.log('CORE_HTTP', coreResponse.status(), coreResponse.headers()['content-type']);
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: 'domcontentloaded' });
+    // Open the right settings drawer before testing controls intentionally housed inside it.
+    await page.locator('#drawerToggle').click();
 
     await expect(page.locator('#chat')).toBeVisible();
     await expect(page.locator('#adminChatInput')).toBeVisible();

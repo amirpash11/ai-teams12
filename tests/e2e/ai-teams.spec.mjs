@@ -25,6 +25,11 @@ test.describe('AI Teams end-to-end smoke', () => {
     await page.locator('#agentBuilderModel').fill('koboldcpp/Kunoichi-DPO-v2-7B-Q8_0-imatrix');
     await page.locator('#agentBuilderCreate').click();
     await expect(page.locator('#editor')).toContainText('عضو تستی');
+    // The editor lives in the right options drawer; make sure that drawer is open before visibility assertions.
+    if (await page.locator('.app').evaluate(el => el.classList.contains('drawer-hidden'))) {
+      await page.locator('#drawerToggle').click();
+    }
+    await expect(page.locator('.app')).not.toHaveClass(/(^| )drawer-hidden( |$)/);
     const memberRow = page.locator('#editor .agent-row').filter({ hasText: 'عضو تستی' }).first();
     await expect(memberRow).toBeVisible();
     await page.locator('#addAgentBtn').click();

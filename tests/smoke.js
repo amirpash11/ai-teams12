@@ -33,7 +33,7 @@ assert(core.includes('state.workflowOrder'),'Workflow order state missing');
 assert(core.includes('const legacySteps=state.workflow&&Array.isArray(state.workflow.steps)?state.workflow.steps:[]'),'Legacy workflow migration missing');
 assert(core.includes('delete state.workflow;'),'Legacy workflow state must be normalized away');
 assert(!core.includes('function renderWorkflowSteps()'),'Legacy Workflow step renderer must be removed');
-assert(!core.includes('state.workflow=state.workflow||{name:\'پیش\u200cفرض\',steps:[]}'),'Legacy workflow initialization must be removed');
+assert(!core.includes('state.workflow=state.workflow||'),'Legacy workflow initialization must be removed');
 
 const forbidden=['oai.stablehorde.net','YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLISHABLE_KEY'];
 for(const value of forbidden) assert(!html.includes(value),'forbidden/stale marker in index.html: '+value);

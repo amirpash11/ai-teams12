@@ -746,8 +746,6 @@ async function runTeamParallel(){
  }
 }
 async function runTeam(){
- state.workflow=state.workflow||{name:'پیش‌فرض',steps:[]};
-
  cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
  const goal=document.getElementById('goal').value.trim();

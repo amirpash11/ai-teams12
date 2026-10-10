@@ -82,17 +82,17 @@ assert(ghGateway.includes('oauth-callback'),'GitHub OAuth callback missing');
 
 console.log('AI Teams smoke test: PASS');
 
-assert(html.includes('function openKnowledgePanel()'),'Knowledge panel missing');
-assert(html.includes('function ensureTimeline()'),'Execution timeline state missing');
-assert(html.includes("timelineEvent('start',a"),'Timeline Agent start event missing');
-assert(html.includes("timelineEvent('complete',a"),'Timeline Agent completion event missing');
-assert(html.includes('id=\"teamTimelinePanel\"'),'Timeline panel renderer missing');
-assert(html.includes('function knowledgeContext(query,limit)'),'Knowledge search missing');
+assert((html+core).includes('function openKnowledgePanel()'),'Knowledge panel missing');
+assert((html+core).includes('function ensureTimeline()'),'Execution timeline state missing');
+assert((html+core).includes("timelineEvent('start',a"),'Timeline Agent start event missing');
+assert((html+core).includes("timelineEvent('complete',a"),'Timeline Agent completion event missing');
+assert((html+core).includes("el.id='teamTimelinePanel'"),'Timeline panel renderer missing');
+assert((html+core).includes('function knowledgeContext(query,limit)'),'Knowledge search missing');
 assert(html.includes('id="knowledgeFile"'),'Knowledge file input missing');
-assert(html.includes('state.knowledge'),'Knowledge state missing');
+assert((html+core).includes('state.knowledge'),'Knowledge state missing');
 
-assert(html.includes('async function refreshHordeModels()'),'dynamic free Horde model refresh missing');
-assert(html.includes("provider.value==='horde'"),'Agent Builder should use refreshed Horde models');
+assert((html+core).includes('async function refreshHordeModels()'),'dynamic free Horde model refresh missing');
+assert((html+core).includes("provider.value==='horde'"),'Agent Builder should use refreshed Horde models');
 
 assert(fs.existsSync('ai-teams-v3.js'),'v3 orchestration layer missing');
 const v3=fs.readFileSync('ai-teams-v3.js','utf8');

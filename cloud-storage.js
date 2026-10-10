@@ -40,6 +40,15 @@ function projectId(){
   }
   return id;
 }
+const RECOVERY_KEY='ai-teams-recovery-snapshots-v1';
+function saveRecoverySnapshot(source,state){
+  const snapshot={source:String(source||'unknown'),savedAt:new Date().toISOString(),projectId:projectId(),state:JSON.parse(JSON.stringify(state))};
+  let history=[];
+  try{history=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'[]');if(!Array.isArray(history))history=[];}catch(_){history=[];}
+  history.unshift(snapshot);history=history.slice(0,5);
+  try{localStorage.setItem(RECOVERY_KEY,JSON.stringify(history));}
+  catch(e){throw new Error('برای جلوگیری از ازدست‌رفتن اطلاعات، بازیابی ابری متوقف شد؛ فضای ذخیره مرورگر کافی نیست.');}
+}
 function validateState(s){
   if(!s||typeof s!=='object'||Array.isArray(s))throw new Error('ساختار پروژه معتبر نیست.');
   const copy=JSON.parse(JSON.stringify(s));
@@ -137,7 +146,7 @@ async function signUp(){
 async function resendConfirmation(){
   if(!cloudReady)return;
   const email=document.getElementById('cloudEmail').value.trim();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return alert('ابتدا ایمیل معتبر را وارد کن.');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return alert('ابتدا ایمیل معتبر را وارد کن.');
   try{
     const r=await supabase.auth.resend({type:'signup',email:email});
     if(r.error)throw r.error;
@@ -147,7 +156,7 @@ async function resendConfirmation(){
 async function resetPassword(){
   if(!cloudReady)return;
   const email=document.getElementById('cloudEmail').value.trim();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return alert('ابتدا ایمیل معتبر را وارد کن.');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return alert('ابتدا ایمیل معتبر را وارد کن.');
   try{
     const r=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
     if(r.error)throw r.error;
@@ -204,7 +213,10 @@ async function syncFromCloud(){
     if(r.error)throw r.error;
     if(r.data&&r.data.state){
       const core=window.aiTeamsCore;if(!core||typeof core.importState!=='function')throw new Error('هسته بازیابی پروژه آماده نیست.');
-      applyingRemote=true;try{core.importState(validateState(r.data.state));}finally{applyingRemote=false;}
+      const localState=validateState(core.getState());
+      const remoteState=validateState(r.data.state);
+      if(JSON.stringify(localState)!==JSON.stringify(remoteState))saveRecoverySnapshot('before-supabase-restore',localState);
+      applyingRemote=true;try{core.importState(remoteState);}finally{applyingRemote=false;}
       status('نسخه ابری پروژه بازیابی شد و اعتبارسنجی شد.',true);
     }else await syncNow(false);
   }catch(e){applyingRemote=false;status('دریافت پروژه ابری ناموفق بود: '+e.message,false);}

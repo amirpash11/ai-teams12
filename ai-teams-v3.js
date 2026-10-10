@@ -229,7 +229,7 @@ async function runSequentialV3(){
  const s=ensureState(); if(!s||V.active)return;
  const goal=String(document.getElementById('goal')?.value||s.goal||'').trim();
  if(!goal){alert('اول هدف تیم را وارد کن.');return}
- const workflow=Array.isArray(s.workflow?.steps)&&s.workflow.steps.length?s.workflow.steps:(s.agents||[]).filter(a=>a.enabled&&a.kind!=='human').map(a=>({agentId:a.id}));
+ const workflow=Array.isArray(s.workflowOrder)&&s.workflowOrder.length?s.workflowOrder.map(agentId=>({agentId})):Array.isArray(s.workflow?.steps)&&s.workflow.steps.length?s.workflow.steps:(s.agents||[]).filter(a=>a.enabled&&a.kind!=='human').map(a=>({agentId:a.id}));
  const agents=workflow.map(st=>(s.agents||[]).find(a=>a.id===st.agentId)).filter(Boolean).filter(a=>a.enabled&&a.kind!=='human');
  if(!agents.length){alert('Agent فعال وجود ندارد.');return}
  V.active=true;V.paused=false;V.skipIds=new Set();V.retryIds=new Set();V.retryNow=false;V.skipNow=false;V.currentId=null;V.startedAt=Date.now();V.finishedAt=null;V.events=[];V.runId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());V.mode='sequential';

@@ -148,6 +148,24 @@ test.describe('AI Teams end-to-end smoke', () => {
     expect(result.count).toBeGreaterThan(0);
   });
 
+  test('Knowledge import is bounded to the safe project budget', async ({ page }) => {
+    await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+    const result = await page.evaluate(() => {
+      const core=window.aiTeamsCore;
+      const state=JSON.parse(JSON.stringify(core.getState()));
+      state.knowledge=[
+        {id:'k1',name:'doc-1',text:'a'.repeat(300000)},
+        {id:'k2',name:'doc-2',text:'b'.repeat(300000)},
+        {id:'k3',name:'doc-3',text:'c'.repeat(300000)}
+      ];
+      core.importState(state);
+      const docs=core.getState().knowledge||[];
+      return {count:docs.length,total:docs.reduce((n,x)=>n+String(x.text||'').length,0)};
+    });
+    expect(result.total).toBeLessThanOrEqual(600000);
+    expect(result.count).toBeLessThanOrEqual(3);
+  });
+
   test('mobile chat-first layout and drawer behavior', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });

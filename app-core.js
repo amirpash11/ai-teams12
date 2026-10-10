@@ -369,6 +369,7 @@ async function callAgent(a,goal,transcript,signal){
   }
   throw lastError||new Error('Gateway در دسترس نیست.');
  }
+ if(typeof window.aiTeamsUniversalCallAgent==='function')return window.aiTeamsUniversalCallAgent(a,goal,transcript);
  const endpoints=['https://oai.aihorde.net/v1/chat/completions'];
  if(a.endpoint&&endpoints.indexOf(a.endpoint)<0)throw new Error('برای AI Horde فقط Endpoint رسمی و امن مجاز است.');
  let models=[];try{models=await ensureHordeModel(a);}catch(e){throw new Error('AI Horde در دسترس نیست: '+(e.message||e));}

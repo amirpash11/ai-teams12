@@ -19,7 +19,7 @@ try{
 const FN='github-gateway';
 let client=null,ready=false;
 const RETRY_DELAYS=[500,1000,2000];
-function configured(){return !CONFIG.supabaseUrl.includes('YOUR_')&&!CONFIG.publishableKey.includes('YOUR_');}
+function configured(){try{const u=new URL(CONFIG.supabaseUrl);return u.protocol==='https:'&&!!CONFIG.publishableKey&&CONFIG.publishableKey.length<=2000&&!CONFIG.supabaseUrl.includes('YOUR_')&&!CONFIG.publishableKey.includes('YOUR_');}catch(e){return false;}}
 function sleep(ms){return new Promise(function(resolve){setTimeout(resolve,ms)});}
 function transientStatus(status){return status===408||status===425||status===429||status>=500;}
 async function fetchWithRetry(url,init){

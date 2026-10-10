@@ -34,6 +34,35 @@ function customEndpointMap() {
   try { return JSON.parse(raw) as Record<string, string> } catch { return {} }
 }
 
+async function readJsonLimited(req: Request, maxBytes: number): Promise<unknown> {
+  const reader = req.body?.getReader()
+  if (!reader) throw new Error('INVALID_JSON')
+  const chunks: Uint8Array[] = []
+  let total = 0
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      total += value.byteLength
+      if (total > maxBytes) {
+        try { await reader.cancel() } catch {}
+        throw new Error('REQUEST_TOO_LARGE')
+      }
+      chunks.push(value)
+    }
+  } finally {
+    try { reader.releaseLock() } catch {}
+  }
+  const bytes = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  try { return JSON.parse(new TextDecoder().decode(bytes)) }
+  catch { throw new Error('INVALID_JSON') }
+}
+
 function compactText(value: unknown, max: number) {
   const s = String(value ?? '')
   if (s.length <= max) return s
@@ -70,7 +99,12 @@ Deno.serve(async (req: Request) => {
   try {
     const contentLength = Number(req.headers.get('content-length') || 0)
     if (Number.isFinite(contentLength) && contentLength > 1200000) return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
-    const input = await req.json()
+    let input: any
+    try { input = await readJsonLimited(req, 1200000) }
+    catch (error) {
+      if (String((error as Error)?.message || error) === 'REQUEST_TOO_LARGE') return json({ error: 'درخواست بیش از حد بزرگ است.' }, 413)
+      return json({ error: 'درخواست JSON معتبر نیست.' }, 400)
+    }
     const rate = await ctx.supabaseAdmin.rpc('consume_ai_gateway_rate_limit', { p_user_id: userId, p_limit: RATE_LIMIT, p_window_seconds: RATE_WINDOW_SECONDS })
     if (rate.error) return json({ error: 'کنترل مصرف Gateway در دسترس نیست.' }, 503)
     const row = Array.isArray(rate.data) ? rate.data[0] : rate.data

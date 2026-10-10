@@ -19,7 +19,7 @@ test.describe('AI Teams end-to-end smoke', () => {
     await expect(page.locator('#adminChatInput')).toBeVisible();
     const voteCheck = await page.evaluate(() => {
       const agents=[{name:'تحلیل‌گر'},{name:'طراح'}];
-      const valid=window.aiTeamsParseAgentVote('```json\\n{"vote_for":"طراح","reason":"راه‌حل دقیق‌تر"}\\n```',agents);
+      const valid=window.aiTeamsParseAgentVote('```json\n{"vote_for":"طراح","reason":"راه‌حل دقیق‌تر"}\n```',agents);
       let invalidRejected=false;
       try { window.aiTeamsParseAgentVote('{"vote_for":"عضو ناشناس","reason":"نامعتبر"}',agents); } catch (_) { invalidRejected=true; }
       return {vote:valid.vote_for,invalidRejected};

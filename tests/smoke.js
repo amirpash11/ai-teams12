@@ -52,8 +52,8 @@ assert(provider.includes('window.aiTeamsTrackController?window.aiTeamsTrackContr
 assert(provider.includes('window.aiTeamsReleaseController(controller)'),'AI Horde must release its controller after completion');
 assert(provider.includes("const requestSignal=controller.signal"),'AI Horde must use its own timeout controller signal');
 assert(provider.includes('signal&&abortHandler)signal.removeEventListener(\'abort\',abortHandler)'),'AI Horde must remove abort listeners after each request');
-assert(core.includes("window.aiTeamsUniversalCallAgent==='function'"),'app core must delegate Horde to robust provider runtime');
-assert(core.includes("window.aiTeamsUniversalCallAgent(a,goal,transcript,signal)"),'core callAgent must delegate Horde with cancellation signal');
+assert(core.includes("const endpoints=['https://oai.aihorde.net/v1/chat/completions']"),'core AI Horde runtime endpoint missing');
+assert(core.includes('await ensureHordeModel(a)'),'core AI Horde runtime must refresh/validate models');
 assert(!provider.includes('oai.stablehorde.net'),'stale Horde endpoint remains');
 assert((provider.match(/oai\.aihorde\.net\/v1\/chat\/completions/g)||[]).length===2,'Horde endpoint should have one catalog and one runtime reference');
 

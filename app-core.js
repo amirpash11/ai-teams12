@@ -1,6 +1,7 @@
 
 const KEY='ai-teams12-state-v2';
 const OLD_KEY='ai-teams12-state-v1';
+const MAX_KNOWLEDGE_BYTES=600000;
 
 function uid(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()+Math.random())}
 function defaults(){
@@ -61,6 +62,22 @@ function normalizeStateShape(){
  state.chat=Array.isArray(state.chat)?state.chat.slice(-200):[];
  state.memory=Array.isArray(state.memory)?state.memory.slice(0,30):[];
  state.runs=Array.isArray(state.runs)?state.runs.slice(0,20):[];
+ let knowledgeBudget=MAX_KNOWLEDGE_BYTES;
+ const rawKnowledge=Array.isArray(state.knowledge)?state.knowledge.slice(0,50):[];
+ state.knowledge=[];
+ rawKnowledge.forEach(function(doc){
+  if(knowledgeBudget<=0||!doc||typeof doc!=='object')return;
+  const text=String(doc.text||'').slice(0,Math.min(300000,knowledgeBudget));
+  if(!text.trim())return;
+  state.knowledge.push({
+   id:String(doc.id||uid()).slice(0,120),
+   name:String(doc.name||'سند بدون نام').slice(0,160),
+   text:text,
+   createdAt:String(doc.createdAt||new Date().toISOString()).slice(0,40),
+   updatedAt:String(doc.updatedAt||doc.createdAt||new Date().toISOString()).slice(0,40)
+  });
+  knowledgeBudget-=text.length;
+ });
  state.providers=Array.isArray(state.providers)?state.providers.slice(0,50).map(function(p){return Object.assign({},stripBrowserSecrets(p),{id:String(p.id||'').slice(0,80),name:String(p.name||'').slice(0,160),protocol:String(p.protocol||'').slice(0,40),auth:String(p.auth||'').slice(0,40),endpoint:String(p.endpoint||'').slice(0,500),model:String(p.model||'').slice(0,200),header:String(p.header||'').slice(0,100),query:String(p.query||'').slice(0,100),template:String(p.template||'').slice(0,12000),responsePath:String(p.responsePath||'').slice(0,300)});}):[];
  const source=Array.isArray(state.agents)&&state.agents.length?state.agents:d.agents;
  const seenAgentIds=new Set();
@@ -157,7 +174,7 @@ function openKnowledgePanel(){
  ensure('knowledgeList','<div id="knowledgeList" style="margin-top:14px"></div>');
  const close=document.getElementById('knowledgeClose');if(close&&!close.dataset.bound){close.dataset.bound='1';close.onclick=function(){el.style.display='none'};}
  const file=document.getElementById('knowledgeFile');if(file&&!file.dataset.bound){file.dataset.bound='1';file.onchange=async function(){const f=this.files&&this.files[0];if(!f)return;if(f.size>300000)return alert('فایل بزرگ‌تر از 300KB است.');document.getElementById('knowledgeName').value=f.name;document.getElementById('knowledgeText').value=await f.text();};}
- const add=document.getElementById('knowledgeAdd');if(add&&!add.dataset.bound){add.dataset.bound='1';add.onclick=function(){const tv=document.getElementById('knowledgeText').value.trim();if(!tv)return alert('متن سند خالی است.');if(tv.length>300000)return alert('متن بزرگ‌تر از 300KB است.');state.knowledge=state.knowledge||[];state.knowledge.unshift({id:uid(),name:(document.getElementById('knowledgeName').value.trim()||'سند بدون نام').slice(0,160),text:tv,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});state.knowledge=state.knowledge.slice(0,50);save();renderKnowledge();document.getElementById('knowledgeText').value='';};}
+ const add=document.getElementById('knowledgeAdd');if(add&&!add.dataset.bound){add.dataset.bound='1';add.onclick=function(){const tv=document.getElementById('knowledgeText').value.trim();if(!tv)return alert('متن سند خالی است.');if(tv.length>300000)return alert('هر سند حداکثر 300KB باشد.');state.knowledge=state.knowledge||[];if(state.knowledge.length>=50)return alert('حداکثر 50 سند نگهداری می‌شود؛ برای افزودن سند جدید، یک سند قبلی را حذف کن.');const used=state.knowledge.reduce(function(n,x){return n+String(x.text||'').length;},0);if(used+tv.length>MAX_KNOWLEDGE_BYTES)return alert('مجموع Knowledge حداکثر 600KB است تا ذخیره محلی و ابری پایدار بماند. ابتدا بخشی از اسناد قبلی را حذف کن.');state.knowledge.unshift({id:uid(),name:(document.getElementById('knowledgeName').value.trim()||'سند بدون نام').slice(0,160),text:tv,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});save();renderKnowledge();document.getElementById('knowledgeText').value='';};}
  const clear=document.getElementById('knowledgeClear');if(clear&&!clear.dataset.bound){clear.dataset.bound='1';clear.onclick=function(){if(confirm('همه اسناد Knowledge حذف شوند؟')){state.knowledge=[];save();renderKnowledge();}};}
  renderKnowledge();el.style.display='block';
 }function renderKnowledge(){const box=document.getElementById('knowledgeList');if(!box)return;const items=state.knowledge||[];box.innerHTML=items.length?items.map(function(x){return '<div class="agent-row" style="margin-top:8px"><div class="agent-head"><strong>📄 '+esc(x.name)+'</strong><button class="btn danger knowledge-delete" data-id="'+esc(x.id)+'" style="width:auto">حذف</button></div><div class="tiny">'+esc(String(x.text||'').slice(0,700))+'</div></div>'}).join(''):'<div class="empty">Knowledge خالی است.</div>';box.querySelectorAll('.knowledge-delete').forEach(function(b){b.onclick=function(){state.knowledge=(state.knowledge||[]).filter(function(x){return x.id!==b.dataset.id});save();renderKnowledge();}});}

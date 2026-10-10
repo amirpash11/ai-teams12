@@ -44,7 +44,8 @@ jobs:
           grep -q "Invalid repository or path" supabase/functions/github-gateway/index.ts
           grep -q "aiTeamsImportState" index.html
           grep -q "normalizeStateShape();" app-core.js
-          grep -q "core.importState(validateState(r.data.state))" cloud-storage.js
+          grep -q "const remoteState=validateState(r.data.state)" cloud-storage.js
+          grep -q "core.importState(remoteState)" cloud-storage.js
           grep -q "importState:window.aiTeamsImportState" provider-manager.js
           grep -q "aiTeamsEnsureProviders" provider-manager.js
           grep -q "if(typeof window.callAgent!=='function')window.callAgent=universalCallAgent;" provider-manager.js

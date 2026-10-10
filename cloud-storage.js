@@ -215,9 +215,16 @@ async function syncFromCloud(){
       const core=window.aiTeamsCore;if(!core||typeof core.importState!=='function')throw new Error('هسته بازیابی پروژه آماده نیست.');
       const localState=validateState(core.getState());
       const remoteState=validateState(r.data.state);
-      if(JSON.stringify(localState)!==JSON.stringify(remoteState))saveRecoverySnapshot('before-supabase-restore',localState);
+      if(JSON.stringify(localState)!==JSON.stringify(remoteState)){
+        saveRecoverySnapshot('before-supabase-restore-local',localState);
+        saveRecoverySnapshot('before-supabase-restore-cloud',remoteState);
+        if(!confirm('نسخه ابری با نسخه فعلی این مرورگر متفاوت است. قبل از جایگزینی، هر دو نسخه در پشتیبان بازیابی نگه‌داری می‌شوند. نسخه ابری بارگذاری شود؟')){
+          status('نسخه فعلی مرورگر حفظ شد؛ نسخه ابری بدون تغییر باقی ماند.',true);
+          return;
+        }
+      }
       applyingRemote=true;try{core.importState(remoteState);}finally{applyingRemote=false;}
-      status('نسخه ابری پروژه بازیابی شد و اعتبارسنجی شد.',true);
+      status('نسخه ابری پروژه بازیابی شد؛ نسخه قبلی نیز در پشتیبان بازیابی نگه‌داری شد.',true);
     }else await syncNow(false);
   }catch(e){applyingRemote=false;status('دریافت پروژه ابری ناموفق بود: '+e.message,false);}
 }

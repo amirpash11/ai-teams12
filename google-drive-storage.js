@@ -2,6 +2,7 @@
 (function(){
 'use strict';
 const DRIVE_API='https://www.googleapis.com/drive/v3';
+const DRIVE_UPLOAD_API='https://www.googleapis.com/upload/drive/v3';
 const FILE_NAME='ai-teams-project.json';
 let accessToken='',tokenExpiresAt=0,initialized=false;
 function panel(){
@@ -98,11 +99,11 @@ function payload(){const core=window.aiTeamsCore;if(!core)throw new Error('هس�
 async function saveToDrive(manual){
  try{const data=payload(),existing=await findFile();let r;
   if(existing){
-   r=await driveFetch(DRIVE_API+'/files/'+encodeURIComponent(existing.id)+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+   r=await driveFetch(DRIVE_UPLOAD_API+'/files/'+encodeURIComponent(existing.id)+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   }else{
    const boundary='aitb'+Date.now(),meta=JSON.stringify({name:FILE_NAME,parents:['appDataFolder'],mimeType:'application/json'});
    const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(data)+'\r\n--'+boundary+'--';
-   r=await driveFetch(DRIVE_API+'/files?uploadType=multipart',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body:body});
+   r=await driveFetch(DRIVE_UPLOAD_API+'/files?uploadType=multipart',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body:body});
   }
   status('پروژه در Google Drive ذخیره شد.',true);if(manual)alert('پروژه با موفقیت در Google Drive ذخیره شد.');
  }catch(e){status('ذخیره در Google Drive ناموفق بود: '+e.message,false);if(manual)alert('ذخیره ناموفق بود: '+e.message);}

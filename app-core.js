@@ -509,6 +509,29 @@ async function runAdminTurn(){
  }
 }
 
+function parseAgentVote(rawText,active){
+ const raw=String(rawText||'').trim();
+ const fence=String.fromCharCode(96).repeat(3);
+ const fenced=raw.match(new RegExp(fence+'(?:json)?\\s*([\\s\\S]*?)'+fence,'i'));
+ const source=fenced?fenced[1].trim():raw;
+ let parsed=null;
+ try{parsed=JSON.parse(source);}catch(e){
+  const object=source.match(/\{[\s\S]*\}/);
+  if(object){try{parsed=JSON.parse(object[0]);}catch(_){parsed=null;}}
+ }
+ let candidate=parsed&&typeof parsed==='object'?(parsed.vote_for||parsed.voteFor||parsed.choice||parsed.selected):'';
+ candidate=String(candidate||'').trim().replace(/^["'\s]+|["'\s,.;:]+$/g,'');
+ if(!candidate){
+  const m=source.match(/(?:vote_for|vote\s+for|my vote is|i vote for|رأی(?:م)? به|انتخاب من)\s*[:：]?\s*["']?([^"'\r\n,}]+)/i);
+  if(m)candidate=String(m[1]||'').trim().replace(/["'\s,.;:]+$/g,'');
+ }
+ const target=(active||[]).find(function(a){return String(a.name||'').trim()===candidate;})||
+   (active||[]).find(function(a){return String(a.name||'').trim().toLowerCase()===candidate.toLowerCase();});
+ if(!target)throw new Error('رأی قابل‌اعتبارسنجی نیست؛ نام عضو باید دقیقاً با فهرست تیم مطابقت داشته باشد.');
+ return {vote_for:target.name,reason:String((parsed&&parsed.reason)||raw).slice(0,800)};
+}
+window.aiTeamsParseAgentVote=parseAgentVote;
+
 async function runDialogue(){
  cancelRequested=false;document.getElementById('stopBtn').disabled=false;
  if(busy)return;
@@ -578,13 +601,8 @@ async function runDialogue(){
           '\\n\\nتو داور مستقل هستی. فقط بهترین پیشنهاد را از بین اعضا انتخاب کن. پاسخ را دقیقاً در یک JSON با دو کلید بده: vote_for (نام دقیق یکی از اعضا) و reason (دلیل کوتاه). نامی خارج از roster انتخاب نکن.';
         voteText=await callAgentResilient(voter,voteGoal,transcript);
       }
-      let parsed=null;
-      try{parsed=JSON.parse(String(voteText).replace(/\`/g,'').trim())}catch(e){
-        const name=(active.find(a=>String(voteText).includes(a.name))||coordinator).name;
-        parsed={vote_for:name,reason:String(voteText).slice(0,500)};
-      }
-      const target=active.find(a=>a.name===parsed.vote_for)||coordinator;
-      dialogueVotes.push({voter:voter.name,vote_for:target.name,reason:String(parsed.reason||'').slice(0,800)});
+      const parsed=parseAgentVote(voteText,active);
+      dialogueVotes.push({voter:voter.name,vote_for:parsed.vote_for,reason:parsed.reason});
     }catch(e){
       dialogueHadError=true;
       dialogueVotes.push({voter:voter.name,vote_for:null,reason:'رأی‌گیری این عضو ناموفق بود: '+e.message});

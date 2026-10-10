@@ -24,6 +24,7 @@ jobs:
           echo "External JavaScript syntax PASS"
       - name: Validate Gateway security invariants
         run: |
+          set -euxo pipefail
           grep -q "Access-Control-Allow-Origin': APP_ORIGIN" supabase/functions/ai-gateway/index.ts
           grep -q "consume_ai_gateway_rate_limit" supabase/functions/ai-gateway/index.ts
           grep -q "oai.aihorde.net/v1/chat/completions" supabase/functions/ai-gateway/index.ts
@@ -65,7 +66,7 @@ jobs:
           grep -Fq "async function fetchWithRetry(url,init)" github-storage.js
           grep -q "compactContext" app-core.js
           test -f ai-teams-v3.js
-          node -e "new Function(require('fs').readFileSync('ai-teams-v3.js','utf8')); console.log('AI Teams v3 syntax PASS')"
+          node --check ai-teams-v3.js && echo "AI Teams v3 syntax PASS"
           echo "Gateway and GitHub security invariants passed."
 
       - name: Validate Supabase Edge Functions

@@ -13,6 +13,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -103,12 +104,12 @@ jobs:
           const h = JSON.parse(fs.readFileSync('/tmp/horde-models.json','utf8'));
           const models = Array.isArray(h.data) ? h.data.map(x=>x?.id).filter(Boolean) : [];
           if(!models.length) throw new Error('No Horde model available for live inference test');
-          const candidates = models.filter(x=>/llama|qwen|mistral|gemma|deepseek|phi|hermes|drummer/i.test(String(x))).slice(0,10);
-          if(!candidates.length) candidates.push(...models.slice(0,10));
+          const candidates = models.filter(x=>/llama|qwen|mistral|gemma|deepseek|phi|hermes|drummer/i.test(String(x))).slice(0,3);
+          if(!candidates.length) candidates.push(...models.slice(0,3));
           let passed=false, lastError='';
           for(const model of candidates){
             const ctrl = new AbortController();
-            const timer = setTimeout(()=>ctrl.abort(), 90000);
+            const timer = setTimeout(()=>ctrl.abort(), 30000);
             let id='';
             try {
               const prompt='USER: Reply with exactly: AI TEAMS LIVE OK';

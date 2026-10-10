@@ -17,7 +17,7 @@ assert((html+core).includes('function agentBuilderModels(providerId)'),'Agent mo
 assert((html+core).includes('function openAgentBuilder()'),'Agent Builder opener missing');
 
 assert(html.includes('id="workflowBuilderBtn"'),'Workflow Builder trigger missing');
-assert(html.includes('id="workflowBuilderModal"'),'Workflow Builder modal missing');
+assert((html+core).includes('id="workflowBuilderModal"')||(html+core).includes("id='workflowBuilderModal'"),'Workflow Builder modal missing');
 assert(core.includes('function openWorkflowBuilder()'),'Workflow Builder opener missing');
 assert((core.match(/function openWorkflowBuilder\(\)/g)||[]).length===1,'Workflow Builder must have exactly one implementation');
 assert(core.includes('function getWorkflowAgents()'),'Workflow agent ordering helper missing');

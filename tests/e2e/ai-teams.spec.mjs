@@ -10,8 +10,10 @@ test.describe('AI Teams end-to-end smoke', () => {
     console.log('CORE_HTTP', coreResponse.status(), coreResponse.headers()['content-type']);
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: 'domcontentloaded' });
-    // Open the right settings drawer before testing controls intentionally housed inside it.
-    await page.locator('#drawerToggle').click();
+    // The drawer defaults to open after localStorage is cleared; open it only if persisted state hid it.
+    if (await page.locator('.app').evaluate(el => el.classList.contains('drawer-hidden'))) {
+      await page.locator('#drawerToggle').click();
+    }
 
     await expect(page.locator('#chat')).toBeVisible();
     await expect(page.locator('#adminChatInput')).toBeVisible();

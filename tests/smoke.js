@@ -103,6 +103,7 @@ assert(core.includes("provider.value==='horde'"),'Agent Builder should use refre
 
 assert(fs.existsSync('ai-teams-v3.js'),'v3 orchestration layer missing');
 const v3=fs.readFileSync('ai-teams-v3.js','utf8');
+assert(v3.includes('Array.isArray(s.workflowOrder)&&s.workflowOrder.length?s.workflowOrder.map(agentId=>({agentId}))'),'V3 runner must honor saved workflow order');
 assert(v3.includes('function buildEvidence('),'Evidence builder missing');
 assert(v3.includes('function renderFinalHTML('),'Final output renderer missing');
 assert(v3.includes('function exportReport('),'Final report export missing');

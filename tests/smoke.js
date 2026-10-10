@@ -4,7 +4,7 @@ const vm=require('vm');
 
 const html=fs.readFileSync('index.html','utf8');
 const core=fs.readFileSync('app-core.js','utf8');
-const inlineBlocks=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)];
+const inlineBlocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
 inlineBlocks.forEach((m,i)=>new vm.Script(m[1],{filename:'index-inline-'+i+'.js'}));
 const requiredIds=['chat','adminChatInput','adminChatBtn','teamName','goal','onlineTeamBtn'];
 for(const id of requiredIds) assert(html.includes('id="'+id+'"')||html.includes("id='"+id+"'"),'missing UI id: '+id);
@@ -86,7 +86,8 @@ assert(html.includes('function openKnowledgePanel()'),'Knowledge panel missing')
 assert(html.includes('function ensureTimeline()'),'Execution timeline state missing');
 assert(html.includes("timelineEvent('start',a"),'Timeline Agent start event missing');
 assert(html.includes("timelineEvent('complete',a"),'Timeline Agent completion event missing');
-assert(html.includes('id=\"teamTimelinePanel\"'),'Timeline panel renderer missing');\nassert(html.includes('function knowledgeContext(query,limit)'),'Knowledge search missing');
+assert(html.includes('id=\"teamTimelinePanel\"'),'Timeline panel renderer missing');
+assert(html.includes('function knowledgeContext(query,limit)'),'Knowledge search missing');
 assert(html.includes('id="knowledgeFile"'),'Knowledge file input missing');
 assert(html.includes('state.knowledge'),'Knowledge state missing');
 
@@ -107,7 +108,7 @@ assert(v3.includes('const browserAgentKeys='),'runtime audit must inspect actual
 assert(v3.includes('const browserProviderKeys='),'runtime audit must inspect actual provider state');
 assert(v3.includes('const unsafeEndpoints='),'runtime audit HTTPS validation missing');
 assert(v3.includes('document.querySelector(\'meta[http-equiv="Content-Security-Policy"]\')'),'runtime audit CSP check missing');
-assert(!/function safeCalc[\\s\\S]{0,1800}Function\\(/.test(v3),'safe calculator must not use dynamic Function evaluation');
+assert(!/function safeCalc[\s\S]{0,1800}Function\(/.test(v3),'safe calculator must not use dynamic Function evaluation');
 assert(v3.includes("if((op==='/'||op==='%')&&rhs===0)throw new Error('zero')"),'safe calculator zero-division guard missing');
 assert(v3.includes('if(i!==s.length||!Number.isFinite(value))throw new Error(\'invalid\')'),'safe calculator trailing-token guard missing');
 assert(v3.includes('function runtimeUIHealth()'),'runtime UI health check missing');

@@ -22,6 +22,9 @@ assert(core.includes('function openWorkflowBuilder()'),'Workflow Builder opener 
 assert((core.match(/function openWorkflowBuilder\(\)/g)||[]).length===1,'Workflow Builder must have exactly one implementation');
 assert(core.includes('function getWorkflowAgents()'),'Workflow agent ordering helper missing');
 assert(core.includes('function parseAgentVote(rawText,active)'),'Strict multi-agent vote parser missing');
+assert(core.includes('const MAX_KNOWLEDGE_BYTES=600000'),'Knowledge total-size safety limit missing');
+assert(core.includes('if(state.knowledge.length>=50)return alert'),'Knowledge must not silently discard documents over the limit');
+assert(core.includes('if(used+tv.length>MAX_KNOWLEDGE_BYTES)return alert'),'Knowledge additions must enforce total size before saving');
 assert(core.includes('window.aiTeamsParseAgentVote=parseAgentVote'),'Vote parser test bridge missing');
 assert(core.includes('رأی قابل‌اعتبارسنجی نیست'),'Invalid votes must not default to the coordinator');
 assert(core.includes("state.workflowOrder=(state.workflowOrder||[]).filter(function(x){return x!==id})"),'Removing a member must clean its workflow entry');

@@ -10,11 +10,11 @@ const requiredIds=['chat','adminChatInput','adminChatBtn','teamName','goal','onl
 for(const id of requiredIds) assert(html.includes('id="'+id+'"')||html.includes("id='"+id+"'"),'missing UI id: '+id);
 assert(html.includes('id="addAgentBtn"')||html.includes("id='addAgentBtn'"),'Agent Builder trigger missing');
 
-assert(html.includes('id=\"agentBuilderModal\"'),'Agent Builder modal missing');
-assert(html.includes('id=\"agentBuilderProvider\"'),'Agent Builder provider selector missing');
-assert(html.includes('id=\"agentBuilderModel\"'),'per-agent model selector missing');
-assert(html.includes('function agentBuilderModels(providerId)'),'Agent model catalog missing');
-assert(html.includes('function openAgentBuilder()'),'Agent Builder opener missing');
+assert((html+core).includes('id=\"agentBuilderModal\"')||(html+core).includes("id='agentBuilderModal'"),'Agent Builder modal missing');
+assert((html+core).includes('id=\"agentBuilderProvider\"')||(html+core).includes("id='agentBuilderProvider'"),'Agent Builder provider selector missing');
+assert((html+core).includes('id=\"agentBuilderModel\"')||(html+core).includes("id='agentBuilderModel'"),'per-agent model selector missing');
+assert((html+core).includes('function agentBuilderModels(providerId)'),'Agent model catalog missing');
+assert((html+core).includes('function openAgentBuilder()'),'Agent Builder opener missing');
 
 assert(html.includes('id="workflowBuilderBtn"'),'Workflow Builder trigger missing');
 assert(html.includes('id="workflowBuilderModal"'),'Workflow Builder modal missing');

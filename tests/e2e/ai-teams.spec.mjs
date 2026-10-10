@@ -38,6 +38,8 @@ test.describe('AI Teams end-to-end smoke', () => {
     const editorToggle = editorCard.locator('.drawer-fold-toggle');
     if (await editorToggle.getAttribute('aria-expanded') === 'false') await editorToggle.click();
     const memberRow = page.locator('#editor .agent-row').filter({ hasText: 'عضو تستی' }).first();
+    // The settings drawer intentionally folds the editor section by default; expand it before asserting member visibility.
+    await page.locator('#editor').evaluate(el => { const card=el.closest('.card'); if(card?.classList.contains('folded')) card.querySelector('.drawer-fold-toggle')?.click(); });
     await expect(memberRow).toBeVisible();
     await page.locator('#addAgentBtn').click();
     await page.locator('#agentBuilderName').fill('عضو تستی');

@@ -60,17 +60,26 @@ function connect(){
 }
 function ensureToken(){
  if(accessToken&&Date.now()<tokenExpiresAt)return Promise.resolve(accessToken);
+ const expired=!!accessToken;
  accessToken='';tokenExpiresAt=0;
  if(!window.aiTeamsCloud||typeof window.aiTeamsCloud.getGoogleDriveToken!=='function')return Promise.reject(new Error('ابتدا وارد حساب Gmail شو.'));
+ if(expired&&typeof window.aiTeamsCloud.connectGoogleDrive==='function'){
+  window.aiTeamsCloud.connectGoogleDrive(true).catch(function(){});
+  return Promise.reject(new Error('نشست Google Drive منقضی شده؛ ورود با Gmail دوباره باز می‌شود.'));
+ }
  return window.aiTeamsCloud.getGoogleDriveToken().then(function(token){
   if(token){accessToken=token;tokenExpiresAt=Date.now()+45*60*1000;updateUI();return token;}
-  if(typeof window.aiTeamsCloud.connectGoogleDrive==='function')window.aiTeamsCloud.connectGoogleDrive().catch(function(){});
+  if(typeof window.aiTeamsCloud.connectGoogleDrive==='function')window.aiTeamsCloud.connectGoogleDrive(true).catch(function(){});
   throw new Error('برای ادامه، یک بار ورود با Gmail و اجازه دسترسی Google Drive را تأیید کن.');
  });
 }
 async function driveFetch(url,options){
  const t=await ensureToken(),opts=Object.assign({},options||{});opts.headers=Object.assign({'Authorization':'Bearer '+t},opts.headers||{});
- let r=await fetch(url,opts);if(r.status===401){accessToken='';tokenExpiresAt=0;const nt=await ensureToken();opts.headers.Authorization='Bearer '+nt;r=await fetch(url,opts);}
+ let r=await fetch(url,opts);if(r.status===401){
+  accessToken='';tokenExpiresAt=0;
+  if(window.aiTeamsCloud&&typeof window.aiTeamsCloud.connectGoogleDrive==='function')window.aiTeamsCloud.connectGoogleDrive(true).catch(function(){});
+  throw new Error('دسترسی Google Drive منقضی شده؛ پنجره ورود Gmail را تأیید کن و دوباره تلاش کن.');
+ }
  if(!r.ok){let msg='';try{const j=await r.json();msg=j.error&&j.error.message||'';}catch(e){}throw new Error(msg||('Google Drive HTTP '+r.status));}return r;
 }
 async function findFile(){
